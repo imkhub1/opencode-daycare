@@ -77,21 +77,21 @@ The data remains static for the lifetime of each page and resets on reload.
 
 ## Acceptance criteria
 
-- [ ] Visiting `/kids` renders the Niños directory rather than the existing placeholder.
-- [ ] The directory shows exactly eight static cards from the reference under Sala Soles.
-- [ ] Only Mateo Fernández's card links to `/kids/mateo-fernandez`.
-- [ ] The other seven child cards are static and do not expose a navigation destination.
-- [ ] `/kids/mateo-fernandez` renders Mateo's identity, age, room, allergy note, dates, linked parents, and the three visible CTAs.
-- [ ] `/kids/new` and `/kids/mateo-fernandez/edit` render static child forms without saving data.
-- [ ] `/kids/mateo-fernandez/link-parent` renders the static invitation interface and code `7K4P9` without sending an invitation.
-- [ ] `/kids/mateo-fernandez/day-summary` renders Mateo's three reference metric cards, mood, and two highlighted moments.
-- [ ] Search, form fields, CTA buttons, invitation controls, and summary selector pills do not persist or alter displayed data.
+- [x] Visiting `/kids` renders the Niños directory rather than the existing placeholder.
+- [x] The directory shows exactly eight static cards from the reference under Sala Soles.
+- [x] Only Mateo Fernández's card links to `/kids/mateo-fernandez`.
+- [x] The other seven child cards are static and do not expose a navigation destination.
+- [x] `/kids/mateo-fernandez` renders Mateo's identity, age, room, allergy note, dates, linked parents, and the three visible CTAs.
+- [x] `/kids/new` and `/kids/mateo-fernandez/edit` render static child forms without saving data.
+- [x] `/kids/mateo-fernandez/link-parent` renders the static invitation interface and code `7K4P9` without sending an invitation.
+- [x] `/kids/mateo-fernandez/day-summary` renders Mateo's three reference metric cards, mood, and two highlighted moments.
+- [x] Search, form fields, CTA buttons, invitation controls, and summary selector pills do not persist or alter displayed data.
 - [ ] All `/kids` screens show `Niños` as the active shared navigation item.
 - [ ] Desktop views retain the sidebar and mobile views use the existing top-menu pattern with stacked content.
-- [ ] `/ninos` no longer resolves as a placeholder route.
-- [ ] `npx tsc --noEmit` succeeds.
-- [ ] `npm run lint` reports no errors from application files, excluding the existing reference-file issue.
-- [ ] `npm run build` succeeds.
+- [x] `/ninos` no longer resolves as a placeholder route.
+- [x] `npx tsc --noEmit` succeeds.
+- [x] `npm run lint` reports no errors from application files, excluding the existing reference-file issue.
+- [x] `npm run build` succeeds.
 
 ## Decisions
 
@@ -123,3 +123,14 @@ The data remains static for the lifetime of each page and resets on reload.
 - Interactive daily-summary selection.
 
 Each excluded capability requires a future spec before implementation.
+
+## Verification
+
+**Date:** 2026-08-14
+
+- **Commands:** `npx tsc --noEmit` and `npm run build` passed. `npm run lint` reports 2 errors and 8 warnings only in excluded `references/pantallas/support.js`; `npx eslint app components` passed.
+- **Routes:** `/kids`, `/kids/mateo-fernandez`, `/kids/new`, `/kids/mateo-fernandez/edit`, `/kids/mateo-fernandez/link-parent`, and `/kids/mateo-fernandez/day-summary` returned HTTP 200. `/ninos` returned HTTP 404.
+- **Runtime:** At `/kids`, exactly one directory link targets `/kids/mateo-fernandez`; the only other main-content link targets `/kids/new`. Replacing Mateo's name in the edit form and reloading restored `Mateo Fernández`. Browser console reported 0 errors.
+- **Visual checks:** Inspected desktop `1280 × 800` and mobile `375 × 667` viewports. Artifacts: `.playwright-mcp/spec02-kids-desktop-current.png`, `.playwright-mcp/spec02-kids-desktop-current.yml`, `.playwright-mcp/spec02-edit-current.yml`, and `.playwright-mcp/spec02-profile-mobile-current.png`.
+- **Unchecked — shared navigation:** `/kids/new`, `/kids/mateo-fernandez/edit`, and `/kids/mateo-fernandez/link-parent` render standalone form shells without `Sidebar` or `MobileNavigation`, so they do not mark `Niños` active.
+- **Unchecked — responsive shared shell:** Those same standalone form routes lack the required desktop sidebar and existing mobile top-menu pattern. The directory and Mateo profile do retain the sidebar on desktop and stack under the top menu on mobile.
