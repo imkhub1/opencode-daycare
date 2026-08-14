@@ -1,69 +1,33 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Avatar, Icon, MobileNavigation, PostCard, Sidebar } from "@/components/open-daycare";
+
+const posts = [
+  { type: "LOGRO" as const, time: "14:20", audience: "Para: familia de Mateo", body: "¡Usó el orinal solito por primera vez! Estaba feliz de contárselo a todos. Un gran paso.", reactions: 3, comments: 1 },
+  { type: "ACTIVIDAD" as const, time: "09:40", audience: "Para: familia de Mateo", body: "Pintamos con témperas esta mañana. Mateo eligió el azul para todo y se concentró un montón mezclando colores.", reactions: 5, comments: 2, photo: "Foto · pintando con témperas" },
+  { type: "ANUNCIO" as const, time: "07:50", audience: "Para: toda la sala", body: "El viernes salimos al parque por la mañana. Recuerden mandar gorra y una botellita de agua.", reactions: 8, comments: 0 },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen bg-sand md:flex">
+      <Sidebar />
+      <div className="min-w-0 flex-1">
+        <MobileNavigation />
+        <main className="mx-auto max-w-[760px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20">
+          <header className="mb-6">
+            <p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-[#d9583c]">GUARDERÍA · SALA SOLES</p>
+            <h1 className="font-display text-3xl font-semibold text-ink">Buenas, Caro</h1>
+            <p className="mt-1 text-sm text-muted">12 niños · martes 17 jun</p>
+          </header>
+          <Link href="/crear-publicacion" className="mb-6 flex items-center gap-3.5 rounded-[18px] border border-line bg-surface px-4 py-3.5 shadow-sm shadow-[#785a3c]/10">
+            <Avatar>C</Avatar>
+            <span className="flex-1 text-[15px] text-[#a89a8b]">Compartí un momento…</span>
+            <span className="flex size-10 items-center justify-center rounded-xl bg-coral-soft text-coral"><Icon name="camera" className="size-5" /></span>
+          </Link>
+          <div className="mb-3.5 flex items-center gap-3.5"><span className="text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">PUBLICADO HOY</span><span className="h-px flex-1 bg-[#e7dac8]" /></div>
+          <div className="flex flex-col gap-4">{posts.map((post) => <PostCard key={post.type} post={post} />)}</div>
+        </main>
+      </div>
     </div>
   );
 }
