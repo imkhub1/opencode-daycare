@@ -11,7 +11,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Project
 
 - Single Next.js 16 App Router app: `app/layout.tsx` is the root layout and `app/page.tsx` is the current entrypoint.
-- The app is still the create-next-app starter. Implement OpenDayCare from the static source of truth in `references/pantallas/` and `references/screenshots/`.
+- Spec 01 (`01-teacher-feed-home`) is implemented: `/` renders the static teacher feed for Caro Giménez in Sala Soles, supported by presentational components in `components/open-daycare.tsx` and placeholder routes in `app/[...placeholder]/page.tsx`.
+- Implement future OpenDayCare features from the static source of truth in `references/pantallas/` and `references/screenshots/`.
 - Tailwind CSS 4 is imported in `app/globals.css`; `@/*` maps to the repository root.
 
 ## Commands
@@ -30,6 +31,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `opencode.json` enables the local `playwright` MCP through `@playwright/mcp@latest`; use it for browser verification and store its artifacts in `.playwright-mcp/`.
 - `/spec` (from `.agents/skills/spec/`) is a manual, no-code workflow that clarifies a feature and writes a sequential `Draft` spec in `specs/`.
 - `/spec-impl` (from `.agents/skills/spec-impl/`) only implements an `Approved` spec. It uses `specs/.spec-config.yml` to decide whether to create a `spec-NN-slug` branch (default: `AutoCreateBranch: true`), pauses after each implementation step, and never commits automatically.
+- `spec-verifier` (`.opencode/agents/spec-verifier.md`) is a custom primary agent responsible for verifying spec acceptance criteria against implementation using build tools, Context7 Next.js guidance, Playwright MCP browser testing, and visual screenshot comparisons. Its edit permissions are restricted to `specs/*.md`.
 
 ## Language
 
