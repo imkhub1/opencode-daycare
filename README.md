@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OpenDayCare
+
+OpenDayCare is a responsive interface for a daycare communication platform. It helps teachers share classroom moments, activities, achievements, and announcements with families.
+
+This repository is part of an **OpenCode course by DevTalles**. The project is developed iteratively from provided screen references, using OpenCode as an AI-assisted development environment.
+
+## Current Scope
+
+The implemented experience is the teacher feed for **Caro Gimenez** in **Sala Soles**. It includes:
+
+- A responsive desktop sidebar and mobile navigation.
+- Daily posts for achievements, activities, and announcements.
+- Navigation to placeholder routes for upcoming screens.
+- A UI built from the visual references in `references/`.
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org/) 16 with the App Router
+- [React](https://react.dev/) 19
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/) 4
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies and start the development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Available Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev    # Start the development server
+npm run build  # Create a production build
+npm run lint   # Run ESLint
+```
 
-## Learn More
+## References
 
-To learn more about Next.js, take a look at the following resources:
+The `references/` directory contains the supplied screen designs and screenshots used as the source of truth for the course exercises.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Course Context
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This is an educational project created for practicing AI-assisted software development workflows with OpenCode. It is not a production-ready daycare management system.
