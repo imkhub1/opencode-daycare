@@ -3,7 +3,6 @@ import { PlaceholderPage } from "@/components/open-daycare";
 
 const destinations: Record<string, string> = {
   "crear-publicacion": "Nueva publicación",
-  ninos: "Niños",
   avisos: "Avisos",
   "mi-cuenta": "Mi cuenta",
   "publicaciones/mateo-logro": "Detalle de publicación",
