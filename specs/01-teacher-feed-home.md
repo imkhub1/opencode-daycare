@@ -61,19 +61,19 @@ The data is static for the lifetime of the page and resets on reload because no 
 
 ## Acceptance criteria
 
-- [ ] Visiting `/` shows the OpenDayCare teacher feed instead of the create-next-app starter content.
-- [ ] The desktop view displays a 248 px fixed sidebar with the OpenDayCare brand, New publication CTA, four navigation items, and the Caro Gimenez session block.
-- [ ] The main feed displays the Sala Soles header, the composer, the Published today separator, and exactly three static cards matching the reference content.
-- [ ] The three cards show achievement, activity, and announcement badges with distinct reference-inspired colors.
-- [ ] The activity card includes the static dashed photo placeholder labeled `Foto · pintando con témperas`.
-- [ ] The application uses Fredoka for display text and Nunito for interface and body text.
-- [ ] At narrow mobile widths, the desktop sidebar is hidden and a top menu exposes the same navigation links.
-- [ ] Every visible navigation or action link resolves to `/` or a declared local route without a 404 response.
-- [ ] Each non-feed route displays its section placeholder and a link back to `/`.
-- [ ] No interaction writes data, calls an API, or requires a user session.
-- [ ] `npx tsc --noEmit` succeeds.
-- [ ] `npm run lint` reports no errors from application files; the existing `references/pantallas/support.js` error is excluded from this feature's validation.
-- [ ] `npm run build` succeeds.
+- [x] Visiting `/` shows the OpenDayCare teacher feed instead of the create-next-app starter content.
+- [x] The desktop view displays a 248 px fixed sidebar with the OpenDayCare brand, New publication CTA, four navigation items, and the Caro Gimenez session block.
+- [x] The main feed displays the Sala Soles header, the composer, the Published today separator, and exactly three static cards matching the reference content.
+- [x] The three cards show achievement, activity, and announcement badges with distinct reference-inspired colors.
+- [x] The activity card includes the static dashed photo placeholder labeled `Foto · pintando con témperas`.
+- [x] The application uses Fredoka for display text and Nunito for interface and body text.
+- [x] At narrow mobile widths, the desktop sidebar is hidden and a top menu exposes the same navigation links.
+- [x] Every visible navigation or action link resolves to `/` or a declared local route without a 404 response.
+- [x] Each non-feed route displays its section placeholder and a link back to `/`.
+- [x] No interaction writes data, calls an API, or requires a user session.
+- [x] `npx tsc --noEmit` succeeds.
+- [x] `npm run lint` reports no errors from application files; the existing `references/pantallas/support.js` error is excluded from this feature's validation.
+- [x] `npm run build` succeeds.
 
 ## Decisions
 
@@ -104,3 +104,34 @@ The data is static for the lifetime of the page and resets on reload because no 
 - Completed children, announcements, account, detail, or photo pages.
 
 Each excluded capability requires a future spec before implementation.
+
+## Verification
+
+**Date:** 2026-08-13
+
+### Validation Commands
+- `npx tsc --noEmit`: **Pass** (Exit code 0, 0 type errors).
+- `npm run lint`: **Pass** (0 errors/warnings in application files `app/*` and `components/*`; 10 pre-existing issues in excluded file `references/pantallas/support.js`).
+- `npm run build`: **Pass** (Production build compiled successfully with Turbopack).
+
+### Runtime & Visual Verification
+- **Dev Server / App URL:** `http://localhost:3001`
+- **Viewports Tested:**
+  - Desktop: 1280 × 800 px
+  - Mobile: 375 × 667 px
+- **Artifacts Captured in `.playwright-mcp/`:**
+  - `desktop-feed.png` (Full desktop view showing 248px sidebar and 3 publication cards)
+  - `mobile-feed.png` (Mobile viewport view showing hidden sidebar and expandable top menu)
+
+### Evidence Summary
+1. **Root Feed Route (`/`):** Displays OpenDayCare header ("GUARDERÍA · SALA SOLES"), "Buenas, Caro", composer link ("Compartí un momento…"), "PUBLICADO HOY" section, and 3 feed cards matching reference copy.
+2. **Desktop Sidebar:** Measures exactly 248 px wide (`sticky` positioning), containing Brand logo, "Nueva publicación" CTA, 4 navigation links, and session avatar block with sign-out link.
+3. **Publication Cards & Badges:**
+   - Card 1 (LOGRO): Green badge (`bg-[#cfebd8]` / `text-[#3e9b6c]`), Mateo's achievement body.
+   - Card 2 (ACTIVIDAD): Blue badge (`bg-[#c7e7f1]` / `text-[#2e89a6]`), activity text, dashed border photo placeholder labeled `Foto · pintando con témperas` linking to `/fotos/mateo-temperas`.
+   - Card 3 (ANUNCIO): Indigo badge (`bg-[#ccd8f4]` / `text-[#4e72c8]`), announcement body text.
+4. **Typography:** Loaded via `next/font/google` in `app/layout.tsx`. Headings (`h1`, `h2`) compute to `Fredoka`, body/interface text (`p`, `a`) compute to `Nunito`.
+5. **Mobile Layout:** At 375 px viewport, desktop sidebar is hidden (`display: none`) and top header `<summary>` menu toggle exposes identical 4 navigation links.
+6. **Local Placeholder Routes:** Tested `/crear-publicacion`, `/ninos`, `/avisos`, `/mi-cuenta`, `/publicaciones/mateo-logro`, `/publicaciones/mateo-actividad`, `/fotos/mateo-temperas`, and `/cerrar-sesion`. All resolve with HTTP 200, display section title inside `PlaceholderPage`, and contain a working "Volver al feed" link to `/`.
+7. **Stateless Behavior:** All feed content is rendered statically from local TypeScript objects without external APIs, sessions, or persistence. 0 browser console errors/warnings.
+
