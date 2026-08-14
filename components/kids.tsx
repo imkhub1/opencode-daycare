@@ -23,6 +23,20 @@ type AddKidForm = {
   medicalNotes: string;
 };
 type FormErrors = Partial<Record<"name" | "birthDate" | "room", string>>;
+type ParentRelationship = "Mamá" | "Papá" | "Tutor/a";
+type LinkedParent = {
+  id: string;
+  name: string;
+  email: string;
+  relationship: ParentRelationship;
+  status: "ACTIVA" | "PENDIENTE";
+};
+type ParentInvitationForm = {
+  name: string;
+  email: string;
+  relationship: ParentRelationship;
+};
+type ParentInvitationErrors = Partial<Record<"name" | "email", string>>;
 
 const kids: Kid[] = [
   {
@@ -142,6 +156,29 @@ const emptyForm = (): AddKidForm => ({
   room: "Soles",
   allergies: "",
   medicalNotes: "",
+});
+
+const initialParents: LinkedParent[] = [
+  {
+    id: "lucia-fernandez",
+    name: "Lucía Fernández",
+    email: "",
+    relationship: "Mamá",
+    status: "ACTIVA",
+  },
+  {
+    id: "diego-fernandez",
+    name: "Diego Fernández",
+    email: "",
+    relationship: "Papá",
+    status: "PENDIENTE",
+  },
+];
+
+const emptyParentInvitation = (): ParentInvitationForm => ({
+  name: "",
+  email: "",
+  relationship: "Mamá",
 });
 
 function formatBirthDate(value: string) {
@@ -515,24 +552,57 @@ export function ChildrenDirectory() {
 }
 
 export function MateoProfile() {
-  const parents = [
-    {
-      initial: "L",
-      avatar: "bg-[#c9b6e8] text-white",
-      name: "Lucía Fernández",
-      detail: "Mamá · activa",
-      status: "ACTIVA",
-      statusClass: "bg-[#cfebd8] text-[#3e9b6c]",
-    },
-    {
-      initial: "D",
-      avatar: "bg-[#a9c7e8] text-white",
-      name: "Diego Fernández",
-      detail: "Papá · invitación enviada",
-      status: "PENDIENTE",
-      statusClass: "bg-[#f7e7a6] text-[#9a7b1e]",
-    },
-  ];
+  const [parents, setParents] = useState(initialParents);
+  const [isParentDialogOpen, setIsParentDialogOpen] = useState(false);
+  const [parentInvitation, setParentInvitation] = useState(emptyParentInvitation);
+  const [parentInvitationErrors, setParentInvitationErrors] =
+    useState<ParentInvitationErrors>({});
+  const parentLinkTriggerRef = useRef<HTMLButtonElement>(null);
+  const parentNameRef = useRef<HTMLInputElement>(null);
+
+  function closeParentDialog() {
+    setIsParentDialogOpen(false);
+    setParentInvitation(emptyParentInvitation());
+    setParentInvitationErrors({});
+    requestAnimationFrame(() => parentLinkTriggerRef.current?.focus());
+  }
+
+  useEffect(() => {
+    if (!isParentDialogOpen) return;
+    parentNameRef.current?.focus();
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeParentDialog();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isParentDialogOpen]);
+
+  function sendParentInvitation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const errors: ParentInvitationErrors = {};
+    if (!parentInvitation.name.trim())
+      errors.name = "Ingresa el nombre del padre o madre.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentInvitation.email))
+      errors.email = "Ingresa un email válido.";
+    setParentInvitationErrors(errors);
+    if (Object.keys(errors).length) {
+      if (errors.name) parentNameRef.current?.focus();
+      else document.getElementById("parent-email")?.focus();
+      return;
+    }
+    setParents((current) => [
+      ...current,
+      {
+        id: crypto.randomUUID(),
+        name: parentInvitation.name.trim(),
+        email: parentInvitation.email,
+        relationship: parentInvitation.relationship,
+        status: "PENDIENTE",
+      },
+    ]);
+    closeParentDialog();
+  }
+
   return (
     <section className="mx-auto w-full max-w-[820px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20">
       <BackLink />
@@ -615,28 +685,34 @@ export function MateoProfile() {
             </h2>
             <div className="flex flex-col gap-3.5">
               {parents.map((parent) => (
-                <div key={parent.name} className="flex items-center gap-3">
+                <div key={parent.id} className="flex items-center gap-3">
                   <InitialAvatar
-                    initial={parent.initial}
-                    className={parent.avatar}
+                    initial={parent.name.trim().charAt(0).toUpperCase()}
+                    className={
+                      parent.status === "ACTIVA"
+                        ? "bg-[#c9b6e8] text-white"
+                        : "bg-[#a9c7e8] text-white"
+                    }
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-[14.5px] font-extrabold text-ink">
                       {parent.name}
                     </p>
                     <p className="text-[12.5px] text-[#a89a8b]">
-                      {parent.detail}
+                      {parent.relationship} · {parent.status === "ACTIVA" ? "activa" : "invitación enviada"}
                     </p>
                   </div>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-1 text-[10.5px] font-extrabold ${parent.statusClass}`}
+                    className={`shrink-0 rounded-full px-2 py-1 text-[10.5px] font-extrabold ${parent.status === "ACTIVA" ? "bg-[#cfebd8] text-[#3e9b6c]" : "bg-[#f7e7a6] text-[#9a7b1e]"}`}
                   >
                     {parent.status}
                   </span>
                 </div>
               ))}
-              <Link
-                href="/kids/mateo-fernandez/link-parent"
+              <button
+                ref={parentLinkTriggerRef}
+                type="button"
+                onClick={() => setIsParentDialogOpen(true)}
                 className="flex items-center gap-3 pt-2"
               >
                 <span className="flex size-10 items-center justify-center rounded-full border-[1.5px] border-dashed border-[#d8cbba] text-[#b0a290]">
@@ -645,11 +721,104 @@ export function MateoProfile() {
                 <span className="text-[14.5px] font-extrabold text-[#c5503a]">
                   Vincular otro padre
                 </span>
-              </Link>
+              </button>
             </div>
           </section>
         </aside>
       </div>
+      {isParentDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#3f362e]/45 p-5"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeParentDialog();
+          }}
+        >
+          <form
+            onSubmit={sendParentInvitation}
+            noValidate
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="link-parent-title"
+            className="max-h-full w-full max-w-[480px] overflow-y-auto rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25"
+          >
+            <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
+              <div>
+                <h2 id="link-parent-title" className="font-display text-lg font-semibold text-ink">
+                  Vincular padre
+                </h2>
+                <p className="text-[13px] text-[#a89a8b]">a Mateo Fernández</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeParentDialog}
+                aria-label="Cerrar"
+                className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted"
+              >
+                <svg aria-hidden="true" className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </header>
+            <div className="space-y-[18px] p-5 sm:p-[26px]">
+              <div className="flex gap-3 rounded-[14px] bg-[#e3ecfb] p-4 text-[13.5px] leading-relaxed text-[#3f5694]">
+                <svg aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#4e72c8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4M12 8h.01" />
+                </svg>
+                Le enviaremos un correo con un código para que active su cuenta. Solo verá el feed de Mateo.
+              </div>
+              <label className="block">
+                <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">NOMBRE DEL PADRE/MADRE</span>
+                <input
+                  ref={parentNameRef}
+                  aria-invalid={Boolean(parentInvitationErrors.name)}
+                  aria-describedby={parentInvitationErrors.name ? "parent-name-error" : undefined}
+                  value={parentInvitation.name}
+                  onChange={(event) => setParentInvitation({ ...parentInvitation, name: event.target.value })}
+                  placeholder="Ej. Diego Fernández"
+                  className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+                />
+                {parentInvitationErrors.name && <p id="parent-name-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">{parentInvitationErrors.name}</p>}
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">EMAIL</span>
+                <input
+                  id="parent-email"
+                  type="email"
+                  aria-invalid={Boolean(parentInvitationErrors.email)}
+                  aria-describedby={parentInvitationErrors.email ? "parent-email-error" : undefined}
+                  value={parentInvitation.email}
+                  onChange={(event) => setParentInvitation({ ...parentInvitation, email: event.target.value })}
+                  placeholder="correo@ejemplo.com"
+                  className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+                />
+                {parentInvitationErrors.email && <p id="parent-email-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">{parentInvitationErrors.email}</p>}
+              </label>
+              <fieldset>
+                <legend className="mb-2.5 text-xs font-extrabold tracking-[0.07em] text-muted">PARENTESCO</legend>
+                <div className="flex gap-2">
+                  {(["Mamá", "Papá", "Tutor/a"] as ParentRelationship[]).map((relationship) => {
+                    const selected = parentInvitation.relationship === relationship;
+                    return <button key={relationship} type="button" aria-pressed={selected} onClick={() => setParentInvitation({ ...parentInvitation, relationship })} className={`flex-1 rounded-full border-[1.5px] py-[11px] text-sm font-extrabold ${selected ? "border-[#9fb8ec] bg-[#ccd8f4] text-[#4e72c8]" : "border-line bg-surface text-[#6e6359]"}`}>{relationship}</button>;
+                  })}
+                </div>
+              </fieldset>
+              <div className="rounded-2xl border-[1.5px] border-dashed border-[#e6d08a] bg-[#fbf1d6] p-[18px] text-center">
+                <p className="text-xs font-extrabold tracking-[0.07em] text-[#a88526]">CÓDIGO DE INVITACIÓN</p>
+                <p className="mt-2 font-display text-[34px] font-semibold tracking-[7px] text-[#8a7234]">7K4P9</p>
+                <p className="mt-1.5 text-[13px] text-[#a88526]">Vence en 7 días</p>
+              </div>
+              <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25">
+                <svg aria-hidden="true" className="size-[19px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m22 2-7 20-4-9-9-4z" />
+                  <path d="M22 2 11 13" />
+                </svg>
+                Enviar invitación
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </section>
   );
 }
@@ -756,115 +925,6 @@ function Field({
         className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
       />
     </label>
-  );
-}
-
-export function ParentLink() {
-  return (
-    <section className="mx-auto w-full max-w-[480px] px-5 py-10">
-      <div className="overflow-hidden rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/15">
-        <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
-          <div>
-            <h1 className="font-display text-lg font-semibold text-ink">
-              Vincular padre
-            </h1>
-            <p className="text-[13px] text-[#a89a8b]">a Mateo Fernández</p>
-          </div>
-          <Link
-            href="/kids/mateo-fernandez"
-            aria-label="Cerrar"
-            className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted"
-          >
-            <svg
-              aria-hidden="true"
-              className="size-[18px]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-            >
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </Link>
-        </header>
-        <div className="space-y-[18px] p-5 sm:p-[26px]">
-          <div className="flex gap-3 rounded-[14px] bg-[#e3ecfb] p-4 text-[13.5px] leading-relaxed text-[#3f5694]">
-            <svg
-              aria-hidden="true"
-              className="mt-0.5 size-5 shrink-0 text-[#4e72c8]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4M12 8h.01" />
-            </svg>
-            Le enviaremos un correo con un código para que active su cuenta.
-            Solo verá el feed de Mateo.
-          </div>
-          <Field
-            label="NOMBRE DEL PADRE/MADRE"
-            placeholder="Ej. Diego Fernández"
-          />
-          <Field label="EMAIL" placeholder="correo@ejemplo.com" />
-          <div>
-            <p className="mb-2.5 text-xs font-extrabold tracking-[0.07em] text-muted">
-              PARENTESCO
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="flex-1 rounded-full border-[1.5px] border-[#9fb8ec] bg-[#ccd8f4] py-[11px] text-sm font-extrabold text-[#4e72c8]"
-              >
-                Mamá
-              </button>
-              <button
-                type="button"
-                className="flex-1 rounded-full border-[1.5px] border-line bg-surface py-[11px] text-sm font-extrabold text-[#6e6359]"
-              >
-                Papá
-              </button>
-              <button
-                type="button"
-                className="flex-1 rounded-full border-[1.5px] border-line bg-surface py-[11px] text-sm font-extrabold text-[#6e6359]"
-              >
-                Tutor/a
-              </button>
-            </div>
-          </div>
-          <div className="rounded-2xl border-[1.5px] border-dashed border-[#e6d08a] bg-[#fbf1d6] p-[18px] text-center">
-            <p className="text-xs font-extrabold tracking-[0.07em] text-[#a88526]">
-              CÓDIGO DE INVITACIÓN
-            </p>
-            <p className="mt-2 font-display text-[34px] font-semibold tracking-[7px] text-[#8a7234]">
-              7K4P9
-            </p>
-            <p className="mt-1.5 text-[13px] text-[#a88526]">Vence en 7 días</p>
-          </div>
-          <Link
-            href="/kids/mateo-fernandez"
-            className="flex items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
-          >
-            <svg
-              aria-hidden="true"
-              className="size-[19px]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m22 2-7 20-4-9-9-4z" />
-              <path d="M22 2 11 13" />
-            </svg>
-            Enviar invitación
-          </Link>
-        </div>
-      </div>
-    </section>
   );
 }
 

@@ -1,6 +1,6 @@
 # SPEC 05 — Link Parent Dialog
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 02
 > **Date:** 2026-08-14
 > **Objective:** Replace Mateo's standalone parent invitation page with a validated modal that temporarily adds a pending linked parent from his profile.
@@ -62,16 +62,16 @@ type ParentInvitationForm = {
 
 ## Acceptance criteria
 
-- [ ] Clicking `Vincular otro padre` on `/kids/mateo-fernandez` opens an `aria-modal` dialog without changing the URL.
-- [ ] The dialog follows `references/pantallas/vincular-padre.dc.html`, identifies Mateo Fernández, displays code `7K4P9`, and has no horizontal overflow at a 375 px viewport.
-- [ ] The dialog exposes required name and email inputs and relationship controls labeled Mamá, Papá, and Tutor/a.
-- [ ] Mamá is selected when the dialog opens, and choosing a relationship selects only that option.
-- [ ] Attempting to send with a blank name or malformed email displays an inline message for every invalid field and focuses the first invalid field.
-- [ ] A valid submission closes and clears the dialog and appends one parent to Mateo's list with the supplied name, selected relationship, `invitación enviada` copy, and `PENDIENTE` status.
-- [ ] The close button, Escape, and overlay click close the dialog without adding a parent, discard form values, and restore focus to `Vincular otro padre`.
-- [ ] Reloading `/kids/mateo-fernandez` restores the two original parent cards and removes parents added during the prior session.
-- [ ] `/kids/mateo-fernandez/link-parent` returns HTTP 404.
-- [ ] `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` succeed.
+- [x] Clicking `Vincular otro padre` on `/kids/mateo-fernandez` opens an `aria-modal` dialog without changing the URL.
+- [x] The dialog follows `references/pantallas/vincular-padre.dc.html`, identifies Mateo Fernández, displays code `7K4P9`, and has no horizontal overflow at a 375 px viewport.
+- [x] The dialog exposes required name and email inputs and relationship controls labeled Mamá, Papá, and Tutor/a.
+- [x] Mamá is selected when the dialog opens, and choosing a relationship selects only that option.
+- [x] Attempting to send with a blank name or malformed email displays an inline message for every invalid field and focuses the first invalid field.
+- [x] A valid submission closes and clears the dialog and appends one parent to Mateo's list with the supplied name, selected relationship, `invitación enviada` copy, and `PENDIENTE` status.
+- [x] The close button, Escape, and overlay click close the dialog without adding a parent, discard form values, and restore focus to `Vincular otro padre`.
+- [x] Reloading `/kids/mateo-fernandez` restores the two original parent cards and removes parents added during the prior session.
+- [x] `/kids/mateo-fernandez/link-parent` returns HTTP 404.
+- [x] `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` succeed.
 
 ## Decisions
 
@@ -103,3 +103,14 @@ type ParentInvitationForm = {
 - Editing, revoking, resending, or activating invitations.
 
 Each excluded capability requires a future spec before implementation.
+
+## Verification
+
+**Date:** 2026-08-14
+
+- **Next.js guidance:** Context7 and the local Next.js 16 documentation require the top-level `"use client"` boundary for state, event handlers, effects, and browser APIs. `components/kids.tsx` already provides that boundary for this interactive modal.
+- **Commands:** `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` passed. `npm run lint` still exits with 2 errors and 8 warnings only in the pre-existing excluded reference file `references/pantallas/support.js`; application lint passed.
+- **Routes and controls:** Playwright verified `/kids/mateo-fernandez` at HTTP 200. The trigger retained its URL while opening a focused `aria-modal` dialog with Mateo, `7K4P9`, the two fields, and the three relationship controls. Mamá was initially pressed; selecting Papá made it the only pressed relationship. `/kids/mateo-fernandez/link-parent` returned HTTP 404.
+- **Submission and reset:** A valid Tutor/a invitation for `Ana Pérez` (`ana@example.com`) closed the dialog, returned focus to the trigger, and added `Ana Pérez`, `Tutor/a · invitación enviada`, and `PENDIENTE`. Reloading restored only Lucía and Diego. The close button, Escape, and a real overlay click closed the dialog; close-button and Escape checks confirmed focus restoration and cleared inputs.
+- **Validation correction:** The parent-invitation form now uses `noValidate` so the component's validator runs for malformed emails. Blank submission displays both inline errors and focuses the name field; submitting a nonempty name with `correo-invalido` displays `Ingresa un email válido.` and focuses the email field.
+- **Visual and runtime:** Inspected `1280 × 800` and `375 × 667` against `references/pantallas/vincular-padre.dc.html`. The modal preserves the reference hierarchy, palette, typography, notice, relationship pills, invitation-code panel, and CTA. At mobile width, the document measured 360 px within a 375 px viewport; the modal uses vertical internal scrolling. Browser console had 0 application errors or warnings; the only accumulated error was the intentional direct 404 route request. Artifacts: `.playwright-mcp/spec05-verification-desktop.png` and `.playwright-mcp/spec05-verification-mobile.png`.
