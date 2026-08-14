@@ -8,6 +8,29 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## MCPs
+## Project
 
-Playwright Screenshots y cualquier cosa relacionada a Playwright tienen que estar en la carpeta .playwright-mcp.
+- Single Next.js 16 App Router app: `app/layout.tsx` is the root layout and `app/page.tsx` is the current entrypoint.
+- The app is still the create-next-app starter. Implement OpenDayCare from the static source of truth in `references/pantallas/` and `references/screenshots/`.
+- Tailwind CSS 4 is imported in `app/globals.css`; `@/*` maps to the repository root.
+
+## Commands
+
+- Use npm: `package-lock.json` is committed.
+- `npm run dev`, `npm run build`, and `npm run lint` are the available scripts; no test or typecheck script exists.
+- Run `npx tsc --noEmit` for type checking. `npm run lint` currently fails only in `references/pantallas/support.js`; application files are clean.
+
+## Workflow
+
+- Keep Playwright artifacts in the gitignored `.playwright-mcp/` directory.
+- Do not remove the generated `BEGIN:nextjs-agent-rules` block; read the relevant local Next.js guide before changing Next.js-specific code.
+
+## OpenCode
+
+- `opencode.json` enables the local `playwright` MCP through `@playwright/mcp@latest`; use it for browser verification and store its artifacts in `.playwright-mcp/`.
+- `/spec` (from `.agents/skills/spec/`) is a manual, no-code workflow that clarifies a feature and writes a sequential `Draft` spec in `specs/`.
+- `/spec-impl` (from `.agents/skills/spec-impl/`) only implements an `Approved` spec. It uses `specs/.spec-config.yml` to decide whether to create a `spec-NN-slug` branch (default: `AutoCreateBranch: true`), pauses after each implementation step, and never commits automatically.
+
+## Language
+
+- Write repository artifacts in English; communicate with the user in Spanish.
