@@ -881,7 +881,7 @@ export function DaySummary() {
           type="button"
           className="flex items-center gap-2 rounded-full border-[1.5px] border-ink bg-ink py-[7px] pr-[15px] pl-2 text-sm font-bold text-white"
         >
-          <span className="flex size-[26px] items-center justify-center rounded-full bg-[#a9d9e8] font-display text-[13px] font-semibold text-[#1f7a93]">
+          <span className="flex size-6.5 items-center justify-center rounded-full bg-[#a9d9e8] font-display text-[13px] font-semibold text-[#1f7a93]">
             M
           </span>
           Mateo
@@ -890,7 +890,7 @@ export function DaySummary() {
           type="button"
           className="flex items-center gap-2 rounded-full border-[1.5px] border-line bg-surface py-[7px] pr-[15px] pl-2 text-sm font-bold text-[#6e6359]"
         >
-          <span className="flex size-[26px] items-center justify-center rounded-full bg-[#f4b8cc] font-display text-[13px] font-semibold text-[#c44a7a]">
+          <span className="flex size-6.5 items-center justify-center rounded-full bg-[#f4b8cc] font-display text-[13px] font-semibold text-[#c44a7a]">
             S
           </span>
           Sofía

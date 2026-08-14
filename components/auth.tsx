@@ -13,7 +13,7 @@ function AuthLogo({
       <span
         className={`flex size-[46px] items-center justify-center rounded-[14px] ${inverse ? "bg-white/20" : "bg-linear-to-br from-[#f8c3a8] to-[#f2937a] shadow-lg shadow-[#ee8164]/25"}`}
       >
-        <Icon name="sun" className="size-[26px] text-white" />
+        <Icon name="sun" className="size-6.5 text-white" />
       </span>
       {showName && (
         <span
