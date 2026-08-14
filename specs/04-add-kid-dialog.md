@@ -64,21 +64,21 @@ type AddKidForm = Omit<AddedKid, "id" | "linkedParents">;
 
 ## Acceptance criteria
 
-- [ ] Clicking `Agregar niño` at `/kids` opens a modal dialog without changing the URL.
-- [ ] The dialog visually follows `references/pantallas/agregar-nino.dc.html` and remains usable without horizontal overflow at a 375 px viewport.
-- [ ] The dialog contains Nombre completo, Fecha de nacimiento, Sala, Alergias, and Notas médicas controls.
-- [ ] Nombre completo, Fecha de nacimiento, and Sala are required, while Alergias and Notas médicas do not block saving.
-- [ ] The Sala selector exposes exactly Soles and Lunita.
-- [ ] Typing or pasting birth-date digits formats the value as `DD/MM/AAAA`.
-- [ ] Attempting to save an incomplete or invalid form shows an inline message below every invalid required field and focuses the first invalid field.
-- [ ] A date such as `31/02/2024`, a current date, or a future date cannot be saved.
-- [ ] Saving valid values closes and clears the dialog, adds one card to the selected room, and updates that room's displayed count by one.
-- [ ] A saved child card shows the calculated age and `sin padres vinculados`.
-- [ ] Saving a child in Lunita creates a `SALA LUNITA` section with its own count.
-- [ ] Cancelar, the close button, Escape, and clicking the overlay close the dialog without adding a child.
-- [ ] Reloading `/kids` restores the original eight static children and removes children added during the prior session.
-- [ ] `/kids/new` returns HTTP 404.
-- [ ] `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` succeed.
+- [x] Clicking `Agregar niño` at `/kids` opens a modal dialog without changing the URL.
+- [x] The dialog visually follows `references/pantallas/agregar-nino.dc.html` and remains usable without horizontal overflow at a 375 px viewport.
+- [x] The dialog contains Nombre completo, Fecha de nacimiento, Sala, Alergias, and Notas médicas controls.
+- [x] Nombre completo, Fecha de nacimiento, and Sala are required, while Alergias and Notas médicas do not block saving.
+- [x] The Sala selector exposes exactly Soles and Lunita.
+- [x] Typing or pasting birth-date digits formats the value as `DD/MM/AAAA`.
+- [x] Attempting to save an incomplete or invalid form shows an inline message below every invalid required field and focuses the first invalid field.
+- [x] A date such as `31/02/2024`, a current date, or a future date cannot be saved.
+- [x] Saving valid values closes and clears the dialog, adds one card to the selected room, and updates that room's displayed count by one.
+- [x] A saved child card shows the calculated age and `sin padres vinculados`.
+- [x] Saving a child in Lunita creates a `SALA LUNITA` section with its own count.
+- [x] Cancelar, the close button, Escape, and clicking the overlay close the dialog without adding a child.
+- [x] Reloading `/kids` restores the original eight static children and removes children added during the prior session.
+- [x] `/kids/new` returns HTTP 404.
+- [x] `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` succeed.
 
 ## Decisions
 
@@ -110,3 +110,14 @@ type AddKidForm = Omit<AddedKid, "id" | "linkedParents">;
 - Rooms other than Soles and Lunita.
 
 Each excluded capability requires a future spec before implementation.
+
+## Verification
+
+**Date:** 2026-08-14
+
+- **Next.js guidance:** Context7 confirms that interactive App Router components using state, effects, event handlers, and browser APIs must be behind a top-level `"use client"` boundary. `components/kids.tsx` uses that boundary.
+- **Commands:** `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` passed. `npm run lint` exits with 2 errors and 8 warnings only in the pre-existing excluded reference file `references/pantallas/support.js`; application lint passed.
+- **Routes and runtime:** Playwright verified `/kids` at HTTP 200 and `/kids/new` at HTTP 404. The CTA retained `/kids` while opening an `aria-modal` dialog. The dialog exposed the five specified controls and exactly the `Soles` and `Lunita` options.
+- **Form behavior:** Entering `01012020` produced `01/01/2020`. Invalid `31/02/2024` and current `14/08/2026` remained in the dialog with the inline date error and focus on the invalid input. A valid Lunita submission closed and reset the dialog, created `SALA LUNITA` with count 1, and displayed `Ana Pérez` as `6 años · sin padres vinculados`. Reloading restored 8 cards and removed the Lunita section.
+- **Dismissal and console:** Cancelar, close button, Escape, and overlay click each closed the dialog without saving; focus returned to `Agregar niño` for Cancelar and Escape. The `/kids` browser console had 0 errors and 0 warnings. The only accumulated console error was the intentional `/kids/new` 404 request.
+- **Visual checks:** Inspected `1280 × 800` and `375 × 667` viewports against `references/pantallas/agregar-nino.dc.html`. The modal retained its reference card hierarchy, palette, typography, fields, and responsive single-column layout; mobile document width was 360 px within a 375 px viewport. Artifacts: `.playwright-mcp/spec04-dialog-desktop.png` and `.playwright-mcp/spec04-dialog-mobile.png`.

@@ -1,7 +1,14 @@
+"use client";
+
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/open-daycare";
 
 type Kid = { id: string; name: string; detail: string; initial: string; avatar: string; badge?: string; badgeClass?: string };
+type Room = "Soles" | "Lunita";
+type AddedKid = { id: string; name: string; birthDate: string; room: Room };
+type AddKidForm = { name: string; birthDate: string; room: Room; allergies: string; medicalNotes: string };
+type FormErrors = Partial<Record<"name" | "birthDate" | "room", string>>;
 
 const kids: Kid[] = [
   { id: "mateo-fernandez", name: "Mateo Fernández", detail: "3 años · 2 padres vinculados", initial: "M", avatar: "bg-[#a9d9e8] text-[#1f7a93]", badge: "MANÍ", badgeClass: "bg-[#fbd8cc] text-[#d9684a]" },
@@ -22,8 +29,79 @@ function BackLink({ href = "/kids", children = "Volver a Niños" }: { href?: str
   return <Link href={href} className="mb-5 flex items-center gap-1.5 text-sm font-bold text-muted"><svg aria-hidden="true" className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>{children}</Link>;
 }
 
+const emptyForm = (): AddKidForm => ({ name: "", birthDate: "", room: "Soles", allergies: "", medicalNotes: "" });
+
+function formatBirthDate(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)].filter(Boolean).join("/");
+}
+
+function isPastDate(value: string) {
+  const [day, month, year] = value.split("/").map(Number);
+  const date = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return /^\d{2}\/\d{2}\/\d{4}$/.test(value) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day && date < today;
+}
+
+function ageFromBirthDate(value: string) {
+  const [day, month, year] = value.split("/").map(Number);
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) age--;
+  return `${age} ${age === 1 ? "año" : "años"}`;
+}
+
+function KidCard({ kid }: { kid: Kid | AddedKid }) {
+  const className = "flex min-w-0 items-center gap-3.5 rounded-[18px] border border-line bg-surface p-4 shadow-sm shadow-[#785a3c]/10";
+  if ("birthDate" in kid) return <article className={className}><InitialAvatar initial={kid.name.trim().charAt(0).toUpperCase()} className="bg-[#f4dc8e] text-[#9a7b1e]" /><span className="min-w-0 flex-1"><span className="block font-display text-base font-semibold text-ink">{kid.name}</span><span className="mt-0.5 block text-[13px] text-[#a89a8b]">{ageFromBirthDate(kid.birthDate)} · sin padres vinculados</span></span></article>;
+  const content = <><InitialAvatar initial={kid.initial} className={kid.avatar} /><span className="min-w-0 flex-1"><span className="block font-display text-base font-semibold text-ink">{kid.name}</span><span className="mt-0.5 block text-[13px] text-[#a89a8b]">{kid.detail}</span></span>{kid.badge && <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold ${kid.badgeClass}`}>{kid.badge}</span>}</>;
+  return kid.id === "mateo-fernandez" ? <Link href="/kids/mateo-fernandez" className={`${className} transition-colors hover:bg-[#fffaf3]`}>{content}</Link> : <article className={className}>{content}</article>;
+}
+
 export function ChildrenDirectory() {
-  return <section className="mx-auto w-full max-w-[880px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20"><header className="mb-[22px] flex items-end justify-between gap-4"><div><p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-[#d9583c]">GESTIÓN</p><h1 className="font-display text-3xl font-semibold text-ink">Niños</h1></div><Link href="/kids/new" className="flex items-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-[18px] py-[11px] text-sm font-extrabold text-white shadow-lg shadow-[#ee8164]/25"><Icon name="plus" className="size-[17px]" />Agregar niño</Link></header><label className="mb-[22px] flex items-center gap-3 rounded-[14px] border border-line bg-surface px-4 py-3"><svg aria-hidden="true" className="size-[18px] shrink-0 text-[#b0a290]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><input aria-label="Buscar niño" placeholder="Buscar niño…" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#b6a99b]" /></label><div className="mb-3.5 flex items-center gap-3"><span className="text-xs font-extrabold tracking-[0.08em] text-ink">SALA SOLES</span><span className="text-[13px] text-[#a89a8b]">8 niños</span><span className="h-px flex-1 bg-[#e7dac8]" /></div><div className="grid gap-3.5 sm:grid-cols-2">{kids.map((kid) => { const content = <><InitialAvatar initial={kid.initial} className={kid.avatar} /><span className="min-w-0 flex-1"><span className="block font-display text-base font-semibold text-ink">{kid.name}</span><span className="mt-0.5 block text-[13px] text-[#a89a8b]">{kid.detail}</span></span>{kid.badge && <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold ${kid.badgeClass}`}>{kid.badge}</span>}</>; const className = "flex min-w-0 items-center gap-3.5 rounded-[18px] border border-line bg-surface p-4 shadow-sm shadow-[#785a3c]/10"; return kid.id === "mateo-fernandez" ? <Link key={kid.id} href="/kids/mateo-fernandez" className={`${className} transition-colors hover:bg-[#fffaf3]`}>{content}</Link> : <article key={kid.id} className={className}>{content}</article>; })}</div></section>;
+  const [isOpen, setIsOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [addedKids, setAddedKids] = useState<AddedKid[]>([]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  function closeDialog() {
+    setIsOpen(false);
+    setForm(emptyForm());
+    setErrors({});
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }
+
+  useEffect(() => {
+    if (!isOpen) return;
+    nameRef.current?.focus();
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeDialog();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
+  function saveKid(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors: FormErrors = {};
+    if (!form.name.trim()) nextErrors.name = "Ingresa el nombre completo.";
+    if (!isPastDate(form.birthDate)) nextErrors.birthDate = "Ingresa una fecha de nacimiento válida y pasada.";
+    if (!form.room) nextErrors.room = "Selecciona una sala.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      if (nextErrors.name) nameRef.current?.focus();
+      else document.getElementById("birthDate")?.focus();
+      return;
+    }
+    setAddedKids((current) => [...current, { id: crypto.randomUUID(), name: form.name.trim(), birthDate: form.birthDate, room: form.room }]);
+    closeDialog();
+  }
+
+  const rooms: Room[] = ["Soles", "Lunita"];
+  return <section className="mx-auto w-full max-w-[880px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20"><header className="mb-[22px] flex items-end justify-between gap-4"><div><p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-[#d9583c]">GESTIÓN</p><h1 className="font-display text-3xl font-semibold text-ink">Niños</h1></div><button ref={triggerRef} type="button" onClick={() => setIsOpen(true)} className="flex items-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-[18px] py-[11px] text-sm font-extrabold text-white shadow-lg shadow-[#ee8164]/25"><Icon name="plus" className="size-[17px]" />Agregar niño</button></header><label className="mb-[22px] flex items-center gap-3 rounded-[14px] border border-line bg-surface px-4 py-3"><svg aria-hidden="true" className="size-[18px] shrink-0 text-[#b0a290]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg><input aria-label="Buscar niño" placeholder="Buscar niño…" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#b6a99b]" /></label>{rooms.map((room) => { const roomKids = room === "Soles" ? [...kids, ...addedKids.filter((kid) => kid.room === room)] : addedKids.filter((kid) => kid.room === room); if (!roomKids.length) return null; return <section key={room} className="mb-6"><div className="mb-3.5 flex items-center gap-3"><span className="text-xs font-extrabold tracking-[0.08em] text-ink">SALA {room.toUpperCase()}</span><span className="text-[13px] text-[#a89a8b]">{roomKids.length} niños</span><span className="h-px flex-1 bg-[#e7dac8]" /></div><div className="grid gap-3.5 sm:grid-cols-2">{roomKids.map((kid) => <KidCard key={kid.id} kid={kid} />)}</div></section>; })}{isOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#3f362e]/45 p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDialog(); }}><form onSubmit={saveKid} role="dialog" aria-modal="true" aria-labelledby="add-kid-title" className="max-h-full w-full max-w-[520px] overflow-y-auto rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25"><header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]"><button type="button" onClick={closeDialog} className="text-[15px] font-bold text-muted">Cancelar</button><h2 id="add-kid-title" className="font-display text-lg font-semibold text-ink">Agregar niño</h2><button type="button" onClick={closeDialog} aria-label="Cerrar" className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted"><svg aria-hidden="true" className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg></button></header><div className="space-y-[18px] p-5 sm:p-[26px]"><label className="block"><span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">NOMBRE COMPLETO</span><input ref={nameRef} aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? "name-error" : undefined} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Ej. Martina López" className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]" />{errors.name && <p id="name-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">{errors.name}</p>}</label><div className="grid gap-[18px] sm:grid-cols-2"><label className="block"><span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">FECHA DE NACIMIENTO</span><input id="birthDate" inputMode="numeric" aria-invalid={Boolean(errors.birthDate)} aria-describedby={errors.birthDate ? "birth-date-error" : undefined} value={form.birthDate} onChange={(event) => setForm({ ...form, birthDate: formatBirthDate(event.target.value) })} placeholder="dd/mm/aaaa" className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]" />{errors.birthDate && <p id="birth-date-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">{errors.birthDate}</p>}</label><label className="block"><span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">SALA</span><select value={form.room} onChange={(event) => setForm({ ...form, room: event.target.value as Room })} aria-invalid={Boolean(errors.room)} aria-describedby={errors.room ? "room-error" : undefined} className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] font-bold text-ink outline-none"><option value="Soles">Soles</option><option value="Lunita">Lunita</option></select>{errors.room && <p id="room-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">{errors.room}</p>}</label></div><label className="block"><span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">ALERGIAS (ETIQUETAS)</span><input value={form.allergies} onChange={(event) => setForm({ ...form, allergies: event.target.value })} placeholder="Ej. Maní, Lactosa" className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]" /></label><label className="block"><span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">NOTAS MÉDICAS</span><textarea value={form.medicalNotes} onChange={(event) => setForm({ ...form, medicalNotes: event.target.value })} placeholder="Indicaciones, medicación, contactos…" className="min-h-[90px] w-full resize-y rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] leading-relaxed outline-none placeholder:text-[#b6a99b]" /></label><button type="submit" className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25">Guardar</button></div></form></div>}</section>;
 }
 
 export function MateoProfile() {
