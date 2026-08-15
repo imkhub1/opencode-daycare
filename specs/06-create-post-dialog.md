@@ -1,6 +1,6 @@
 # SPEC 06 — Create Post Dialog
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 01
 > **Date:** 2026-08-14
 > **Objective:** Replace the feed's new-post navigation with an accessible modal that temporarily adds a publication with drag-and-drop photos.
@@ -79,20 +79,20 @@ type FeedPost = {
 
 ## Acceptance criteria
 
-- [ ] Clicking the desktop `+ Nueva publicación` control on `/` opens an `aria-modal` dialog without changing the URL.
-- [ ] A visible mobile `Nueva publicación` control opens the same dialog at a 375 px viewport.
-- [ ] The modal follows `references/pantallas/crear-publicacion.dc.html` and has no horizontal document overflow at a 375 px viewport.
-- [ ] Opening the modal shows no selected audience, post type, description, or photos.
-- [ ] Mateo, Sofía, and Benjamín can be selected together, while selecting `Toda la sala` clears and excludes child selections.
-- [ ] The modal exposes exactly Comida, Siesta, Actividad, Logro, Ánimo, Foto, and Anuncio types, and only one can be selected at a time.
-- [ ] Publishing without an audience, type, or non-blank description shows inline errors and focuses the first invalid control.
-- [ ] Clicking the photo control or dropping images adds valid JPEG, PNG, WebP, or GIF files of 10 MB or less as previews.
-- [ ] The modal accepts at most six photos, allows each selected photo to be removed, and displays inline errors for invalid files, oversized files, or selections over the limit.
-- [ ] A valid publication closes and resets the modal, then adds exactly one feed card containing its chosen type, audience copy, description, and selected photo previews.
-- [ ] Multiple child recipients render as `Para: familias de Mateo y Sofía`, while the room recipient renders as `Para: toda la sala`.
-- [ ] Reloading `/` restores only the three reference posts and removes all temporarily published posts.
-- [ ] Cancelar, Escape, and an overlay click close the dialog without publishing, discard selected values and previews, and restore focus to the invoking trigger.
-- [ ] `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` succeed.
+- [x] Clicking the desktop `+ Nueva publicación` control on `/` opens an `aria-modal` dialog without changing the URL.
+- [x] A visible mobile `Nueva publicación` control opens the same dialog at a 375 px viewport.
+- [x] The modal follows `references/pantallas/crear-publicacion.dc.html` and has no horizontal document overflow at a 375 px viewport.
+- [x] Opening the modal shows no selected audience, post type, description, or photos.
+- [x] Mateo, Sofía, and Benjamín can be selected together, while selecting `Toda la sala` clears and excludes child selections.
+- [x] The modal exposes exactly Comida, Siesta, Actividad, Logro, Ánimo, Foto, and Anuncio types, and only one can be selected at a time.
+- [x] Publishing without an audience, type, or non-blank description shows inline errors and focuses the first invalid control.
+- [x] Clicking the photo control or dropping images adds valid JPEG, PNG, WebP, or GIF files of 10 MB or less as previews.
+- [x] The modal accepts at most six photos, allows each selected photo to be removed, and displays inline errors for invalid files, oversized files, or selections over the limit.
+- [x] A valid publication closes and resets the modal, then adds exactly one feed card containing its chosen type, audience copy, description, and selected photo previews.
+- [x] Multiple child recipients render as `Para: familias de Mateo y Sofía`, while the room recipient renders as `Para: toda la sala`.
+- [x] Reloading `/` restores only the three reference posts and removes all temporarily published posts.
+- [x] Cancelar, Escape, and an overlay click close the dialog without publishing, discard selected values and previews, and restore focus to the invoking trigger.
+- [x] `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` succeed.
 
 ## Decisions
 
@@ -126,3 +126,14 @@ type FeedPost = {
 - Any audience beyond the three hardcoded children and the whole room.
 
 Each excluded capability requires a future spec before implementation.
+
+## Verification
+
+**Date:** 2026-08-14
+
+- **Next.js guidance:** Context7 and the local Next.js 16 documentation require a top-level `"use client"` boundary for state, event handlers, and browser APIs. `app/page.tsx` provides that boundary for the `File` and object-URL interaction.
+- **Commands:** `npx tsc --noEmit`, `npx eslint app components`, and `npm run build` passed. `npm run lint` exits with the documented 2 errors and 8 warnings only in the pre-existing excluded reference file `references/pantallas/support.js`; application lint passed.
+- **Desktop runtime:** Playwright verified `/` at HTTP 200 in a `1280 × 800` viewport. The desktop CTA retained `/` while opening an `aria-modal` dialog. The initial form had no pressed controls, description, or previews. All three children selected together; `Toda la sala` then cleared them; the seven required type controls were present and mutually exclusive.
+- **Validation, files, and publication:** An empty submission displayed the three inline errors and focused Mateo. A real drop of seven valid PNG files, one text file, and one 11 MB PNG produced six previews plus inline invalid-type, size, and limit messages; removing one preview left five. A valid Mateo-and-Sofía Actividad post closed the dialog, restored focus to the CTA, added a fourth card with `Para: familias de Mateo y Sofía`, its description, and five image previews. Reloading restored three reference cards.
+- **Mobile and visual checks:** Inspected the supplied `references/pantallas/crear-publicacion.dc.html` against Playwright captures at `1280 × 800` and `375 × 667`. The modal retained the reference hierarchy, palette, typography, pill controls, textarea, and photo drop area. At 375 px, document width was 360 px with no horizontal overflow and the mobile CTA opened the modal. Artifacts: `spec06-desktop-modal.png` and `spec06-mobile-modal.png`.
+- **Dismissal correction:** Moving overlay dismissal from `mousedown` to `click` allows the native click focus change to finish before `closeModal` restores focus. Playwright confirmed Cancelar, Escape, and a real overlay click close and clear the modal, then focus `Nueva publicación`. Browser console: 0 errors and 0 warnings during the fresh mobile run.
