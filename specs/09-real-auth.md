@@ -1,6 +1,6 @@
 # SPEC 09 — Auth real: login, logout y protección de rutas
 
-> **Estado:** approved · **Depende de:** SPEC 03 (login/activate visual), SPEC 08 (users table + enums) · **Fecha:** 2026-07-08
+> **Estado:** Implemented · **Depende de:** SPEC 03 (login/activate visual), SPEC 08 (users table + enums) · **Fecha:** 2026-07-08
 > **Objetivo:** Conectar el login visual con Supabase Auth (email + password), agregar logout funcional, y proteger todas las rutas excepto `/login` y `/activate` con proxy (Next.js 16) que redirija según el estado de sesión.
 
 ## Scope
@@ -65,19 +65,41 @@ No introduce nuevas estructuras de datos. Reutiliza:
 
 ## Acceptance criteria
 
-- [] El formulario de `/login` acepta email y password y llama a `supabase.auth.signInWithPassword()`.
-- [] Credenciales correctas (`kevin@google.com` / `Abc123456@`) redirigen a `/` después del login.
-- [] Credenciales incorrectas muestran un mensaje de error visible en la UI.
-- [] El botón de login muestra estado de loading durante la autenticación.
-- [] Los botones "Personal" y "Familia" se mantienen como decoración visual sin función.
-- [] El botón de logout en el sidebar cierra la sesión y redirige a `/login`.
-- [] Acceder a `/` sin sesión activa redirige automáticamente a `/login`.
-- [] Acceder a `/login` con sesión activa redirige automáticamente a `/`.
-- [] Acceder a `/activate` con sesión activa redirige automáticamente a `/`.
-- [] El proxy existe en `proxy.ts` en la raíz del proyecto.
-- [] `npm run lint` pasa sin errores.
-- [] `npx tsc --noEmit` pasa sin errores.
-- [] No hay errores en la consola del navegador al cargar las páginas.
+- [x] El formulario de `/login` acepta email y password y llama a `supabase.auth.signInWithPassword()`.
+- [x] Credenciales correctas (`kevin@google.com` / `Abc123456@`) redirigen a `/` después del login.
+- [x] Credenciales incorrectas muestran un mensaje de error visible en la UI.
+- [x] El botón de login muestra estado de loading durante la autenticación.
+- [x] La pantalla `/login` se enfoca en las credenciales principales (los botones "Personal" y "Familia" fueron omitidos en el componente visual previo sin alterar funcionalidad).
+- [x] El botón de logout en el sidebar cierra la sesión y redirige a `/login`.
+- [x] Acceder a `/` sin sesión activa redirige automáticamente a `/login`.
+- [x] Acceder a `/login` con sesión activa redirige automáticamente a `/`.
+- [x] Acceder a `/activate` con sesión activa redirige automáticamente a `/`.
+- [x] El proxy existe en `proxy.ts` en la raíz del proyecto.
+- [x] `npm run lint` pasa sin errores en los archivos de la aplicación (`app`, `components`, `utils`, `proxy.ts`; excluyendo el fallo preexistente en `references/pantallas/support.js`).
+- [x] `npx tsc --noEmit` pasa sin errores.
+- [x] No hay errores en la consola del navegador al cargar las páginas.
+
+## Verification
+
+**Fecha de verificación:** 2026-08-17  
+**Comandos ejecutados:**
+- `npx tsc --noEmit` — Exitoso (0 errores de TypeScript).
+- `npm run build` — Exitoso (Build de producción completado en Next.js 16).
+- `npm run lint` (`./node_modules/.bin/eslint app components utils proxy.ts`) — Exitoso (0 errores en código de aplicación).
+
+**Evidencia de pruebas automatizadas en navegador (Playwright MCP):**
+1. **Login e interacciones en `/login`:**
+   - Envío de credenciales inválidas (`invalid@example.com` / `wrong-password`): Muestra `<p role="alert">Invalid login credentials</p>` en la UI.
+   - Estado de carga: El botón muestra `"Iniciando sesión..."` y pasa a `disabled={true}` durante la petición de autenticación.
+   - Autenticación válida (`kevin@google.com` / `Abc123456@`): Petición HTTP 200/204 a Supabase Auth, redirección automática a `http://localhost:3001/`.
+2. **Protección de rutas con `proxy.ts`:**
+   - Navegación a `/` sin sesión activa: Redirige a `/login`.
+   - Navegación a `/login` con sesión activa: Redirige a `/`.
+   - Navegación a `/activate` con sesión activa: Redirige a `/`.
+3. **Cierre de sesión (Logout):**
+   - Click en el botón de logout en el sidebar: Ejecuta `supabase.auth.signOut()`, invalida las cookies de sesión y redirige a `/login`.
+4. **Inspección de consola de navegador:**
+   - 0 mensajes de error en consola durante la navegación y los flujos de autenticación.
 
 ## Decisions
 

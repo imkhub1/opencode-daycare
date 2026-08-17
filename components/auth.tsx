@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { type ChangeEventHandler, type FormEvent, useState } from "react";
 import { Icon } from "@/components/open-daycare";
+import { createClient } from "@/utils/supabase/client";
 
 function AuthLogo({
   inverse = false,
@@ -30,13 +34,21 @@ function Field({
   label,
   type = "text",
   defaultValue,
+  value,
+  onChange,
   placeholder,
+  autoComplete,
+  required = false,
   className = "",
 }: {
   label: string;
   type?: "email" | "password" | "text";
   defaultValue?: string;
+  value?: string;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
   placeholder?: string;
+  autoComplete?: string;
+  required?: boolean;
   className?: string;
 }) {
   return (
@@ -47,7 +59,11 @@ function Field({
       <input
         type={type}
         defaultValue={defaultValue}
+        value={value}
+        onChange={onChange}
         placeholder={placeholder}
+        autoComplete={autoComplete}
+        required={required}
         className={`w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] text-ink outline-none placeholder:text-[#b6a99b] ${className}`}
       />
     </label>
@@ -55,6 +71,31 @@ function Field({
 }
 
 export function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+      return;
+    }
+
+    window.location.href = new URL("/", window.location.origin).href;
+  }
+
   return (
     <main className="grid min-h-screen bg-[#fbf4ec] lg:grid-cols-[1.05fr_1fr]">
       <section className="relative hidden overflow-hidden bg-linear-[155deg] from-[#f6a98e] via-[#f2937a] to-[#ec7e62] p-[56px_60px] text-white lg:flex lg:flex-col lg:justify-between">
@@ -84,24 +125,43 @@ export function LoginScreen() {
           <p className="mb-7 text-[15px] text-muted">
             Ingresá para ver el día de hoy.
           </p>
-          <Field
-            label="EMAIL"
-            type="email"
-            defaultValue="caro@opendaycare.com"
-          />
-          <Field label="CONTRASEÑA" type="password" placeholder="••••••••" />
-          <button
-            type="button"
-            className="mb-5 block w-full text-right text-[13.5px] font-bold text-[#c5503a]"
-          >
-            ¿Olvidaste tu contraseña?
-          </button>
-          <Link
-            href="/"
-            className="block w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35"
-          >
-            Iniciar sesión
-          </Link>
+          <form onSubmit={handleSubmit}>
+            <Field
+              label="EMAIL"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              required
+            />
+            <Field
+              label="CONTRASEÑA"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              className="mb-5 block w-full text-right text-[13.5px] font-bold text-[#c5503a]"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="block w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
+            </button>
+            {error && (
+              <p role="alert" className="mt-3 text-center text-sm text-[#c5503a]">
+                {error}
+              </p>
+            )}
+          </form>
           <p className="mt-6 text-center text-[14.5px] text-muted">
             ¿Te invitó la guardería?{" "}
             <Link href="/activate" className="font-extrabold text-[#c5503a]">

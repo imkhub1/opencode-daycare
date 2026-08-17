@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { LogoutButton } from "@/components/shared/LogoutButton";
 
 type IconName = "bell" | "camera" | "heart" | "home" | "image" | "log-out" | "megaphone" | "menu" | "message" | "plus" | "sun" | "user" | "users";
 
@@ -40,7 +41,7 @@ function NavLinks({ activeHref = "/", compact = false }: { activeHref?: string; 
 }
 
 export function Sidebar({ activeHref = "/", onCreatePost }: { activeHref?: string; onCreatePost?: (event: React.MouseEvent<HTMLButtonElement>) => void }) {
-  return <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-surface px-4 py-6 md:flex"><div className="px-2 pb-6"><Brand /></div><button onClick={onCreatePost} className="mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#ee8164]/25"><Icon name="plus" className="size-[17px]" />Nueva publicación</button><NavLinks activeHref={activeHref} /><div className="mt-3 border-t border-line pt-4"><div className="flex items-center gap-3 px-2"><Avatar>C</Avatar><div className="min-w-0 flex-1"><p className="text-sm font-extrabold text-ink">Caro Giménez</p><p className="text-xs text-[#a89a8b]">Maestra · Soles</p></div><Link href="/cerrar-sesion" aria-label="Cerrar sesión" className="flex size-8 items-center justify-center rounded-lg bg-sand text-muted hover:text-coral"><Icon name="log-out" className="size-4" /></Link></div></div></aside>;
+  return <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-surface px-4 py-6 md:flex"><div className="px-2 pb-6"><Brand /></div><button onClick={onCreatePost} className="mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#ee8164]/25"><Icon name="plus" className="size-[17px]" />Nueva publicación</button><NavLinks activeHref={activeHref} /><div className="mt-3 border-t border-line pt-4"><div className="flex items-center gap-3 px-2"><Avatar>C</Avatar><div className="min-w-0 flex-1"><p className="text-sm font-extrabold text-ink">Caro Giménez</p><p className="text-xs text-[#a89a8b]">Maestra · Soles</p></div><LogoutButton><Icon name="log-out" className="size-4" /></LogoutButton></div></div></aside>;
 }
 
 export function MobileNavigation({ activeHref = "/", onCreatePost }: { activeHref?: string; onCreatePost?: (event: React.MouseEvent<HTMLButtonElement>) => void }) {
