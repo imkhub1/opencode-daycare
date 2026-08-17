@@ -137,4 +137,3 @@ Each of these, if needed, belongs in its own spec.
    - `daycares_update` (FOR UPDATE TO anon, authenticated USING (false) WITH CHECK (false)) -> Blocked.
    - `daycares_delete` (FOR DELETE TO anon, authenticated USING (false)) -> Blocked.
    - Verified via transactional SQL role simulation (`set local role anon` / `set local role authenticated`).
-
