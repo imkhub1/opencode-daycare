@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { StaffNavigationOnly } from "@/components/shared/AppProfileProvider";
 import { LogoutButton } from "@/components/shared/LogoutButton";
 import { SidebarUser } from "@/components/shared/SidebarUser";
 
@@ -38,7 +39,10 @@ export function Avatar({ children, tone = "coral" }: { children: ReactNode; tone
 const navItems: { href: string; label: string; icon: IconName }[] = [{ href: "/", label: "Feed", icon: "home" }, { href: "/kids", label: "Niños", icon: "users" }, { href: "/avisos", label: "Avisos", icon: "bell" }, { href: "/mi-cuenta", label: "Mi cuenta", icon: "user" }];
 
 function NavLinks({ activeHref = "/", compact = false }: { activeHref?: string; compact?: boolean }) {
-  return <nav className={compact ? "flex flex-col gap-1" : "flex flex-1 flex-col gap-1"}>{navItems.map((item) => <Link key={item.href} href={item.href} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${item.href === activeHref ? "bg-coral-soft text-[#d9583c]" : "text-[#6e6359] hover:bg-[#f6ecdf]"}`}><Icon name={item.icon} className="size-5" />{item.label}</Link>)}</nav>;
+  return <nav className={compact ? "flex flex-col gap-1" : "flex flex-1 flex-col gap-1"}>{navItems.map((item) => {
+    const link = <Link href={item.href} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${item.href === activeHref ? "bg-coral-soft text-[#d9583c]" : "text-[#6e6359] hover:bg-[#f6ecdf]"}`}><Icon name={item.icon} className="size-5" />{item.label}</Link>;
+    return item.href === "/kids" ? <StaffNavigationOnly key={item.href}>{link}</StaffNavigationOnly> : <span key={item.href}>{link}</span>;
+  })}</nav>;
 }
 
 export function Sidebar({ activeHref = "/", onCreatePost }: { activeHref?: string; onCreatePost?: (event: React.MouseEvent<HTMLButtonElement>) => void }) {
