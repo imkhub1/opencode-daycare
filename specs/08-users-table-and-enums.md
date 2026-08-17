@@ -132,7 +132,7 @@ CREATE TRIGGER on_auth_user_created
 -- when the user is created in auth.users.
 ```
 
-> **Note:** The `fernando@google.com` user and password will be created through the Supabase Auth API (not direct SQL), since `auth.users` is managed by Supabase. The `handle_new_user` trigger will automatically create the row in `users` with the provided metadata.
+> **Note:** The `kevin@google.com` user and password will be created through the Supabase Auth API (not direct SQL), since `auth.users` is managed by Supabase. The `handle_new_user` trigger will automatically create the row in `users` with the provided metadata.
 
 ## Implementation plan
 
@@ -143,7 +143,7 @@ CREATE TRIGGER on_auth_user_created
    - Read/write RLS policies.
    - The `handle_new_user` trigger for `auth.users`.
 2. Apply the migration with `apply_migration`.
-3. Create the staff user `fernando@google.com` with password `Abc123456@` through the Supabase Auth API (or `supabase auth signup`), passing `raw_user_meta_data` with the `daycare_id` for "Guardería Sala Soles", `role: 'staff'`, and `full_name: 'Fernando'`.
+3. Create the staff user `kevin@google.com` with password `Abc123456@` through the Supabase Auth API (or `supabase auth signup`), passing `raw_user_meta_data` with the `daycare_id` for "Guardería Sala Soles", `role: 'staff'`, and `full_name: 'Kevin'`.
 4. Use `list_tables` to verify that the table exists and `execute_sql` to confirm that the staff user was created.
 
 ## Acceptance criteria
@@ -154,14 +154,14 @@ CREATE TRIGGER on_auth_user_created
 - [ ] The RLS policies allow SELECT access for users in the same daycare.
 - [ ] The RLS policies allow INSERT/UPDATE access for staff and admin users.
 - [ ] The `handle_new_user` trigger works: creating a user in `auth.users` automatically creates the corresponding row in `users`.
-- [ ] A staff user with the email `fernando@google.com` exists and is linked to "Guardería Sala Soles".
+- [ ] A staff user with the email `kevin@google.com` exists and is linked to "Guardería Sala Soles".
 - [ ] The migration was applied through `apply_migration` without errors.
 
 ## Decisions
 
 - **Yes:** Create only the `user_role` and `user_status` enums in this migration. The remaining enums will be created when their tables require them.
 - **Yes:** Use an `AFTER INSERT ON auth.users` trigger to automatically create the row in `users`. This follows the schema convention.
-- **Yes:** Seed a staff user with the credentials `fernando@google.com` / `Abc123456@` for development testing.
+- **Yes:** Seed a staff user with the credentials `kevin@google.com` / `Abc123456@` for development testing.
 - **No:** Include the parent invitation flow. It will be covered in a separate spec.
 - **No:** Create a test parent user. Only a staff user is needed for now.
 
