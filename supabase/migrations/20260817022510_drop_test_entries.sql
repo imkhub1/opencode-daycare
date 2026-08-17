@@ -1,0 +1,1 @@
+-- Historical remote cleanup migration. No test objects remain in the schema.

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Fredoka, Nunito } from "next/font/google";
+import type { ReactNode } from "react";
+import { AppProfileProvider } from "@/components/shared/AppProfileProvider";
+import { getCurrentAppProfile } from "@/utils/supabase/profile";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -19,13 +22,22 @@ export const metadata: Metadata = {
   description: "La comunidad de tu guarderia",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  let profile = null;
+  try {
+    profile = await getCurrentAppProfile();
+  } catch {
+    // Keep public/auth routes usable when the application profile read is transiently unavailable.
+  }
+
   return (
     <html
       lang="es"
       className={`${fredoka.variable} ${nunito.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AppProfileProvider profile={profile}>{children}</AppProfileProvider>
+      </body>
     </html>
   );
 }

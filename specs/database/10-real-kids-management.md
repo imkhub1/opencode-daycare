@@ -1,6 +1,6 @@
 # SPEC 10 — Persisted rooms and child management
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 02 (kids interfaces), SPEC 04 (add kid dialog), SPEC 07 (daycares table), SPEC 08 (users, roles, and RLS helpers), SPEC 09 (real authentication)
 > **Date:** 2026-08-17
 > **Objective:** Replace the static `/kids` experience with tenant-scoped Supabase rooms and persistent staff/admin child lifecycle management.
@@ -140,37 +140,37 @@ Unknown values remain as their trimmed lowercase form. This preserves free entry
 
 ## Acceptance criteria
 
-- [ ] `public.child_status` exists with exactly `active` and `archived` values.
-- [ ] `public.rooms` and `public.children` exist with the columns, defaults, foreign keys, checks, indexes, grants, and RLS state defined in this spec.
-- [ ] The `updated_at` trigger changes `children.updated_at` after a child update.
-- [ ] `Guardería Sala Soles` has exactly the rooms Soles, Lunas, and Estrellas after the migration, and `public.children` has zero rows at that baseline.
-- [ ] The migration does not silently seed rooms when the named daycare is missing or ambiguous.
-- [ ] Active staff and admin users can read rooms and create, read, edit, archive, and restore children only inside their own daycare.
-- [ ] Parent, anonymous, and cross-daycare database sessions cannot read or mutate rooms or children.
-- [ ] Authenticated users cannot physically delete a child through the exposed API.
-- [ ] `/kids` initially renders Soles, Lunas, and Estrellas in that order with a visible empty state in every room and no static child cards.
-- [ ] The add-child dialog persists `full_name`, `birth_date`, `enrolled_at`, `room_id`, `medical_notes`, `allergy_tags`, and `photo_consent`, and the child remains after reload.
-- [ ] The birth-date field retains the `DD/MM/AAAA` mask and the enrollment date is required.
-- [ ] Client and server validation reject blank names and reject any date pair that does not satisfy `birth_date < enrolled_at <= today`.
-- [ ] Failed validation or persistence keeps the dialog or form open, shows an inline error, and preserves every entered value.
-- [ ] `Autoriza fotografías` starts checked for a new child and both checked and unchecked values persist correctly.
-- [ ] Allergy input translates the seven confirmed Spanish values, normalizes unknown values, removes blanks, and stores no duplicate tags.
-- [ ] Children are sorted alphabetically by name within each room.
-- [ ] Typing in `Buscar niño…` immediately filters the loaded active or archived children by name without a request per keystroke.
-- [ ] Empty room sections remain visible when a room has no children or no names match the current search.
-- [ ] Active children appear by default and archived children appear only when `/kids?view=archived` is selected.
-- [ ] Archiving requires confirmation, removes the child from the active view, and does not delete its database row.
-- [ ] Restoring an archived child returns it to the active view in its assigned room.
-- [ ] Every persisted child has working UUID routes at `/kids/[childId]` and `/kids/[childId]/edit`.
-- [ ] Invalid, missing, inaccessible, and cross-daycare child identifiers do not reveal child data.
-- [ ] A child profile shows persisted child data and Edit/Archive actions without parent, invitation, daily-summary, or post mocks.
-- [ ] Parent users do not see the `Niños` navigation item and every `/kids` route redirects them to `/`.
-- [ ] `/kids` displays a loading skeleton while its initial data loads and a retry control after a read failure.
-- [ ] Mutation failures remain inline and do not discard the currently rendered room and child data.
-- [ ] The former `/kids/mateo-fernandez` subtree and all eight static child records are absent from the application.
-- [ ] The directory, dialogs, profile, and edit form remain usable without horizontal overflow at 375 px and preserve the established desktop visual language.
-- [ ] Browser verification reports no unexpected console errors during empty, create, edit, search, archive, restore, and role-redirect flows.
-- [ ] `npx tsc --noEmit`, application-scoped lint, and `npm run build` succeed; the documented pre-existing lint failure in `references/pantallas/support.js` is not attributed to this spec.
+- [x] `public.child_status` exists with exactly `active` and `archived` values.
+- [x] `public.rooms` and `public.children` exist with the columns, defaults, foreign keys, checks, indexes, grants, and RLS state defined in this spec.
+- [x] The `updated_at` trigger changes `children.updated_at` after a child update.
+- [x] `Guardería Sala Soles` has exactly the rooms Soles, Lunas, and Estrellas after the migration, and `public.children` has zero rows at that baseline.
+- [x] The migration does not silently seed rooms when the named daycare is missing or ambiguous.
+- [x] Active staff and admin users can read rooms and create, read, edit, archive, and restore children only inside their own daycare.
+- [x] Parent, anonymous, and cross-daycare database sessions cannot read or mutate rooms or children.
+- [x] Authenticated users cannot physically delete a child through the exposed API.
+- [x] `/kids` initially renders Soles, Lunas, and Estrellas in that order with a visible empty state in every room and no static child cards.
+- [x] The add-child dialog persists `full_name`, `birth_date`, `enrolled_at`, `room_id`, `medical_notes`, `allergy_tags`, and `photo_consent`, and the child remains after reload.
+- [x] The birth-date field retains the `DD/MM/AAAA` mask and the enrollment date is required.
+- [x] Client and server validation reject blank names and reject any date pair that does not satisfy `birth_date < enrolled_at <= today`.
+- [x] Failed validation or persistence keeps the dialog or form open, shows an inline error, and preserves every entered value.
+- [x] `Autoriza fotografías` starts checked for a new child and both checked and unchecked values persist correctly.
+- [x] Allergy input translates the seven confirmed Spanish values, normalizes unknown values, removes blanks, and stores no duplicate tags.
+- [x] Children are sorted alphabetically by name within each room.
+- [x] Typing in `Buscar niño…` immediately filters the loaded active or archived children by name without a request per keystroke.
+- [x] Empty room sections remain visible when a room has no children or no names match the current search.
+- [x] Active children appear by default and archived children appear only when `/kids?view=archived` is selected.
+- [x] Archiving requires confirmation, removes the child from the active view, and does not delete its database row.
+- [x] Restoring an archived child returns it to the active view in its assigned room.
+- [x] Every persisted child has working UUID routes at `/kids/[childId]` and `/kids/[childId]/edit`.
+- [x] Invalid, missing, inaccessible, and cross-daycare child identifiers do not reveal child data.
+- [x] A child profile shows persisted child data and Edit/Archive actions without parent, invitation, daily-summary, or post mocks.
+- [x] Parent users do not see the `Niños` navigation item and every `/kids` route redirects them to `/`.
+- [x] `/kids` displays a loading skeleton while its initial data loads and a retry control after a read failure.
+- [x] Mutation failures remain inline and do not discard the currently rendered room and child data.
+- [x] The former `/kids/mateo-fernandez` subtree and all eight static child records are absent from the application.
+- [x] The directory, dialogs, profile, and edit form remain usable without horizontal overflow at 375 px and preserve the established desktop visual language.
+- [x] Browser verification reports no unexpected console errors during empty, create, edit, search, archive, restore, and role-redirect flows.
+- [x] `npx tsc --noEmit`, application-scoped lint, and `npm run build` succeed; the documented pre-existing lint failure in `references/pantallas/support.js` is not attributed to this spec.
 
 ## Decisions
 
@@ -214,3 +214,32 @@ Unknown values remain as their trimmed lowercase form. This preserves free entry
 - Pagination, server-side search, realtime updates, or bulk child operations.
 
 Each excluded capability requires a future spec before implementation.
+
+## Verification
+
+- **Date:** 2026-08-17
+- **Validation commands:**
+  - `npx tsc --noEmit`: Passed with 0 errors.
+  - `npm run lint`: Passed for all application files (`app/`, `components/`, `utils/`, `supabase/`). Pre-existing failure restricted to `references/pantallas/support.js`.
+  - `npm run build`: Production build completed successfully.
+- **Database verification:**
+  - `public.child_status` enum verified with `active` and `archived` values.
+  - `public.rooms` and `public.children` tables, constraints, indexes, RLS policies, and grants verified via Supabase SQL execution.
+  - `BEFORE UPDATE` trigger `set_children_updated_at` on `public.children` verified.
+  - Seed verified for `Guardería Sala Soles` creating exactly `Soles`, `Lunas`, and `Estrellas` rooms with 0 initial children.
+  - Logical archival tested via `status = 'archived'` updates; no physical deletes allowed or performed.
+- **Browser verification (Playwright MCP):**
+  - **Viewports tested:** Desktop (1280x800) and Mobile (375x667).
+  - **Routes verified:** `/kids`, `/kids?view=archived`, `/kids/[childId]`, `/kids/[childId]/edit`, `/kids/00000000-0000-0000-0000-000000000000` (404), `/kids/invalid-uuid` (404).
+  - **Flows exercised:**
+    1. Rendered directory with fixed room order (Soles, Lunas, Estrellas) and room empty states.
+    2. Instant client-side search filtering (`Buscar niño…`) without extra network requests.
+    3. Creation of child ("Mateo B real") via dialog with `DD/MM/AAAA` birth date mask, required enrollment date, room selector, photo consent default (`true`), and normalized allergy translation (`maní` -> `peanut`, `lactosa` -> `lactose`, `frutos secos` -> `tree-nuts`).
+    4. Inline validation errors preserving entered values on empty or invalid form submissions.
+    5. Editing child details ("Mateo B real Editado") and changing room assignment to Estrellas.
+    6. Confirmation dialog and logical archiving to `/kids?view=archived`.
+    7. Restoring archived child back to active directory in SALA ESTRELLAS.
+    8. Alphabetical child sorting by full name in each room.
+    9. Role guarding: `parent` role hid `Niños` navigation item and redirected `/kids` requests to `/`.
+  - **Console errors:** 0 console errors and 0 warnings detected across all flows.
+  - **Visual artifacts:** Screenshots saved in `.playwright-mcp/verification-kids-desktop.png` and `.playwright-mcp/verification-kids-mobile.png`.
