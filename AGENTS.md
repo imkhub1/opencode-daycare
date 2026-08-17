@@ -24,6 +24,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Workflow
 
 - Keep Playwright artifacts in the gitignored `.playwright-mcp/` directory.
+- Create every database-related spec under `specs/database/`, never directly under `specs/`.
 - Do not remove the generated `BEGIN:nextjs-agent-rules` block; read the relevant local Next.js guide before changing Next.js-specific code.
 
 ## OpenCode
