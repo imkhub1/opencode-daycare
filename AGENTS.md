@@ -33,6 +33,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `/spec-impl` (from `.agents/skills/spec-impl/`) only implements an `Approved` spec. It uses `specs/.spec-config.yml` to decide whether to create a `spec-NN-slug` branch (default: `AutoCreateBranch: true`), pauses after each implementation step, and never commits automatically.
 - `spec-verifier` (`.opencode/agents/spec-verifier.md`) is a custom primary agent responsible for verifying spec acceptance criteria against implementation using build tools, Context7 Next.js guidance, Playwright MCP browser testing, and visual screenshot comparisons. Its edit permissions are restricted to `specs/*.md`.
 
+## Supabase
+
+- The global OpenCode configuration at `~/.config/opencode/opencode.json` provides an authenticated `supabase` MCP server for project `buhfslxahextimvdfveh`, with account, database, debugging, development, functions, branching, storage, and docs features.
+- Use the `supabase` skill in `.agents/skills/supabase/` for every Supabase task, including the MCP server, Auth, Database, Storage, Realtime, Edge Functions, CLI, and `supabase-js` integrations.
+- Before implementing a Supabase feature, review the current changelog and relevant documentation. Verify completed changes with an appropriate query, build, or request rather than assuming they worked.
+- Use `.agents/skills/supabase-postgres-best-practices/` before writing or modifying Postgres schemas, migrations, SQL queries, indexes, RLS policies, database functions, or performance-related database code.
+- Preserve RLS on exposed tables, never expose service-role or secret keys to the client, and follow the security guidance in the Supabase skill for Auth, Storage, views, and privileged functions.
+- Skills are managed through `skills-lock.json` and belong only in `.agents/skills/`; do not create a project `.claude/` directory.
+
 ## Language
 
 - Write repository artifacts in English; communicate with the user in Spanish.
