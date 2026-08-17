@@ -1,6 +1,6 @@
 # SPEC 07 — Daycares table with RLS and seed data
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** None (first table in the schema)
 > **Date:** 2026-07-08
 > **Objective:** Create the `daycares` table with RLS, an address field, and seed data including "Guardería Sala Soles".
@@ -76,11 +76,11 @@ INSERT INTO daycares (name, address) VALUES
 
 ## Acceptance criteria
 
-- [ ] The `daycares` table exists in the database with `id`, `name`, `address`, `created_at`, and `updated_at` columns.
-- [ ] RLS is enabled on the `daycares` table.
-- [ ] At least 4 rows exist in `daycares`, including "Guardería Sala Soles".
-- [ ] The migration was applied without errors through `apply_migration`.
-- [ ] The RLS policies allow SELECT and block INSERT/UPDATE/DELETE.
+- [x] The `daycares` table exists in the database with `id`, `name`, `address`, `created_at`, and `updated_at` columns.
+- [x] RLS is enabled on the `daycares` table.
+- [x] At least 4 rows exist in `daycares`, including "Guardería Sala Soles".
+- [x] The migration was applied without errors through `apply_migration`.
+- [x] The RLS policies allow SELECT and block INSERT/UPDATE/DELETE.
 
 ## Decisions
 
@@ -104,3 +104,37 @@ INSERT INTO daycares (name, address) VALUES
 - Integration with the existing screens.
 
 Each of these, if needed, belongs in its own spec.
+
+## Verification
+
+**Date:** 2026-08-16
+
+### Validation Commands
+- `npx tsc --noEmit`: PASSED (0 errors).
+- `npm run lint`: PASSED for application code (1 pre-existing excluded failure in `references/pantallas/support.js`).
+- `npm run build`: PASSED (Next.js 16 build succeeded).
+
+### Browser & Visual Verification
+- **N/A**: This spec defines a database table and migration; it does not include UI components, routes, or visual screens.
+
+### Database Evidence
+1. **Table & Schema**:
+   - Table `public.daycares` exists.
+   - Columns: `id` (uuid, PK, default `gen_random_uuid()`), `name` (text, NOT NULL), `address` (text, nullable), `created_at` (timestamptz, NOT NULL, default `now()`), `updated_at` (timestamptz, NOT NULL, default `now()`).
+2. **Row Level Security**:
+   - `pg_class.relrowsecurity` is `true`.
+3. **Seed Data**:
+   - 4 rows confirmed in `public.daycares`:
+     - `Guardería Arcoíris` (`Calle Luna 456, Zona Norte`)
+     - `Guardería Estrellitas` (`Paseo de los Niños 321, Residencial`)
+     - `Guardería Sala Soles` (`Av. Principal 123, Centro`)
+     - `Guardería Semillitas` (`Blvd. del Sol 789, Col. Jardines`)
+4. **Migration History**:
+   - Migration `20260817031611_001_create_daycares_table` applied successfully via `apply_migration`.
+5. **RLS Policies & Permissions**:
+   - `daycares_read` (FOR SELECT TO anon, authenticated USING (true)) -> Allowed.
+   - `daycares_insert` (FOR INSERT TO anon, authenticated WITH CHECK (false)) -> Blocked.
+   - `daycares_update` (FOR UPDATE TO anon, authenticated USING (false) WITH CHECK (false)) -> Blocked.
+   - `daycares_delete` (FOR DELETE TO anon, authenticated USING (false)) -> Blocked.
+   - Verified via transactional SQL role simulation (`set local role anon` / `set local role authenticated`).
+
