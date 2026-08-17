@@ -1,6 +1,6 @@
 # SPEC 08 — Users table with enums, RLS, and seed staff user
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** Spec 07 (daycares table)
 > **Date:** 2026-07-08
 > **Objective:** Create the `user_role` and `user_status` enums, the `users` table with RLS, an `auth.users` trigger, and a test staff user.
@@ -14,7 +14,7 @@
 - Enable Row Level Security (RLS) on the `users` table.
 - Create basic RLS policies: read access for authenticated users in the same daycare and write access for staff/admin users.
 - Create an `AFTER INSERT ON auth.users` trigger that automatically inserts a row into `users`, passing `daycare_id`, `role`, and `full_name` from `raw_user_meta_data`.
-- Insert a test staff user: `fernando@google.com` with password `Abc123456@`, linked to "Guardería Sala Soles".
+- Insert a test staff user: `kevin@google.com` with password `Abc123456@`, linked to "Guardería Sala Soles".
 - Apply it as a Supabase migration using `apply_migration`.
 
 **Out of scope (for future specs):**
@@ -148,14 +148,14 @@ CREATE TRIGGER on_auth_user_created
 
 ## Acceptance criteria
 
-- [ ] The `user_role` and `user_status` enums exist in the database with the correct values.
-- [ ] The `users` table exists with all specified columns.
-- [ ] RLS is enabled on the `users` table.
-- [ ] The RLS policies allow SELECT access for users in the same daycare.
-- [ ] The RLS policies allow INSERT/UPDATE access for staff and admin users.
-- [ ] The `handle_new_user` trigger works: creating a user in `auth.users` automatically creates the corresponding row in `users`.
-- [ ] A staff user with the email `kevin@google.com` exists and is linked to "Guardería Sala Soles".
-- [ ] The migration was applied through `apply_migration` without errors.
+- [x] The `user_role` and `user_status` enums exist in the database with the correct values.
+- [x] The `users` table exists with all specified columns.
+- [x] RLS is enabled on the `users` table.
+- [x] The RLS policies allow SELECT access for users in the same daycare.
+- [x] The RLS policies allow INSERT/UPDATE access for staff and admin users.
+- [x] The `handle_new_user` trigger works: creating a user in `auth.users` automatically creates the corresponding row in `users`.
+- [x] A staff user with the email `kevin@google.com` exists and is linked to "Guardería Sala Soles".
+- [x] The migration was applied through `apply_migration` without errors.
 
 ## Decisions
 
@@ -183,3 +183,34 @@ CREATE TRIGGER on_auth_user_created
 - Creating enums unrelated to `users`.
 
 Each of these, if needed, will have its own spec.
+
+## Verification
+
+**Date:** 2026-08-17
+
+### Repository validation
+
+- `npx tsc --noEmit`: PASSED with no TypeScript errors.
+- `npm run build`: PASSED with Next.js 16.3.0; all 10 routes were generated successfully.
+- `npm run lint`: FAILED only in the pre-existing excluded reference asset `references/pantallas/support.js` (2 errors and 8 warnings); no application files produced diagnostics.
+- `git diff --check`: PASSED.
+
+### Database evidence
+
+1. **Enums:** Live `pg_enum` inspection returned `user_role = {staff,parent,admin}` and `user_status = {pending,active}`.
+2. **Table:** `list_tables` and `information_schema.columns` confirmed all 10 specified columns, types, nullability, and defaults. Catalog constraints confirmed the UUID primary key, `auth.users(id) ON DELETE CASCADE`, and the `daycares(id)` foreign key.
+3. **RLS:** `pg_class.relrowsecurity` is `true` for `public.users`.
+4. **SELECT policy:** A read-only session simulated as Kevin with database role `authenticated` returned one visible row; `only_same_daycare` evaluated to `true`, and the private helper resolved the expected daycare UUID without recursion.
+5. **Write policies:** The live role simulation confirmed `INSERT` and `UPDATE` grants and a true staff authorization predicate. `pg_policies` confirmed that both policies allow `staff` and `admin`, with both `USING` and `WITH CHECK` present for UPDATE.
+6. **Auth trigger:** `on_auth_user_created` is enabled on `auth.users`; `handle_new_user` is `SECURITY DEFINER` with an empty `search_path`. The Auth signup request returned HTTP 200 during implementation, and the resulting Auth UUID has a matching automatically-created `public.users` row.
+7. **Staff seed:** `kevin@google.com` exists in `auth.users` with a password and has a matching `public.users` profile: `role = staff`, `status = active`, `full_name = Kevin`, and daycare `Guardería Sala Soles`. Email confirmation is currently false and was not required by the acceptance criteria.
+8. **Migration history:** Supabase lists `20260817060844_create_users_table_and_enums` and the privilege correction `20260817061111_restrict_users_table_privileges`; both `apply_migration` calls returned success.
+
+### Browser and visual verification
+
+- Not applicable: this spec contains no UI, route, responsive behavior, or visual reference.
+
+### Advisor results
+
+- Supabase performance advisors returned no findings.
+- Unrelated project-wide security warnings remain for `public.rls_auto_enable()` execute permissions ([anon remediation](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [authenticated remediation](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)) and disabled leaked-password protection ([remediation](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)). No warning targeted the Spec 08 tables, policies, helpers, or trigger.
