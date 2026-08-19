@@ -618,21 +618,16 @@ function relationshipLabel(relationship: ParentLink["relationship"] | ParentInvi
 
 function RetryInvitationButton({
   invitationId,
-  onSuccess,
 }: {
   invitationId: string;
-  onSuccess: (token: string) => void;
 }) {
   const router = useRouter();
   const action = retryParentInvitation.bind(null, invitationId);
   const [state, formAction, pending] = useActionState(action, { success: false });
 
   useEffect(() => {
-    if (state.success) {
-      if (state.token) onSuccess(state.token);
-      router.refresh();
-    }
-  }, [onSuccess, router, state.success, state.token]);
+    if (state.success) router.refresh();
+  }, [router, state.success]);
 
   return (
     <form action={formAction} className="mt-2">
@@ -709,7 +704,6 @@ export function ChildProfile({
 }) {
   const router = useRouter();
   const [isParentDialogOpen, setIsParentDialogOpen] = useState(false);
-  const [successToken, setSuccessToken] = useState<string | null>(null);
   const parentLinkTriggerRef = useRef<HTMLButtonElement>(null);
   const pendingInvitations = invitations.filter(
     (invitation) => invitation.status === "pending",
@@ -721,13 +715,8 @@ export function ChildProfile({
 
   function closeParentDialog() {
     setIsParentDialogOpen(false);
-    requestAnimationFrame(() => parentLinkTriggerRef.current?.focus());
-  }
-
-  function handleInvitationSuccess(token: string) {
-    setSuccessToken(token);
-    closeParentDialog();
     router.refresh();
+    requestAnimationFrame(() => parentLinkTriggerRef.current?.focus());
   }
 
   return (
@@ -777,13 +766,6 @@ export function ChildProfile({
             Editar datos
           </Link>
           <LifecycleButton child={child} />
-          {successToken && (
-            <section role="status" className="rounded-2xl border-[1.5px] border-dashed border-[#e6d08a] bg-[#fbf1d6] p-4">
-              <p className="text-xs font-extrabold tracking-[0.07em] text-[#a88526]">CÓDIGO ENVIADO</p>
-              <p className="mt-1 font-display text-[28px] font-semibold tracking-[6px] text-[#8a7234]">{successToken}</p>
-              <p className="mt-1 text-xs text-[#a88526]">Compártelo solo con la persona invitada.</p>
-            </section>
-          )}
           <section className="rounded-2xl border border-line bg-surface p-4 sm:p-[18px]">
             <h2 className="mb-3.5 text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">PADRES VINCULADOS</h2>
             <div className="flex flex-col gap-3.5">
@@ -810,7 +792,7 @@ export function ChildProfile({
                           {invitation.deliveryStatus === "failed" ? "Error de envío" : "Correo enviado"}
                         </p>
                         {invitation.deliveryStatus === "failed" && child.status === "active" && (
-                          <RetryInvitationButton invitationId={invitation.id} onSuccess={setSuccessToken} />
+                          <RetryInvitationButton invitationId={invitation.id} />
                         )}
                         {child.status === "active" && (
                           <CancelInvitationButton
@@ -853,7 +835,6 @@ export function ChildProfile({
           childId={child.id}
           childName={child.fullName}
           onClose={closeParentDialog}
-          onSuccess={handleInvitationSuccess}
         />
       )}
     </section>
