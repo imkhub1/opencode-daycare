@@ -1,7 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { type ChangeEventHandler, type FormEvent, useState } from "react";
+import {
+  type ChangeEventHandler,
+  type FormEvent,
+  useState,
+} from "react";
+import { useRouter } from "next/navigation";
+import {
+  acceptExistingParentInvitation,
+  getActivationPreview,
+  signUpParentAccount,
+  type ActivationPreview,
+} from "@/app/activate/actions";
 import { Icon } from "@/components/open-daycare";
 import { createClient } from "@/utils/supabase/client";
 
@@ -39,6 +50,8 @@ function Field({
   placeholder,
   autoComplete,
   required = false,
+  readOnly = false,
+  disabled = false,
   className = "",
 }: {
   label: string;
@@ -49,6 +62,8 @@ function Field({
   placeholder?: string;
   autoComplete?: string;
   required?: boolean;
+  readOnly?: boolean;
+  disabled?: boolean;
   className?: string;
 }) {
   return (
@@ -64,13 +79,22 @@ function Field({
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}
+        readOnly={readOnly}
+        disabled={disabled}
         className={`w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] text-ink outline-none placeholder:text-[#b6a99b] ${className}`}
       />
     </label>
   );
 }
 
-export function LoginScreen() {
+export function LoginScreen({
+  invite = "",
+  activation = "",
+}: {
+  invite?: string;
+  activation?: string;
+}) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -93,7 +117,14 @@ export function LoginScreen() {
       return;
     }
 
-    window.location.href = new URL("/", window.location.origin).href;
+    const safeInvite = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/i.test(invite.trim())
+      ? invite.trim().toUpperCase()
+      : "";
+    router.push(
+      safeInvite
+        ? `/activate?code=${encodeURIComponent(safeInvite)}`
+        : "/",
+    );
   }
 
   return (
@@ -125,6 +156,16 @@ export function LoginScreen() {
           <p className="mb-7 text-[15px] text-muted">
             Ingresá para ver el día de hoy.
           </p>
+          {activation === "success" && (
+            <p role="status" className="mb-5 rounded-xl bg-[#cfebd8] px-4 py-3 text-sm font-bold text-[#3e8b62]">
+              Tu cuenta fue activada y el vínculo con el niño quedó confirmado.
+            </p>
+          )}
+          {activation === "error" && (
+            <p role="alert" className="mb-5 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">
+              No se pudo completar la activación. Revisa el enlace e inténtalo nuevamente.
+            </p>
+          )}
           <form onSubmit={handleSubmit}>
             <Field
               label="EMAIL"
@@ -174,81 +215,148 @@ export function LoginScreen() {
   );
 }
 
-export function ActivateScreen() {
+export function ActivateScreen({
+  token: initialToken,
+  preview: initialPreview,
+  authenticated = false,
+}: {
+  token: string;
+  preview: ActivationPreview | null;
+  authenticated?: boolean;
+}) {
+  const router = useRouter();
+  const [token, setToken] = useState(initialToken.trim().toUpperCase());
+  const [preview, setPreview] = useState(initialPreview);
+  const [name, setName] = useState(initialPreview?.invitedFullName ?? "");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [now] = useState(() => Date.now());
+  const initialError = initialToken && !initialPreview
+    ? "El código no es válido o ya no está disponible."
+    : "";
+
+  const previewIsUsable = Boolean(
+    preview &&
+      preview.status === "pending" &&
+      preview.deliveryStatus === "sent" &&
+      new Date(preview.expiresAt).getTime() > now,
+  );
+
+  async function lookupToken(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    setError("");
+    setMessage("");
+    setIsLoading(true);
+    const nextPreview = await getActivationPreview(token);
+    setPreview(nextPreview);
+    if (!nextPreview) setError("El código no es válido o ya no está disponible.");
+    else setName(nextPreview.invitedFullName);
+    setIsLoading(false);
+  }
+
+  async function submitSignup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+
+    if (!previewIsUsable || !preview || !name.trim() || password.length < 8) {
+      setError("Ingresa un nombre y una contraseña de al menos 8 caracteres.");
+      return;
+    }
+
+    setIsLoading(true);
+    const result = await signUpParentAccount({
+      token,
+      fullName: name,
+      email: preview.email,
+      password,
+    });
+    setIsLoading(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+
+    setMessage("Revisa tu correo para confirmar la cuenta. Después volverás aquí para completar la activación.");
+  }
+
+  async function acceptExisting(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setIsLoading(true);
+    const result = await acceptExistingParentInvitation(token, name);
+    setIsLoading(false);
+
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+
+    router.push("/login?activation=success");
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#fbf4ec] px-5 py-10 sm:p-10">
       <section className="w-full max-w-[440px]">
-        <div className="mb-[22px]">
-          <AuthLogo showName={false} />
-        </div>
-        <h1 className="mb-2 font-display text-[32px] leading-[1.15] font-semibold text-ink">
-          Bienvenida a OpenDayCare
-        </h1>
-        <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">
-          Te invitaron a seguir el día de tu hijo. Creá tu contraseña para
-          activar la cuenta.
-        </p>
-        <div className="mb-[22px] flex items-center gap-[14px] rounded-2xl border-[1.5px] border-[#eadfd0] bg-white p-[14px_16px]">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#a9d9e8] font-display text-[19px] font-semibold text-[#1f7a93]">
-            M
-          </span>
-          <div>
-            <p className="text-[13px] text-muted">Te invitaron a seguir a</p>
-            <p className="font-display text-[17px] font-semibold text-ink">
-              Mateo · Sala Soles
-            </p>
-          </div>
-        </div>
-        <Field
-          label="CÓDIGO DE INVITACIÓN"
-          defaultValue="7K4P9"
-          className="font-display text-lg font-bold tracking-[3px]"
-        />
-        <Field
-          label="EMAIL"
-          type="email"
-          defaultValue="lucia.fernandez@gmail.com"
-        />
-        <Field
-          label="CREAR CONTRASEÑA"
-          type="password"
-          defaultValue="contraseña"
-          className="border-[#f2a78e]"
-        />
-        <div className="mb-6 flex items-start gap-3 rounded-[14px] bg-[#fbf1d6] p-[14px_16px]">
-          <span
-            aria-hidden="true"
-            className="mt-px flex size-6 shrink-0 items-center justify-center rounded-lg bg-[#5fb97e] text-white"
-          >
-            <svg
-              className="size-[15px]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="m20 6-11 11-5-5" />
-            </svg>
-          </span>
-          <p className="text-sm leading-[1.45] text-[#8a7234]">
-            Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro
-            de la app.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35"
-        >
-          Activar mi cuenta
-        </button>
-        <p className="mt-[22px] text-center text-[14.5px] text-muted">
-          ¿Ya tenés cuenta?{" "}
-          <Link href="/login" className="font-extrabold text-[#c5503a]">
-            Iniciar sesión
-          </Link>
-        </p>
+        <div className="mb-[22px]"><AuthLogo showName={false} /></div>
+        <h1 className="mb-2 font-display text-[32px] leading-[1.15] font-semibold text-ink">Bienvenida a OpenDayCare</h1>
+        <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">Te invitaron a seguir el día de tu hijo. Creá tu contraseña para activar la cuenta.</p>
+
+        {!previewIsUsable && (
+          <form onSubmit={lookupToken} className="mb-5 rounded-2xl border border-line bg-white p-4">
+            <Field
+              label="CÓDIGO DE INVITACIÓN"
+              value={token}
+              onChange={(event) => setToken(event.target.value.toUpperCase())}
+              autoComplete="one-time-code"
+              className="mb-3 font-display text-lg font-bold tracking-[3px]"
+            />
+            <button type="submit" disabled={isLoading} className="w-full rounded-xl bg-ink px-4 py-3 text-sm font-extrabold text-white disabled:opacity-60">
+              {isLoading ? "Buscando…" : "Continuar"}
+            </button>
+          </form>
+        )}
+
+        {previewIsUsable && preview ? (
+          <>
+            <div className="mb-[22px] flex items-center gap-[14px] rounded-2xl border-[1.5px] border-[#eadfd0] bg-white p-[14px_16px]">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#a9d9e8] font-display text-[19px] font-semibold text-[#1f7a93]">{preview.childName.charAt(0)}</span>
+              <div className="min-w-0">
+                <p className="text-[13px] text-muted">Te invitaron a seguir a</p>
+                <p className="truncate font-display text-[17px] font-semibold text-ink">{preview.childName} · {preview.daycareName}</p>
+              </div>
+            </div>
+
+            <form onSubmit={authenticated ? acceptExisting : submitSignup}>
+              <Field label="EMAIL" type="email" value={preview.email} readOnly disabled className="bg-[#f5eee6]" />
+              <Field label="NOMBRE PARA TU CUENTA" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required />
+              {!authenticated && (
+                <Field label="CREAR CONTRASEÑA" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required className="border-[#f2a78e]" />
+              )}
+              <div className="mb-6 flex items-start gap-3 rounded-[14px] bg-[#fbf1d6] p-[14px_16px]">
+                <span aria-hidden="true" className="mt-px flex size-6 shrink-0 items-center justify-center rounded-lg bg-[#5fb97e] text-white">✓</span>
+                <p className="text-sm leading-[1.45] text-[#8a7234]">Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro de la app.</p>
+              </div>
+              {message && <p role="status" className="mb-4 rounded-xl bg-[#cfebd8] px-4 py-3 text-sm font-bold text-[#3e8b62]">{message}</p>}
+              {error && <p role="alert" className="mb-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">{error}</p>}
+              <button type="submit" disabled={isLoading} className="w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:opacity-60">
+                {isLoading ? "Procesando…" : authenticated ? "Aceptar invitación" : "Activar mi cuenta"}
+              </button>
+            </form>
+
+            {!authenticated && (
+              <p className="mt-[22px] text-center text-[14.5px] text-muted">
+                ¿Ya tenés cuenta? <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-[#c5503a]">Iniciar sesión</Link>
+              </p>
+            )}
+          </>
+        ) : (
+          !error && <p className="rounded-xl bg-[#fffaf2] px-4 py-3 text-sm text-muted">Ingresa el código de cinco caracteres que recibiste por correo.</p>
+        )}
+         {(error || initialError) && !preview && <p role="alert" className="mt-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">{error || initialError}</p>}
       </section>
     </main>
   );
