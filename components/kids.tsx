@@ -37,6 +37,25 @@ const avatarTones = [
 ];
 
 type FormErrors = Partial<Record<keyof ChildFormValues, string>>;
+type ParentRelationship = "Mamá" | "Papá" | "Tutor/a";
+type LinkedParent = {
+  id: string;
+  name: string;
+  relationship: ParentRelationship;
+  status: "ACTIVA" | "PENDIENTE";
+};
+type ParentInvitationForm = {
+  name: string;
+  email: string;
+  relationship: ParentRelationship;
+};
+type ParentInvitationErrors = Partial<Record<"name" | "email", string>>;
+
+const emptyParentInvitation = (): ParentInvitationForm => ({
+  name: "",
+  email: "",
+  relationship: "Mamá",
+});
 
 function InitialAvatar({ name, large = false }: { name: string; large?: boolean }) {
   const initial = name.trim().charAt(0).toLocaleUpperCase("es") || "N";
@@ -602,11 +621,227 @@ function LifecycleButton({ child }: { child: Child }) {
   );
 }
 
+function ParentLinkDialog({
+  childName,
+  onClose,
+  onInvite,
+}: {
+  childName: string;
+  onClose: () => void;
+  onInvite: (invitation: ParentInvitationForm) => void;
+}) {
+  const [form, setForm] = useState(emptyParentInvitation);
+  const [errors, setErrors] = useState<ParentInvitationErrors>({});
+  const dialogRef = useRef<HTMLFormElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    nameRef.current?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        "button:not([disabled]), input:not([disabled])",
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors: ParentInvitationErrors = {};
+    if (!form.name.trim()) nextErrors.name = "Ingresa el nombre del padre o madre.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      nextErrors.email = "Ingresa un email válido.";
+    }
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length) {
+      if (nextErrors.name) nameRef.current?.focus();
+      else emailRef.current?.focus();
+      return;
+    }
+
+    onInvite({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      relationship: form.relationship,
+    });
+  }
+
+  return (
+    <div
+      role="presentation"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#3f362e]/45 p-4 sm:p-5"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <form
+        ref={dialogRef}
+        onSubmit={submit}
+        noValidate
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="link-parent-title"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-[480px] overflow-y-auto rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25 sm:max-h-[calc(100dvh-3rem)]"
+      >
+        <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
+          <div>
+            <h2 id="link-parent-title" className="font-display text-lg font-semibold text-ink">
+              Vincular padre
+            </h2>
+            <p className="text-[13px] text-[#a89a8b]">a {childName}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted"
+          >
+            <svg aria-hidden="true" className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </header>
+        <div className="space-y-[18px] p-5 sm:p-[26px]">
+          <div className="flex gap-3 rounded-[14px] bg-[#e3ecfb] p-4 text-[13.5px] leading-relaxed text-[#3f5694]">
+            <svg aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#4e72c8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4M12 8h.01" />
+            </svg>
+            Le enviaremos un correo con un código para que active su cuenta. Solo verá el feed de {childName}.
+          </div>
+
+          <label className="block" htmlFor="link-parent-name">
+            <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">NOMBRE DEL PADRE/MADRE</span>
+            <input
+              ref={nameRef}
+              id="link-parent-name"
+              value={form.name}
+              onChange={(event) => {
+                setForm((current) => ({ ...current, name: event.target.value }));
+                setErrors((current) => ({ ...current, name: undefined }));
+              }}
+              placeholder="Ej. Diego Fernández"
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? "link-parent-name-error" : undefined}
+              className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+            />
+            {errors.name && (
+              <p id="link-parent-name-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">
+                {errors.name}
+              </p>
+            )}
+          </label>
+
+          <label className="block" htmlFor="link-parent-email">
+            <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">EMAIL</span>
+            <input
+              ref={emailRef}
+              id="link-parent-email"
+              type="email"
+              value={form.email}
+              onChange={(event) => {
+                setForm((current) => ({ ...current, email: event.target.value }));
+                setErrors((current) => ({ ...current, email: undefined }));
+              }}
+              placeholder="correo@ejemplo.com"
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "link-parent-email-error" : undefined}
+              className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+            />
+            {errors.email && (
+              <p id="link-parent-email-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">
+                {errors.email}
+              </p>
+            )}
+          </label>
+
+          <fieldset>
+            <legend className="mb-2.5 text-xs font-extrabold tracking-[0.07em] text-muted">PARENTESCO</legend>
+            <div className="flex gap-2">
+              {(["Mamá", "Papá", "Tutor/a"] as ParentRelationship[]).map((relationship) => {
+                const selected = form.relationship === relationship;
+                return (
+                  <button
+                    key={relationship}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setForm((current) => ({ ...current, relationship }))}
+                    className={`min-w-0 flex-1 rounded-full border-[1.5px] px-1 py-[11px] text-sm font-extrabold ${selected ? "border-[#9fb8ec] bg-[#ccd8f4] text-[#4e72c8]" : "border-line bg-surface text-[#6e6359]"}`}
+                  >
+                    {relationship}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <div className="rounded-2xl border-[1.5px] border-dashed border-[#e6d08a] bg-[#fbf1d6] p-[18px] text-center">
+            <p className="text-xs font-extrabold tracking-[0.07em] text-[#a88526]">CÓDIGO DE INVITACIÓN</p>
+            <p className="mt-2 font-display text-[34px] font-semibold tracking-[7px] text-[#8a7234]">7K4P9</p>
+            <p className="mt-1.5 text-[13px] text-[#a88526]">Vence en 7 días</p>
+          </div>
+
+          <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25">
+            <svg aria-hidden="true" className="size-[19px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m22 2-7 20-4-9-9-4z" />
+              <path d="M22 2 11 13" />
+            </svg>
+            Enviar invitación
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function ChildProfile({ child }: { child: Child }) {
+  const [linkedParents, setLinkedParents] = useState<LinkedParent[]>([]);
+  const [isParentDialogOpen, setIsParentDialogOpen] = useState(false);
+  const parentLinkTriggerRef = useRef<HTMLButtonElement>(null);
   const medicalSummary = [
     child.allergyTags.length ? `Alergias: ${child.allergyTags.join(", ")}.` : "Sin alergias registradas.",
     child.medicalNotes || "Sin notas médicas.",
   ].join(" ");
+
+  function closeParentDialog() {
+    setIsParentDialogOpen(false);
+    requestAnimationFrame(() => parentLinkTriggerRef.current?.focus());
+  }
+
+  function addLinkedParent(invitation: ParentInvitationForm) {
+    setLinkedParents((current) => [
+      ...current,
+      {
+        id: crypto.randomUUID(),
+        name: invitation.name,
+        relationship: invitation.relationship,
+        status: "PENDIENTE",
+      },
+    ]);
+    closeParentDialog();
+  }
 
   return (
     <section className="mx-auto w-full max-w-[820px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20">
@@ -655,8 +890,41 @@ export function ChildProfile({ child }: { child: Child }) {
             Editar datos
           </Link>
           <LifecycleButton child={child} />
+          <section className="rounded-2xl border border-line bg-surface p-4 sm:p-[18px]">
+            <h2 className="mb-3.5 text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">PADRES VINCULADOS</h2>
+            <div className="flex flex-col gap-3.5">
+              {linkedParents.length ? (
+                linkedParents.map((parent) => (
+                  <div key={parent.id} className="flex items-center gap-3">
+                    <InitialAvatar name={parent.name} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14.5px] font-extrabold text-ink">{parent.name}</p>
+                      <p className="text-[12.5px] text-[#a89a8b]">{parent.relationship} · invitación enviada</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-[#f7e7a6] px-2 py-1 text-[10.5px] font-extrabold text-[#9a7b1e]">{parent.status}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted">Todavía no hay padres vinculados.</p>
+              )}
+              <button
+                ref={parentLinkTriggerRef}
+                type="button"
+                onClick={() => setIsParentDialogOpen(true)}
+                className="flex items-center gap-3 pt-2 text-left"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-[#d8cbba] text-[#b0a290]">
+                  <Icon name="plus" className="size-[18px]" />
+                </span>
+                <span className="text-[14.5px] font-extrabold text-[#c5503a]">Vincular otro padre</span>
+              </button>
+            </div>
+          </section>
         </aside>
       </div>
+      {isParentDialogOpen && (
+        <ParentLinkDialog childName={child.fullName} onClose={closeParentDialog} onInvite={addLinkedParent} />
+      )}
     </section>
   );
 }
