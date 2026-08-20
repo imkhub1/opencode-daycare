@@ -54,15 +54,15 @@ Open [http://localhost:3000](http://localhost:3000). Unauthenticated requests ar
 
 Fill `.env.local` with values from the Supabase project and the email provider before using authenticated or invitation flows:
 
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL used by browser and server clients. |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key used by browser and server clients. |
-| `RESEND_API_KEY` | Server-only Resend API key for invitation emails. |
-| `RESEND_FROM_EMAIL` | Verified sender address for invitation emails. |
-| `RESEND_REPLY_TO` | Optional reply-to address. |
-| `PARENT_INVITATION_CODE_KEY` | 64 hexadecimal characters used to encrypt invitation tokens. Generate one with `openssl rand -hex 32`. |
-| `NEXT_PUBLIC_APP_URL` | Public application origin used to build activation links, for example `http://localhost:3000` locally. |
+| Variable                               | Purpose                                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Supabase project URL used by browser and server clients.                                               |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key used by browser and server clients.                                           |
+| `RESEND_API_KEY`                       | Server-only Resend API key for invitation emails.                                                      |
+| `RESEND_FROM_EMAIL`                    | Verified sender address for invitation emails.                                                         |
+| `RESEND_REPLY_TO`                      | Optional reply-to address.                                                                             |
+| `PARENT_INVITATION_CODE_KEY`           | 64 hexadecimal characters used to encrypt invitation tokens. Generate one with `openssl rand -hex 32`. |
+| `NEXT_PUBLIC_APP_URL`                  | Public application origin used to build activation links, for example `http://localhost:3000` locally. |
 
 `SUPABASE_DB_PASSWORD` is only for Supabase CLI operations. It is not used by the Next.js runtime and must not be exposed to the browser. Do not commit `.env.local` or any real credentials.
 
@@ -153,24 +153,45 @@ codegraph status
 
 When application code changes, refresh the CodeGraph index with `codegraph sync`. When the database changes, add or review a migration, inspect the migration history, run the relevant Supabase advisors, and apply it through the project-approved Supabase MCP migration workflow. Do not use the MCP `execute_sql` tool for persistent schema changes.
 
+### Schedule the Database Audit
+
+The read-only OpenDayCare database security audit can be scheduled locally or through an external worker. See [`docs/db-audit-scheduling.md`](docs/db-audit-scheduling.md) for macOS `launchd`, macOS/Linux cron, Windows Task Scheduler and PowerShell, Supabase Cron, and GitHub Actions examples.
+
+The project command is loaded after restarting OpenCode. The supported non-interactive invocation is:
+
+```bash
+opencode run --command db-audit --dir "/path/to/06-open-daycare"
+```
+
+`opencode run /db-audit` is not equivalent in the installed CLI; it sends `/db-audit` as plain prompt text. Scheduled execution must use the same user with non-interactive provider and Supabase MCP authentication already available. The audit never applies corrections; findings remain subject to the project's explicit edit and migration confirmation workflow.
+
+The macOS `launchd` job is currently disabled temporarily. No automatic audit will run until it is explicitly re-enabled. The source plist remains at `ops/launchd/com.opendaycare.db-audit.plist`, and the scheduling examples remain available in the runbook.
+
+To re-enable the installed per-user LaunchAgent:
+
+```bash
+launchctl enable "gui/$(id -u)/com.opendaycare.db-audit"
+launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/com.opendaycare.db-audit.plist"
+```
+
 ## Tools Used in This Project
 
-| Tool | Role |
-| --- | --- |
-| Next.js 16.3 | App Router runtime, server rendering, route handlers, server actions, and `proxy.ts`. |
-| React 19 | Client components and interactive UI. |
-| TypeScript | Static type checking with `npx tsc --noEmit`. |
-| Tailwind CSS 4 | Application styling and responsive layouts. |
-| Supabase Auth, Postgres, and SSR | Authentication, database access, RLS-backed data, and session cookies. |
-| Supabase CLI | Account login, organization/project access checks, linking, and migration inspection. |
-| Supabase MCP | OpenCode access to project documentation, schema inspection, advisors, and reviewed database migrations. |
-| Resend | Parent invitation email delivery. |
-| OpenCode | AI-assisted development environment and MCP orchestration. |
-| Context7 MCP | Current library and framework documentation for implementation and verification. |
-| CodeGraph | Local code index and symbol/call-graph exploration in `.codegraph/`. |
-| Playwright MCP | Browser-based route, interaction, responsive, and visual verification. |
-| ESLint | JavaScript, TypeScript, and Next.js linting. |
-| Git | Source control and review of migrations and application changes. |
+| Tool                             | Role                                                                                                     |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Next.js 16.3                     | App Router runtime, server rendering, route handlers, server actions, and `proxy.ts`.                    |
+| React 19                         | Client components and interactive UI.                                                                    |
+| TypeScript                       | Static type checking with `npx tsc --noEmit`.                                                            |
+| Tailwind CSS 4                   | Application styling and responsive layouts.                                                              |
+| Supabase Auth, Postgres, and SSR | Authentication, database access, RLS-backed data, and session cookies.                                   |
+| Supabase CLI                     | Account login, organization/project access checks, linking, and migration inspection.                    |
+| Supabase MCP                     | OpenCode access to project documentation, schema inspection, advisors, and reviewed database migrations. |
+| Resend                           | Parent invitation email delivery.                                                                        |
+| OpenCode                         | AI-assisted development environment and MCP orchestration.                                               |
+| Context7 MCP                     | Current library and framework documentation for implementation and verification.                         |
+| CodeGraph                        | Local code index and symbol/call-graph exploration in `.codegraph/`.                                     |
+| Playwright MCP                   | Browser-based route, interaction, responsive, and visual verification.                                   |
+| ESLint                           | JavaScript, TypeScript, and Next.js linting.                                                             |
+| Git                              | Source control and review of migrations and application changes.                                         |
 
 OpenCode skills are stored in `.agents/skills/`. The project uses the Supabase and Supabase Postgres best-practices skills for database work, plus the spec and spec-implementation workflows for feature planning and delivery. Playwright artifacts belong in the gitignored `.playwright-mcp/` directory.
 
