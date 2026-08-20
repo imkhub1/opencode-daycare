@@ -11,7 +11,7 @@ const roleLabels = {
 export function SidebarUser() {
   const profile = useAppProfile();
   const name = profile?.fullName.trim() || "Usuario";
-  const role = profile ? roleLabels[profile.role] : "Usuario";
+  const role = profile?.role ? roleLabels[profile.role] : "Cuenta";
 
   return (
     <>

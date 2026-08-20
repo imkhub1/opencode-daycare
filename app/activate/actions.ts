@@ -3,6 +3,8 @@
 import { createClient } from "@/utils/supabase/server";
 
 const GENERIC_ERROR = "El código no es válido o ya no está disponible.";
+const DIRECT_ACTIVATION_ERROR =
+  "La cuenta no pudo activarse directamente. Desactiva la confirmación por email en Supabase y vuelve a intentarlo.";
 
 export type ActivationPreview = {
   childName: string;
@@ -90,21 +92,10 @@ export async function signUpParentAccount({
   }
 
   const supabase = await createClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (!appUrl) return { ok: false as const, message: GENERIC_ERROR };
-
-  let callbackUrl: string;
-  try {
-    callbackUrl = `${new URL(appUrl).origin}/auth/callback?invite=${encodeURIComponent(normalizedToken)}`;
-  } catch {
-    return { ok: false as const, message: GENERIC_ERROR };
-  }
-
   const { data, error } = await supabase.auth.signUp({
     email: normalizedEmail,
     password,
     options: {
-      emailRedirectTo: callbackUrl,
       data: {
         invite_token: normalizedToken,
         display_name: normalizedName,
@@ -112,8 +103,25 @@ export async function signUpParentAccount({
     },
   });
 
-  if (error || data.session) {
+  if (error || !data.user || !data.session) {
     if (data.session) await supabase.auth.signOut();
+    return {
+      ok: false as const,
+      message: error ? GENERIC_ERROR : DIRECT_ACTIVATION_ERROR,
+    };
+  }
+
+  const { data: acceptance, error: acceptanceError } = await supabase.rpc(
+    "accept_parent_invitation",
+    {
+      p_token: normalizedToken,
+      p_full_name: normalizedName,
+    },
+  );
+
+  await supabase.auth.signOut();
+
+  if (acceptanceError || !acceptance?.[0]) {
     return { ok: false as const, message: GENERIC_ERROR };
   }
 

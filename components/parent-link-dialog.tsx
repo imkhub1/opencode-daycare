@@ -9,17 +9,26 @@ import {
 
 import {
   createParentInvitation,
+  editParentInvitation,
   type ParentInvitationActionState,
   type ParentInvitationFormValues,
 } from "@/app/kids/parent-invitations/actions";
 
 const INITIAL_STATE: ParentInvitationActionState = { success: false };
 const RELATIONSHIPS = ["Mamá", "Papá", "Tutor/a"] as const;
+const RELATIONSHIP_VALUES = {
+  Mamá: "mother",
+  Papá: "father",
+  "Tutor/a": "guardian",
+} as const;
 
 type ParentLinkDialogProps = {
   childId: string;
   childName: string;
   onClose: () => void;
+  initialValues?: ParentInvitationFormValues;
+  invitationId?: string;
+  edit?: boolean;
 };
 
 function emptyForm(): ParentInvitationFormValues {
@@ -30,12 +39,18 @@ export function ParentLinkDialog({
   childId,
   childName,
   onClose,
+  initialValues,
+  invitationId,
+  edit = false,
 }: ParentLinkDialogProps) {
+  const action = edit
+    ? editParentInvitation.bind(null, invitationId ?? "", childId)
+    : createParentInvitation;
   const [state, formAction, pending] = useActionState(
-    createParentInvitation,
+    action,
     INITIAL_STATE,
   );
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(() => initialValues ?? emptyForm());
   const dialogRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -72,6 +87,10 @@ export function ParentLinkDialog({
   const errors = state.errors ?? {};
   const success = state.success && Boolean(state.token);
 
+  useEffect(() => {
+    if (edit && state.success) onClose();
+  }, [edit, onClose, state.success]);
+
   return (
     <div
       role="presentation"
@@ -91,11 +110,15 @@ export function ParentLinkDialog({
       >
         <input type="hidden" name="childId" value={childId} />
         <input type="hidden" name="invitationId" value={state.invitationId ?? ""} />
-        <input type="hidden" name="relationship" value={form.relationship} />
+        <input
+          type="hidden"
+          name="relationship"
+          value={RELATIONSHIP_VALUES[form.relationship]}
+        />
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
           <div>
             <h2 id="link-parent-title" className="font-display text-lg font-semibold text-ink">
-              Vincular padre
+              {edit ? "Editar invitación" : "Vincular padre"}
             </h2>
             <p className="text-[13px] text-[#a89a8b]">a {childName}</p>
           </div>
@@ -161,7 +184,9 @@ export function ParentLinkDialog({
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
-              Le enviaremos un correo con un código para que active su cuenta. Solo verá el feed de {childName}.
+              {edit
+                ? "Actualiza los datos del padre. Deberás reenviar la invitación para que reciba la información nueva."
+                : `Le enviaremos un correo con un código para que active su cuenta. Solo verá el feed de ${childName}.`}
             </div>
 
             <label className="block" htmlFor="link-parent-name">
@@ -227,7 +252,7 @@ export function ParentLinkDialog({
               type="submit"
               className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
             >
-              {state.invitationId ? "Reintentar envío" : "Enviar invitación"}
+              {edit ? "Guardar cambios" : state.invitationId ? "Reintentar envío" : "Enviar invitación"}
             </button>
           </div>
         )}

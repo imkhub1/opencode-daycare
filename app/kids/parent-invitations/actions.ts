@@ -22,6 +22,8 @@ const GENERIC_DELIVERY_ERROR =
   "La invitación se creó, pero no se pudo enviar el correo. Puedes reintentarlo.";
 const GENERIC_CANCELLATION_ERROR =
   "No se pudo cancelar la invitación. Inténtalo nuevamente.";
+const GENERIC_UPDATE_ERROR =
+  "No se pudo actualizar la invitación. Inténtalo nuevamente.";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -117,13 +119,17 @@ function relationshipFromLabel(value: string): ParentInvitationRelationship | nu
 }
 
 function relationshipToLabel(value: string): ParentRelationship {
+  if (value === "Mamá" || value === "Papá" || value === "Tutor/a") {
+    return value;
+  }
+
   return (
     {
       mother: "Mamá",
       father: "Papá",
       guardian: "Tutor/a",
     } as Record<string, ParentRelationship>
-  )[value] ?? "Mamá";
+  )[value] ?? (value as ParentRelationship);
 }
 
 function readFormValues(formData: FormData): ParentInvitationFormValues {
@@ -229,7 +235,6 @@ async function deliverInvitation(
     const token = decryptParentInvitationToken(payload.token_ciphertext);
     const email = buildParentInvitationEmail({
       fullName: payload.full_name,
-      email: payload.email,
       childName: payload.child_name,
       daycareName: payload.daycare_name,
       relationship: payload.relationship,
@@ -390,6 +395,49 @@ export async function retryParentInvitation(
     return { success: true, invitationId, token: delivery.token ?? undefined };
   } catch {
     return { success: false, message: GENERIC_DELIVERY_ERROR, invitationId };
+  }
+}
+
+export async function editParentInvitation(
+  invitationId: string,
+  childId: string,
+  _previousState: ParentInvitationActionState,
+  formData: FormData,
+): Promise<ParentInvitationActionState> {
+  const values = readFormValues(formData);
+  const validation = validateForm(values);
+
+  if (!UUID_PATTERN.test(invitationId) || !UUID_PATTERN.test(childId)) {
+    return { success: false, message: GENERIC_UPDATE_ERROR, values };
+  }
+
+  if (!validation.data) {
+    return {
+      success: false,
+      message: "Revisa los campos indicados.",
+      errors: validation.errors,
+      values,
+    };
+  }
+
+  try {
+    const supabase = await createAuthorizedClient();
+    const { error } = await supabase.rpc("update_parent_invitation", {
+      p_invitation_id: invitationId,
+      p_full_name: validation.data.name,
+      p_email: validation.data.email,
+      p_relationship: validation.data.relationship,
+    });
+
+    if (error) {
+      return { success: false, message: GENERIC_UPDATE_ERROR, values };
+    }
+
+    revalidatePath(`/kids/${childId}`);
+    revalidatePath("/kids");
+    return { success: true };
+  } catch {
+    return { success: false, message: GENERIC_UPDATE_ERROR, values };
   }
 }
 
