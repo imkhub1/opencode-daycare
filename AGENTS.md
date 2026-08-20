@@ -52,6 +52,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `opencode.json` configures the local Playwright MCP and the Supabase MCP scoped to `buhfslxahextimvdfveh`.
 - Keep Playwright artifacts in the gitignored `.playwright-mcp/` directory.
 - `.codegraph/` is the generated local CodeGraph index. Use `codegraph status` to inspect it and `codegraph sync` after source changes; do not edit the index manually.
+- `.opencode/commands/db-audit.md` invokes the read-only `db-security-auditor` subagent. Use `opencode run --command db-audit --dir <repository>`; do not use `opencode run /db-audit`, which is treated as plain prompt text by the installed CLI.
+- `scripts/db-audit.mjs` is the scheduler launcher. It must remain read-only, must not receive `--auto`, and must preserve the same user's OpenCode/MCP authentication, lock, timeout, and result-marker behavior.
+- `docs/db-audit-scheduling.md` documents cron, Windows Task Scheduler/PowerShell, `launchd`, Supabase Cron, and GitHub Actions examples. Supabase Cron and GitHub Actions are documentation-only; no remote Cron job or GitHub workflow is active.
+- `ops/launchd/com.opendaycare.db-audit.plist` is machine-specific. The installed macOS LaunchAgent is currently disabled intentionally; do not bootstrap or kickstart it without an explicit user request. If re-enabled, it runs Fridays at 18:00 in the local macOS timezone and writes logs under `~/Library/Logs/OpenDayCare/`.
 - `/spec` from `.agents/skills/spec/` is a manual, no-code workflow that clarifies a feature and writes a sequential `Draft` spec in `specs/`.
 - `/spec-impl` from `.agents/skills/spec-impl/` only implements an `Approved` spec. It uses `specs/.spec-config.yml` to decide whether to create a `spec-NN-slug` branch, with `AutoCreateBranch: true` currently enabled, pauses after each implementation step, and never commits automatically.
 
