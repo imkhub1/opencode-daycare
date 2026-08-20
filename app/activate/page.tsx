@@ -1,4 +1,3 @@
-import { getActivationPreview } from "@/app/activate/actions";
 import { ActivateScreen } from "@/components/auth";
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentAppProfile } from "@/utils/supabase/profile";
@@ -9,7 +8,6 @@ export default async function ActivatePage({
   searchParams: Promise<{ code?: string }>;
 }) {
   const { code = "" } = await searchParams;
-  const preview = code ? await getActivationPreview(code) : null;
   const supabase = await createClient();
   const {
     data: { user },
@@ -17,19 +15,15 @@ export default async function ActivatePage({
   const profile = await getCurrentAppProfile();
   const authenticatedParent = Boolean(
     user &&
-      preview &&
       profile?.role === "parent" &&
-      (profile.status === "pending" || profile.status === "active") &&
-      user.email?.toLowerCase() === preview.email.toLowerCase(),
+      (profile.status === "pending" || profile.status === "active"),
   );
-  const blockedSession = Boolean(user && preview && !authenticatedParent);
 
   return (
     <ActivateScreen
       token={code}
-      preview={preview}
       authenticated={authenticatedParent}
-      blockedSession={blockedSession}
+      blockedSession={Boolean(user && !authenticatedParent)}
     />
   );
 }
