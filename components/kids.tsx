@@ -133,15 +133,13 @@ function validateLocally(values: ChildFormValues): FormErrors {
   if (!birthDate) errors.birthDate = "Usa una fecha válida en formato DD/MM/AAAA.";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(values.enrolledAt)) {
     errors.enrolledAt = "Selecciona una fecha de inscripción válida.";
+  } else if (values.enrolledAt > localToday()) {
+    errors.enrolledAt = "La inscripción no puede ser posterior a hoy.";
   }
   if (!values.roomId) errors.roomId = "Selecciona una sala válida.";
 
-  if (birthDate && values.enrolledAt) {
-    if (birthDate >= values.enrolledAt) {
-      errors.birthDate = "El nacimiento debe ser anterior a la inscripción.";
-    } else if (values.enrolledAt > localToday()) {
-      errors.enrolledAt = "La inscripción no puede ser posterior a hoy.";
-    }
+  if (birthDate && values.enrolledAt && birthDate >= values.enrolledAt) {
+    errors.birthDate = "El nacimiento debe ser anterior a la inscripción.";
   }
 
   return errors;
@@ -178,7 +176,7 @@ function ChildFormFields({
 
   return (
     <div className="space-y-[18px]">
-      <label className="block">
+      <label className="block" htmlFor={`${idPrefix}-full-name`}>
         <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
           NOMBRE COMPLETO
         </span>
@@ -202,11 +200,12 @@ function ChildFormFields({
       </label>
 
       <div className="grid gap-[18px] sm:grid-cols-2">
-        <label className="block">
+        <label className="block" htmlFor={`${idPrefix}-birth-date`}>
           <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
             FECHA DE NACIMIENTO
           </span>
           <input
+            id={`${idPrefix}-birth-date`}
             name="birthDate"
             required
             inputMode="numeric"
@@ -224,11 +223,12 @@ function ChildFormFields({
           )}
         </label>
 
-        <label className="block">
+        <label className="block" htmlFor={`${idPrefix}-enrolled-at`}>
           <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
             FECHA DE INSCRIPCIÓN
           </span>
           <input
+            id={`${idPrefix}-enrolled-at`}
             type="date"
             name="enrolledAt"
             required
@@ -247,9 +247,10 @@ function ChildFormFields({
         </label>
       </div>
 
-      <label className="block">
+      <label className="block" htmlFor={`${idPrefix}-room-id`}>
         <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">SALA</span>
         <select
+          id={`${idPrefix}-room-id`}
           name="roomId"
           required
           aria-invalid={Boolean(errors.roomId)}
@@ -271,11 +272,12 @@ function ChildFormFields({
         )}
       </label>
 
-      <label className="block">
+      <label className="block" htmlFor={`${idPrefix}-allergies`}>
         <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
           ALERGIAS (ETIQUETAS)
         </span>
         <input
+          id={`${idPrefix}-allergies`}
           name="allergies"
           value={values.allergies}
           onChange={(event) => update("allergies", event.target.value)}
@@ -284,11 +286,12 @@ function ChildFormFields({
         />
       </label>
 
-      <label className="block">
+      <label className="block" htmlFor={`${idPrefix}-medical-notes`}>
         <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
           NOTAS MÉDICAS
         </span>
         <textarea
+          id={`${idPrefix}-medical-notes`}
           name="medicalNotes"
           value={values.medicalNotes}
           onChange={(event) => update("medicalNotes", event.target.value)}
@@ -297,8 +300,9 @@ function ChildFormFields({
         />
       </label>
 
-      <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-line bg-white px-4 py-3.5">
+      <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-line bg-white px-4 py-3.5" htmlFor={`${idPrefix}-photo-consent`}>
         <input
+          id={`${idPrefix}-photo-consent`}
           type="checkbox"
           name="photoConsent"
           value="true"
@@ -320,9 +324,15 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
 
   useEffect(() => {
     dialogRef.current?.querySelector<HTMLInputElement>("input[name='fullName']")?.focus();
+  }, []);
 
+  useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !pending) onClose();
+      if (event.key === "Escape" && !pending) {
+        event.preventDefault();
+        onClose();
+        return;
+      }
       if (event.key !== "Tab") return;
 
       const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
@@ -358,6 +368,7 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
 
   return (
     <div
+      role="presentation"
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#3f362e]/45 p-4 sm:p-5"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !pending) onClose();
@@ -816,7 +827,7 @@ export function ChildProfile({
                           {invitation.deliveryStatus === "failed" && (
                             <div className="mr-auto self-center">
                               <p className="text-[11px] font-bold text-[#c5413a]">Error de envío</p>
-                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {new Date(invitation.expiresAt).toLocaleDateString("es-AR")}</p>
+                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {isoToDisplayDate(invitation.expiresAt.slice(0, 10))}</p>
                             </div>
                           )}
                           {invitation.deliveryStatus === "failed" && child.status === "active" && (
@@ -825,7 +836,7 @@ export function ChildProfile({
                           {invitation.deliveryStatus === "sent" && (
                             <div className="mr-auto self-center">
                               <p className="text-[11px] font-bold text-[#3e8b62]">Correo enviado</p>
-                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {new Date(invitation.expiresAt).toLocaleDateString("es-AR")}</p>
+                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {isoToDisplayDate(invitation.expiresAt.slice(0, 10))}</p>
                             </div>
                           )}
                           {child.status === "active" && (

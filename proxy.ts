@@ -11,7 +11,9 @@ function redirectWithCookies(
   const response = NextResponse.redirect(new URL(pathname, request.url));
 
   // Keep refreshed Supabase cookies and their anti-cache headers on redirects.
-  sessionResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+  sessionResponse.cookies
+    .getAll()
+    .forEach((cookie) => response.cookies.set(cookie));
   ["cache-control", "expires", "pragma"].forEach((name) => {
     const value = sessionResponse.headers.get(name);
     if (value) response.headers.set(name, value);
@@ -23,7 +25,10 @@ function redirectWithCookies(
 export async function proxy(request: NextRequest) {
   const { claims, response } = await updateSession(request);
   const isPublicRoute = publicRoutes.has(request.nextUrl.pathname);
-  const invite = request.nextUrl.searchParams.get("invite")?.trim().toUpperCase();
+  const invite = request.nextUrl.searchParams
+    .get("invite")
+    ?.trim()
+    .toUpperCase();
   const hasValidInvite = Boolean(
     invite && /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/.test(invite),
   );
@@ -49,7 +54,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|.*\\.(?:png|svg|ico)$).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|.*\\.(?:png|svg|ico)$).*)"],
 };

@@ -52,9 +52,22 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `opencode.json` configures the local Playwright MCP and the Supabase MCP scoped to `buhfslxahextimvdfveh`.
 - Keep Playwright artifacts in the gitignored `.playwright-mcp/` directory.
 - `.codegraph/` is the generated local CodeGraph index. Use `codegraph status` to inspect it and `codegraph sync` after source changes; do not edit the index manually.
+- `.opencode/commands/db-audit.md` invokes the read-only `db-security-auditor` subagent. Use `opencode run --command db-audit --dir <repository>`; do not use `opencode run /db-audit`, which is treated as plain prompt text by the installed CLI.
+- `scripts/db-audit.mjs` is the scheduler launcher. It must remain read-only, must not receive `--auto`, and must preserve the same user's OpenCode/MCP authentication, lock, timeout, and result-marker behavior.
+- `docs/db-audit-scheduling.md` documents cron, Windows Task Scheduler/PowerShell, `launchd`, Supabase Cron, and GitHub Actions examples. Supabase Cron and GitHub Actions are documentation-only; no remote Cron job or GitHub workflow is active.
+- `ops/launchd/com.opendaycare.db-audit.plist` is machine-specific. The installed macOS LaunchAgent is currently disabled intentionally; do not bootstrap or kickstart it without an explicit user request. If re-enabled, it runs Fridays at 18:00 in the local macOS timezone and writes logs under `~/Library/Logs/OpenDayCare/`.
 - `/spec` from `.agents/skills/spec/` is a manual, no-code workflow that clarifies a feature and writes a sequential `Draft` spec in `specs/`.
 - `/spec-impl` from `.agents/skills/spec-impl/` only implements an `Approved` spec. It uses `specs/.spec-config.yml` to decide whether to create a `spec-NN-slug` branch, with `AutoCreateBranch: true` currently enabled, pauses after each implementation step, and never commits automatically.
-- `spec-verifier` in `.opencode/agents/spec-verifier.md` verifies acceptance criteria using build tools, current Next.js guidance, Playwright browser evidence, and visual comparisons. It may edit only `specs/*.md`.
+
+### Project Agents and Subagents
+
+The following project-scoped subagents are registered in `.opencode/agents/` and can be invoked with their `@name` mention:
+
+- `@accessibility-checker` in `.opencode/agents/accessibility-checker.md`: audits and minimally fixes explicitly selected files against WCAG 2.2 Level AA.
+- `@db-migrator` in `.opencode/agents/db-migrator.md`: reconciles local and remote Supabase migration history, creates and applies approved migrations, and delegates database work for `/spec-impl`.
+- `@db-security-auditor` in `.opencode/agents/db-security-auditor.md`: manually audits Supabase/Postgres RLS, privileges, functions, views, and parent/child/daycare isolation; local and remote corrections require explicit confirmation, and it is not part of `/spec-impl`.
+- `@react-best-practices` in `.opencode/agents/react-best-practices.md`: reviews and improves explicitly selected React files using current React and Next.js practices while preserving behavior.
+- `@spec-verifier` in `.opencode/agents/spec-verifier.md`: verifies spec acceptance criteria with code, build checks, current Next.js guidance, and Playwright evidence; it may edit only `specs/*.md`.
 
 ## Workflow
 

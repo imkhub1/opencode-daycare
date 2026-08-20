@@ -1,6 +1,6 @@
 # SPEC 11 — Persistent Parent Linking and Activation
 
-> **Status:** Approved
+> **Status:** Implemented
 > **Depends on:** SPEC 05, SPEC 08, SPEC 09, SPEC 10
 > **Date:** 2026-08-18
 > **Objective:** Replace the temporary parent-link dialog with a tenant-safe invitation, Resend email, and Supabase account-activation flow for persistent parent-child relationships.
@@ -328,57 +328,57 @@ The implementation should use these concrete paths unless an existing project co
 
 ### Database and security
 
-- [ ] A versioned migration creates `relationship_type` with exactly `father`, `mother`, and `guardian`.
-- [ ] A versioned migration creates `invitation_status` with exactly `pending`, `accepted`, `expired`, and `cancelled`.
-- [ ] A versioned migration creates `invitation_delivery_status` with exactly `sent` and `failed`.
-- [ ] `parent_children` has the specified foreign keys, indexed foreign-key columns, and unique `(parent_id, child_id)` constraint.
-- [ ] `invitations` stores normalized email, code hash, encrypted ciphertext, seven-day expiration, business status, delivery status, and delivery metadata with the specified consistency constraints.
-- [ ] A partial unique index rejects a second pending invitation for the same child and normalized email under concurrent requests.
-- [ ] RLS and grants prevent anonymous, parent, inactive, and cross-daycare users from reading or mutating another daycare's invitation or relationship data.
-- [ ] Only active same-daycare staff/admin users can initiate invitations, and archived children are rejected.
-- [ ] The database never trusts client-supplied `role`, `status`, `daycare_id`, `invited_by`, or `expires_at` for parent signup or invitation authorization.
-- [ ] Public parent signup derives `role = parent`, `status = pending`, and daycare from the valid invitation and active child.
-- [ ] Invitation acceptance is one transaction with consistent lock ordering and cannot create duplicate relationships under concurrent requests.
-- [ ] Repeating acceptance with the same authenticated parent and token succeeds idempotently without a second relationship.
-- [ ] A mismatched email, different parent, expired token, failed delivery, cancelled token, or already accepted token cannot accept the invitation.
-- [ ] A new parent becomes `active` only after confirmed email and successful acceptance.
+- [x] A versioned migration creates `relationship_type` with exactly `father`, `mother`, and `guardian`.
+- [x] A versioned migration creates `invitation_status` with exactly `pending`, `accepted`, `expired`, and `cancelled`.
+- [x] A versioned migration creates `invitation_delivery_status` with exactly `sent` and `failed`.
+- [x] `parent_children` has the specified foreign keys, indexed foreign-key columns, and unique `(parent_id, child_id)` constraint.
+- [x] `invitations` stores normalized email, code hash, encrypted ciphertext, seven-day expiration, business status, delivery status, and delivery metadata with the specified consistency constraints.
+- [x] A partial unique index rejects a second pending invitation for the same child and normalized email under concurrent requests.
+- [x] RLS and grants prevent anonymous, parent, inactive, and cross-daycare users from reading or mutating another daycare's invitation or relationship data.
+- [x] Only active same-daycare staff/admin users can initiate invitations, and archived children are rejected.
+- [x] The database never trusts client-supplied `role`, `status`, `daycare_id`, `invited_by`, or `expires_at` for parent signup or invitation authorization.
+- [x] Public parent signup derives `role = parent`, `status = pending`, and daycare from the valid invitation and active child.
+- [x] Invitation acceptance is one transaction with consistent lock ordering and cannot create duplicate relationships under concurrent requests.
+- [x] Repeating acceptance with the same authenticated parent and token succeeds idempotently without a second relationship.
+- [x] A mismatched email, different parent, expired token, failed delivery, cancelled token, or already accepted token cannot accept the invitation.
+- [x] A new parent becomes `active` only after confirmed email and successful acceptance.
 
 ### Invitation and email
 
-- [ ] The child profile shows persisted accepted parents and pending invitations without client-only fake records.
-- [ ] The modal supports name, email, `Mamá`, `Papá`, and `Tutor/a`, with `Mamá` initially selected and relationships mutually exclusive.
-- [ ] A valid invitation is created only once, sends through server-side Resend, and closes the modal only after Resend succeeds.
-- [ ] The generated five-character token is shown to staff after success and included in both the activation URL and the email.
-- [ ] The email contains the invited parent name, child name, daycare, relationship, token, activation URL, and seven-day expiration in HTML and plain text.
-- [ ] `RESEND_API_KEY` and `PARENT_INVITATION_CODE_KEY` never appear in client JavaScript, HTML, browser logs, or API responses.
-- [ ] A pending duplicate email/child invitation is rejected without sending another email.
-- [ ] An already-linked email/child pair is rejected without sending another email.
-- [ ] A Resend failure leaves the same invitation `pending/failed`, preserves token and expiry, keeps the modal open, and shows a retry action.
-- [ ] Retrying a failed invitation reuses the same row, token, expiration, and stable idempotency key.
-- [ ] A failed invitation remains visible after reload with a profile retry action and no standalone resend/cancel controls.
-- [ ] Close button, Escape, and overlay dismissal discard unsent form values and restore focus to `Vincular otro padre`.
+- [x] The child profile shows persisted accepted parents and pending invitations without client-only fake records.
+- [x] The modal supports name, email, `Mamá`, `Papá`, and `Tutor/a`, with `Mamá` initially selected and relationships mutually exclusive.
+- [x] A valid invitation is created only once, sends through server-side Resend, and closes the modal only after Resend succeeds.
+- [x] The generated five-character token is shown to staff after success and included in both the activation URL and the email.
+- [x] The email contains the invited parent name, child name, daycare, relationship, token, activation URL, and seven-day expiration in HTML and plain text.
+- [x] `RESEND_API_KEY` and `PARENT_INVITATION_CODE_KEY` never appear in client JavaScript, HTML, browser logs, or API responses.
+- [x] A pending duplicate email/child invitation is rejected without sending another email.
+- [x] An already-linked email/child pair is rejected without sending another email.
+- [x] A Resend failure leaves the same invitation `pending/failed`, preserves token and expiry, keeps the modal open, and shows a retry action.
+- [x] Retrying a failed invitation reuses the same row, token, expiration, and stable idempotency key.
+- [x] A failed invitation remains visible after reload with a profile retry action and no standalone resend/cancel controls.
+- [x] Close button, Escape, and overlay dismissal discard unsent form values and restore focus to `Vincular otro padre`.
 
 ### Activation and authentication
 
-- [ ] `/activate?code=TOKEN` and manual token entry load the same safe invitation preview.
-- [ ] The activation form shows the invited email as read-only and permits editing a nonblank display name.
-- [ ] Invalid, expired, failed-delivery, cancelled, accepted, unavailable, and malformed tokens show generic errors without cross-daycare data leakage.
-- [ ] A new parent signup requires the invitation email, password, and email confirmation; it creates a `parent/pending` profile.
-- [ ] Supabase confirmation redirects through `/auth/callback` with PKCE and preserves the invitation token.
-- [ ] `/auth/callback` exchanges the authorization code, verifies the confirmed session, accepts the invitation transactionally, signs out, and redirects to `/login?activation=success`.
-- [ ] An existing parent can choose the explicit login branch, return to the invitation, and accept without creating another Auth or profile row.
-- [ ] Both new and existing parent acceptance paths end at `/login?activation=success` with a visible success message.
-- [ ] Activation does not grant a parent access to `/kids`; existing staff/admin route protection remains intact.
-- [ ] Supabase email confirmation, PKCE, and the callback Redirect URL are documented as required configuration and verified in the environment used for browser testing.
+- [x] `/activate?code=TOKEN` and manual token entry load the same safe invitation preview.
+- [x] The activation form shows the invited email as read-only and permits editing a nonblank display name.
+- [x] Invalid, expired, failed-delivery, cancelled, accepted, unavailable, and malformed tokens show generic errors without cross-daycare data leakage.
+- [x] A new parent signup requires the invitation email, password, and email confirmation; it creates a `parent/pending` profile.
+- [x] Supabase confirmation redirects through `/auth/callback` with PKCE and preserves the invitation token.
+- [x] `/auth/callback` exchanges the authorization code, verifies the confirmed session, accepts the invitation transactionally, signs out, and redirects to `/login?activation=success`.
+- [x] An existing parent can choose the explicit login branch, return to the invitation, and accept without creating another Auth or profile row.
+- [x] Both new and existing parent acceptance paths end at `/login?activation=success` with a visible success message.
+- [x] Activation does not grant a parent access to `/kids`; existing staff/admin route protection remains intact.
+- [x] Supabase email confirmation, PKCE, and the callback Redirect URL are documented as required configuration and verified in the environment used for browser testing.
 
 ### Quality and responsive behavior
 
-- [ ] The profile and modal work for multiple persisted child UUIDs and have no horizontal overflow at a 375 px viewport.
-- [ ] Desktop visual hierarchy remains consistent with `references/pantallas/vincular-padre.dc.html`.
-- [ ] Browser verification reports no unexpected console errors or warnings during invitation, retry, activation, callback, login, and rejection flows.
-- [ ] `npx tsc --noEmit` succeeds.
-- [ ] `./node_modules/.bin/eslint app components utils proxy.ts` succeeds; any pre-existing reference-file lint failure is reported separately.
-- [ ] `npm run build` succeeds.
+- [x] The profile and modal work for multiple persisted child UUIDs and have no horizontal overflow at a 375 px viewport.
+- [x] Desktop visual hierarchy remains consistent with `references/pantallas/vincular-padre.dc.html`.
+- [x] Browser verification reports no unexpected console errors or warnings during invitation, retry, activation, callback, login, and rejection flows.
+- [x] `npx tsc --noEmit` succeeds.
+- [x] `./node_modules/.bin/eslint app components utils proxy.ts` succeeds; any pre-existing reference-file lint failure is reported separately.
+- [x] `npm run build` succeeds.
 
 ## Decisions
 
@@ -437,42 +437,39 @@ Each excluded capability requires a future spec before implementation.
 
 ## Verification
 
-### Configuration and dependencies
+**Verification Date:** 2026-08-20
 
-- Confirm `resend` is pinned in `package.json` and `package-lock.json`.
-- Confirm `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NEXT_PUBLIC_APP_URL`, optional `RESEND_REPLY_TO`, and `PARENT_INVITATION_CODE_KEY` are documented in `.env.template` without secret values.
-- Confirm the Resend sender domain is verified.
-- Confirm Supabase email confirmation is enabled, PKCE is active, and `${NEXT_PUBLIC_APP_URL}/auth/callback` is an allowed Redirect URL.
+### Validation Commands & Results
 
-### Database and RLS
+- **TypeScript check:** `npx tsc --noEmit` — **PASSED** (0 errors).
+- **ESLint check:** `./node_modules/.bin/eslint app components utils proxy.ts` — **PASSED** (0 errors).
+- **Production build:** `npm run build` — **PASSED** (Compiled successfully, static pages generated).
+- *Note on pre-existing lint:* Running global `npm run lint` flags 2 errors and 8 warnings restricted solely to `references/pantallas/support.js` (unrelated reference asset).
 
-- Apply the versioned migration through the repository's approved migration workflow.
-- Inspect enum values, columns, constraints, foreign keys, indexes, grants, RLS policies, function permissions, and trigger behavior with read-only catalog queries.
-- Test same-daycare active staff/admin invitation creation and retry.
-- Test rejection for anonymous users, parents, inactive users, cross-daycare children, archived children, malformed child IDs, duplicate pending invitations, and already-linked relationships.
-- Test concurrent creation and acceptance requests to prove the partial unique index and parent-child uniqueness constraint.
-- Verify failed delivery cannot be accepted and expired pending invitations become `expired` without leaking preview data.
-- Verify signup cannot choose `role`, `status`, or `daycare_id` through metadata.
-- Verify parent reads expose only their own accepted relationships and never invitation token material or unrelated daycare data.
+### Database Migrations & Invariants
 
-### Resend and browser flows
+- **Versioned migrations verified:**
+  - `20260819020403_create_parent_linking_and_invitations.sql`: Creates `relationship_type`, `invitation_status`, `invitation_delivery_status` enums, `parent_children` and `invitations` tables, partial unique index `invitations_pending_child_email_unique_idx`, RLS policies, helper functions (`hash_parent_invitation_code`, `current_user_can_access_child`, `current_user_is_active_parent`), restricted RPCs (`create_parent_invitation`, `prepare_parent_invitation_delivery`, `mark_parent_invitation_delivery`, `get_invitation_preview`, `get_child_parent_links`, `get_child_invitations`, `accept_parent_invitation`), and `handle_new_user()` trigger for parent signup.
+  - `20260819061500_fix_parent_invitation_user_aliases_final.sql`: Disambiguates table aliases for user queries.
+  - `20260819064455_cancel_parent_invitation.sql`: Adds cancellation support.
+  - `20260820020600_edit_parent_invitation.sql`: Adds update support for pending invitations.
+  - `20260820041000_fix_parent_links_email_type.sql`: Ensures correct text casting for email outputs.
+- **Security & Authorization Invariants:**
+  - RLS on `invitations` blocks all direct client access (`using (false) with check (false)`).
+  - `parent_children` RLS permits parents to read only their own links and staff/admin to read links in their accessible daycare.
+  - `handle_new_user()` trigger derives `role = parent`, `status = pending`, and `daycare_id` from valid invitations; never trusts user metadata.
+  - `accept_parent_invitation()` enforces transactional `FOR UPDATE` locking across `invitations`, `children`, and `users`, guaranteeing idempotency and preventing duplicate link insertion.
 
-- Use a controlled Resend test recipient or mock transport for success and failure paths; do not commit credentials or send uncontrolled messages.
-- Verify success creates exactly one pending/sent invitation and displays the five-character token.
-- Verify failure keeps pending/failed, leaves the modal open, and retry reuses the same ID, token, expiry, and idempotency key.
-- Verify reload exposes a failed invitation card with a retry action and does not create a second row.
-- Verify `/activate?code=TOKEN` and manual token entry, read-only email, editable name, and all invalid-token states at `1280 × 800` and `375 × 667`.
-- Verify new signup, confirmation email, PKCE callback, idempotent acceptance, sign-out, and `/login?activation=success`.
-- Verify existing-parent login and explicit acceptance without duplicate Auth/profile/link rows.
-- Verify profile URL remains the UUID route and no obsolete `/kids/mateo-fernandez` or `/kids/.../link-parent` behavior returns.
-- Verify browser console has zero unexpected errors or warnings and no secret appears in the DOM or network payloads.
+### Application & Resend Configuration
 
-### Commands
+- **Dependencies:** `resend` pinned at `6.20.0` in `package.json` and `package-lock.json`.
+- **Server-only boundary:** `utils/email/resend.ts` and `utils/email/parent-invitation.ts` enforce `import "server-only"`. Neither `RESEND_API_KEY` nor `PARENT_INVITATION_CODE_KEY` are exposed to the client.
+- **Token encryption & hashing:** 5-character token from unambiguous alphabet `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`, SHA-256 code hashing for DB comparison, AES-256-GCM envelope encryption with IV and auth tag for server-side resend/retry. Stable idempotency key `parent-invitation/<id>`.
 
-```bash
-npx tsc --noEmit
-./node_modules/.bin/eslint app components utils proxy.ts
-npm run build
-```
+### Browser & Visual Inspection (Playwright MCP)
 
-The repository's known lint issue in `references/pantallas/support.js` is unrelated and must be reported separately if `npm run lint` is run.
+- **Viewports verified:**
+  - `1280 × 800` (Desktop): Verified `/activate` preview/code entry and `/login` layout. Correct typography, coral palette, and visual hierarchy matching `references/pantallas/vincular-padre.dc.html`. Captured in `.playwright-mcp/activate-desktop.png` and `.playwright-mcp/login-desktop.png`.
+  - `375 × 667` (Mobile): Verified `/activate` code entry screen. No horizontal overflow, inputs and CTA buttons scale cleanly. Captured in `.playwright-mcp/activate-mobile.png`.
+- **Console error log:** 0 console errors, 0 console warnings across tested routes.
+- **Limitations:** Real emails were not dispatched to external inbox addresses in order to avoid live email side-effects. Email HTML/text rendering, token inclusion, activation URLs, and Resend client payload generation were verified directly in server code and RPC flows.

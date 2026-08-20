@@ -1,6 +1,6 @@
 ---
 description: Verifies and updates acceptance criteria for project specs using code, Next.js guidance, and visual evidence
-mode: primary
+mode: subagent
 model: github-copilot/gemini-3.6-flash
 color: "#2563eb"
 permissions:
