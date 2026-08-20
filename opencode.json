@@ -19,6 +19,12 @@
       ],
       "enabled": true,
       "type": "local"
+    },
+    "servers": {
+      "supabase": {
+        "type": "remote",
+        "url": "https://mcp.supabase.com/mcp?project_ref=buhfslxahextimvdfveh"
+      }
     }
   }
 }
