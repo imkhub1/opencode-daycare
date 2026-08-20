@@ -3,7 +3,7 @@ name: spec-impl
 description: Implements an approved spec. Validates that the state means "Approved" (in any language), creates a git branch named after the spec, switches to it, and starts the implementation step by step with pauses to review diffs.
 disable-model-invocation: true
 argument-hint: <NN-spec-name>
-allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Bash(git status:*), Bash(git branch:*), Bash(git checkout:*), Bash(git log:*), Bash(git diff:*), Bash(git stash:*), Bash(cat:*), Bash(ls:*)
+allowed-tools: Read, Glob, Grep, Edit, Write, AskUserQuestion, Task, Bash(git status:*), Bash(git branch:*), Bash(git checkout:*), Bash(git log:*), Bash(git diff:*), Bash(git stash:*), Bash(cat:*), Bash(ls:*)
 ---
 
 # /spec-impl — Implementer of approved specs
@@ -151,10 +151,14 @@ Once you have confirmed the state means `Approved`:
    ```
 
 4. **Do not start implementing yet.** First show the spec summary to the user so they have it fresh. Extract and show:
-   - The **objective** (the line after `**Objective:**` / `**Objetivo:**` / equivalent label).
-   - The **scope** (the `## Scope` / `## Alcance` / equivalent section).
-   - The **implementation plan** (the section with the numbered steps — `## Implementation plan` / `## Plan de implementación` / equivalent).
-   - The **acceptance criteria** (the checklist — `## Acceptance criteria` / `## Criterios de aceptación` / equivalent).
+    - The **objective** (the line after `**Objective:**` / `**Objetivo:**` / equivalent label).
+    - The **scope** (the `## Scope` / `## Alcance` / equivalent section).
+    - The **implementation plan** (the section with the numbered steps — `## Implementation plan` / `## Plan de implementación` / equivalent).
+    - The **acceptance criteria** (the checklist — `## Acceptance criteria` / `## Criterios de aceptación` / equivalent).
+
+5. Classify every numbered implementation-plan step before starting implementation. Mark a step as **database**, **mixed**, or **non-database**. A step is database-related when it creates, alters, verifies, or applies migrations, tables, columns, enums, constraints, indexes, functions, triggers, grants, RLS, policies, database seeds, Supabase Auth database behavior, or other persistent Supabase/Postgres changes. A mixed step contains both database and application work.
+
+6. Tell the user which steps will be delegated to `db-migrator` before asking to start Step 1. Do not hide database delegation inside an unrelated step.
 
 Match section headings by meaning, not by exact wording — the spec may be authored in any language.
 
@@ -185,6 +189,17 @@ Once confirmed, follow these rules during the entire implementation:
 - Show a summary of which files you touched and what you did.
 - Say: `Step N completed. Could you review the diff and let me know if I continue with Step N+1?`
 - Wait for confirmation before continuing.
+
+**Database-step delegation:**
+
+- Before implementing each step, check its classification from the implementation-plan inventory. Never author, edit, validate, or apply database migrations directly from `spec-impl`.
+- For a **database** step, invoke the `db-migrator` subagent in the foreground with the `Task` tool using `subagent_type: "db-migrator"` and no background execution. Include the spec path, exact implementation-plan step, relevant acceptance criteria, dependencies, current branch, and the requested database outcome. Tell it to follow its own migration/reconciliation workflow and to return its structured Spanish result.
+- For a **mixed** step, delegate the database portion to `db-migrator` first. Implement the application portion only after the database subagent returns a non-blocking result and its migration diff is available for review.
+- Do not invoke Supabase MCP tools, write SQL, or modify `supabase/migrations/` directly from `spec-impl`. The `db-migrator` subagent owns all database work.
+- Wait for the delegated task to finish. If it returns `BLOQUEADO`, `ESPERANDO_CONFIRMACION`, an unknown remote state, an application error, or `APLICADO_CON_VERIFICACION_PARCIAL`, stop the current implementation step and present the blocker to the user. Do not continue dependent application work or retry silently.
+- If `db-migrator` requests confirmation before `apply_migration`, relay the exact migration, project, risks, and confirmation request to the user. Continue only after the user explicitly confirms and the subagent completes its post-application verification.
+- Review the subagent's result and diff as part of the same step. Confirm that only the intended new migration was changed, that no applied migration was rewritten, and that the reported remote history/catalog evidence matches the spec.
+- A delegated database step is complete only when its outcome is verified and the user has reviewed the resulting diff. Then use the normal `Step N completed` pause before moving to the next plan step.
 
 **If during the implementation you find an ambiguity** the spec does not resolve:
 
