@@ -54,7 +54,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `.codegraph/` is the generated local CodeGraph index. Use `codegraph status` to inspect it and `codegraph sync` after source changes; do not edit the index manually.
 - `/spec` from `.agents/skills/spec/` is a manual, no-code workflow that clarifies a feature and writes a sequential `Draft` spec in `specs/`.
 - `/spec-impl` from `.agents/skills/spec-impl/` only implements an `Approved` spec. It uses `specs/.spec-config.yml` to decide whether to create a `spec-NN-slug` branch, with `AutoCreateBranch: true` currently enabled, pauses after each implementation step, and never commits automatically.
-- `spec-verifier` in `.opencode/agents/spec-verifier.md` verifies acceptance criteria using build tools, current Next.js guidance, Playwright browser evidence, and visual comparisons. It may edit only `specs/*.md`.
+
+### Project Agents and Subagents
+
+The following project-scoped subagents are registered in `.opencode/agents/` and can be invoked with their `@name` mention:
+
+- `@accessibility-checker` in `.opencode/agents/accessibility-checker.md`: audits and minimally fixes explicitly selected files against WCAG 2.2 Level AA.
+- `@db-migrator` in `.opencode/agents/db-migrator.md`: reconciles local and remote Supabase migration history, creates and applies approved migrations, and delegates database work for `/spec-impl`.
+- `@react-best-practices` in `.opencode/agents/react-best-practices.md`: reviews and improves explicitly selected React files using current React and Next.js practices while preserving behavior.
+- `@spec-verifier` in `.opencode/agents/spec-verifier.md`: verifies spec acceptance criteria with code, build checks, current Next.js guidance, and Playwright evidence; it may edit only `specs/*.md`.
 
 ## Workflow
 
