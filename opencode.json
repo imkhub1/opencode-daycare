@@ -1,6 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
 
+  "formatter": {
+    "enabled": true,
+    "type": "prettier"
+  },
+
   "lsp": true,
 
   "references": {
@@ -12,11 +17,7 @@
 
   "mcp": {
     "playwright": {
-      "command": [
-        "npx",
-        "-y",
-        "@playwright/mcp@latest"
-      ],
+      "command": ["npx", "-y", "@playwright/mcp@latest"],
       "enabled": true,
       "type": "local"
     },
