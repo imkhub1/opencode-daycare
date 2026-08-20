@@ -180,20 +180,19 @@
           entry.subs.delete(sub);
         };
       }, []);
+      const propsMeta = entry.propsMeta;
       const defaults = React.useMemo(() => {
         const d = {};
-        for (const k in entry.propsMeta || {}) {
-          const v = entry.propsMeta?.[k]?.default;
+        for (const k in propsMeta || {}) {
+          const v = propsMeta?.[k]?.default;
           if (v !== void 0) d[k] = v;
         }
         return d;
-      }, [entry.propsMeta]);
+      }, [propsMeta]);
       return h(Root, { ...defaults, ...entry.propOverrides || {} });
     }
     const ReactDOM = getReactDOM();
-    if (ReactDOM.createRoot)
-      ReactDOM.createRoot(hostEl).render(h(StandaloneRoot));
-    else ReactDOM.render(h(StandaloneRoot), hostEl);
+    ReactDOM.createRoot(hostEl).render(h(StandaloneRoot));
     return rootName;
   }
 
@@ -722,14 +721,18 @@
       this.props = props || {};
     }
     setState(update, cb) {
-      this.__host && this.__host.__setLogicState(update, cb);
+      if (this.__host) {
+        this.__host.__setLogicState(update, cb);
+      }
     }
     forceUpdate() {
-      this.__host && this.__host.forceUpdate();
+      if (this.__host) {
+        this.__host.forceUpdate();
+      }
     }
     componentDidMount() {
     }
-    componentDidUpdate(_prevProps) {
+    componentDidUpdate() {
     }
     componentWillUnmount() {
     }
@@ -860,7 +863,11 @@
       /** The props the author's logic + template see — internal __-prefixed
        *  wiring stripped. */
       __userProps() {
-        const { __name, __hintSize, __tplId, __hostStyle, ...rest } = this.props;
+        const rest = { ...this.props };
+        delete rest.__name;
+        delete rest.__hintSize;
+        delete rest.__tplId;
+        delete rest.__hostStyle;
         return rest;
       }
       __setLogicState(update, cb) {
@@ -1086,13 +1093,13 @@
           filename: url,
           presets: ["react", "typescript"]
         }).code : src;
-        const module = { exports: {} };
+        const moduleObject = { exports: {} };
         const before = new Set(Object.keys(window));
         //! nosemgrep: eval-and-function-constructor
         new Function("React", "module", "exports", "require", code)(
           getReact(),
-          module,
-          module.exports,
+          moduleObject,
+          moduleObject.exports,
           () => ({})
         );
         const globals = {};
@@ -1101,12 +1108,12 @@
             globals[k] = window[k];
           }
         }
-        cache.set(url, { mod: module.exports, globals });
+        cache.set(url, { mod: moduleObject.exports, globals });
         console.info(
           "[dc-runtime] x-import: loaded",
           url,
           "\u2014 exports:",
-          Object.keys(module.exports),
+          Object.keys(moduleObject.exports),
           "window globals:",
           Object.keys(globals)
         );

@@ -14,6 +14,11 @@ type Pokemon = {
   };
 };
 
+type FetchedPokemonState = {
+  key: string;
+  pokemon: Pokemon;
+};
+
 const FIRST_POKEMON = 1;
 const LAST_POKEMON = 1025;
 
@@ -26,29 +31,54 @@ async function getPokemon(id: number, signal: AbortSignal) {
 }
 
 function titleCase(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
+  return value
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
 
 export function PokemonBrowser() {
   const [pokemonId, setPokemonId] = useState(25);
   const [reloadKey, setReloadKey] = useState(0);
-  const [pokemon, setPokemon] = useState<Pokemon | null>(null);
+  const [fetchedState, setFetchedState] = useState<FetchedPokemonState | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
-  const isLoading = !error && pokemon?.id !== pokemonId;
+
+  const requestKey = `${pokemonId}-${reloadKey}`;
+  const isLoading = !error && fetchedState?.key !== requestKey;
+  const pokemon = fetchedState?.pokemon;
 
   useEffect(() => {
+    let ignore = false;
     const controller = new AbortController();
 
     getPokemon(pokemonId, controller.signal)
-      .then(setPokemon)
+      .then((data) => {
+        if (!ignore) {
+          setFetchedState({ key: `${pokemonId}-${reloadKey}`, pokemon: data });
+        }
+      })
       .catch((reason: unknown) => {
-        if (reason instanceof DOMException && reason.name === "AbortError")
+        if (ignore) return;
+        if (
+          (reason instanceof Error ||
+            (typeof reason === "object" &&
+              reason !== null &&
+              "name" in reason)) &&
+          (reason as { name?: string }).name === "AbortError"
+        ) {
           return;
+        }
         setError(
           "No pudimos cargar el Pokémon. Revisá tu conexión e intentá de nuevo.",
         );
       });
-    return () => controller.abort();
+
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
   }, [pokemonId, reloadKey]);
 
   function moveBy(amount: number) {
@@ -57,6 +87,9 @@ export function PokemonBrowser() {
       Math.min(LAST_POKEMON, Math.max(FIRST_POKEMON, current + amount)),
     );
   }
+
+  const artworkUrl =
+    pokemon?.sprites.other?.["official-artwork"]?.front_default;
 
   return (
     <section className="w-full max-w-2xl rounded-[28px] border border-line bg-surface p-5 shadow-xl shadow-[#785a3c]/10 sm:p-8">
@@ -83,12 +116,14 @@ export function PokemonBrowser() {
           aria-hidden="true"
         />
         {isLoading && (
-          <p className="animate-pulse text-sm font-bold text-muted">
-            Buscando en la Pokédex…
-          </p>
+          <div role="status" aria-live="polite">
+            <p className="animate-pulse text-sm font-bold text-muted">
+              Buscando en la Pokédex…
+            </p>
+          </div>
         )}
-        {error && (
-          <div className="text-center">
+        {error && !isLoading && (
+          <div role="alert" aria-live="assertive" className="text-center">
             <p className="font-display text-xl font-semibold text-ink">
               Algo salió mal
             </p>
@@ -107,19 +142,23 @@ export function PokemonBrowser() {
         )}
         {pokemon && !isLoading && !error && (
           <div className="grid w-full items-center gap-6 sm:grid-cols-[1fr_1fr]">
-            <Image
-              src={
-                pokemon.sprites.other?.["official-artwork"]?.front_default ?? ""
-              }
-              alt={`Ilustración de ${titleCase(pokemon.name)}`}
-              width={280}
-              height={280}
-              priority
-              className="mx-auto size-56 object-contain drop-shadow-[0_18px_12px_rgba(101,73,42,0.2)] sm:size-64"
-            />
+            {artworkUrl ? (
+              <Image
+                src={artworkUrl}
+                alt={`Ilustración de ${titleCase(pokemon.name)}`}
+                width={280}
+                height={280}
+                priority
+                className="mx-auto size-56 object-contain drop-shadow-[0_18px_12px_rgba(101,73,42,0.2)] sm:size-64"
+              />
+            ) : (
+              <div className="mx-auto flex size-56 items-center justify-center rounded-2xl bg-[#eadcc9]/50 text-center text-sm font-bold text-muted sm:size-64">
+                Sin imagen disponible
+              </div>
+            )}
             <div className="text-center sm:text-left">
               <h2 className="font-display text-4xl font-semibold capitalize text-ink">
-                {pokemon.name}
+                {titleCase(pokemon.name)}
               </h2>
               <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
                 {pokemon.types.map(({ type }) => (
@@ -155,6 +194,7 @@ export function PokemonBrowser() {
           type="button"
           onClick={() => moveBy(-1)}
           disabled={pokemonId === FIRST_POKEMON || isLoading}
+          aria-label="Pokémon anterior"
           className="rounded-xl border border-line bg-white px-4 py-3 text-sm font-extrabold text-ink transition hover:bg-[#f4ece1] disabled:cursor-not-allowed disabled:opacity-40"
         >
           ← Anterior
@@ -166,6 +206,7 @@ export function PokemonBrowser() {
           type="button"
           onClick={() => moveBy(1)}
           disabled={pokemonId === LAST_POKEMON || isLoading}
+          aria-label="Pokémon siguiente"
           className="rounded-xl bg-coral px-4 py-3 text-sm font-extrabold text-white transition hover:bg-[#c9573f] disabled:cursor-not-allowed disabled:opacity-40"
         >
           Siguiente →
