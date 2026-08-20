@@ -3,56 +3,9 @@
 import { createClient } from "@/utils/supabase/server";
 
 const GENERIC_ERROR = "El código no es válido o ya no está disponible.";
-const DIRECT_ACTIVATION_ERROR =
-  "La cuenta no pudo activarse directamente. Desactiva la confirmación por email en Supabase y vuelve a intentarlo.";
-
-export type ActivationPreview = {
-  childName: string;
-  daycareName: string;
-  invitedFullName: string;
-  email: string;
-  relationship: "father" | "mother" | "guardian";
-  status: "pending" | "accepted" | "expired" | "cancelled";
-  deliveryStatus: "sent" | "failed";
-  expiresAt: string;
-};
 
 function validToken(token: string) {
   return /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/i.test(token.trim());
-}
-
-export async function getActivationPreview(
-  token: string,
-): Promise<ActivationPreview | null> {
-  const normalizedToken = token.trim().toUpperCase();
-  if (!validToken(normalizedToken)) return null;
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("get_invitation_preview", {
-    p_token: normalizedToken,
-  });
-  const row = data?.[0];
-
-  if (
-    error ||
-    !row ||
-    row.status !== "pending" ||
-    row.delivery_status !== "sent" ||
-    new Date(row.expires_at).getTime() <= Date.now()
-  ) {
-    return null;
-  }
-
-  return {
-    childName: row.child_name,
-    daycareName: row.daycare_name,
-    invitedFullName: row.invited_full_name,
-    email: row.email,
-    relationship: row.relationship,
-    status: row.status,
-    deliveryStatus: row.delivery_status,
-    expiresAt: row.expires_at,
-  };
 }
 
 export async function signUpParentAccount({
@@ -80,22 +33,18 @@ export async function signUpParentAccount({
     return { ok: false as const, message: GENERIC_ERROR };
   }
 
-  const preview = await getActivationPreview(normalizedToken);
-  if (
-    !preview ||
-    preview.status !== "pending" ||
-    preview.deliveryStatus !== "sent" ||
-    preview.email.toLowerCase() !== normalizedEmail ||
-    new Date(preview.expiresAt).getTime() <= Date.now()
-  ) {
-    return { ok: false as const, message: GENERIC_ERROR };
-  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) return { ok: false as const, message: GENERIC_ERROR };
+
+  const confirmationUrl = new URL("/auth/callback", appUrl);
+  confirmationUrl.searchParams.set("invite", normalizedToken);
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: normalizedEmail,
     password,
     options: {
+      emailRedirectTo: confirmationUrl.toString(),
       data: {
         invite_token: normalizedToken,
         display_name: normalizedName,
@@ -103,13 +52,15 @@ export async function signUpParentAccount({
     },
   });
 
-  if (error || !data.user || !data.session) {
+  if (error || !data.user) {
     if (data.session) await supabase.auth.signOut();
     return {
       ok: false as const,
-      message: error ? GENERIC_ERROR : DIRECT_ACTIVATION_ERROR,
+      message: GENERIC_ERROR,
     };
   }
+
+  if (!data.session) return { ok: true as const, awaitingConfirmation: true as const };
 
   const { data: acceptance, error: acceptanceError } = await supabase.rpc(
     "accept_parent_invitation",
@@ -125,7 +76,7 @@ export async function signUpParentAccount({
     return { ok: false as const, message: GENERIC_ERROR };
   }
 
-  return { ok: true as const };
+  return { ok: true as const, awaitingConfirmation: false as const };
 }
 
 export async function acceptExistingParentInvitation(

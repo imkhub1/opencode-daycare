@@ -9,9 +9,7 @@ import {
 import { useRouter } from "next/navigation";
 import {
   acceptExistingParentInvitation,
-  getActivationPreview,
   signUpParentAccount,
-  type ActivationPreview,
 } from "@/app/activate/actions";
 import { Icon } from "@/components/open-daycare";
 import { createClient } from "@/utils/supabase/client";
@@ -170,6 +168,11 @@ export function LoginScreen({
               No se pudo completar la activación. Revisa el enlace e inténtalo nuevamente.
             </p>
           )}
+          {activation === "pending" && (
+            <p role="status" className="mb-5 rounded-xl bg-[#fff1c7] px-4 py-3 text-sm font-bold text-[#8a7234]">
+              Revisa tu correo para confirmar la cuenta y completar la activación.
+            </p>
+          )}
           <form onSubmit={handleSubmit}>
             <Field
               label="EMAIL"
@@ -223,70 +226,28 @@ export function LoginScreen({
 
 export function ActivateScreen({
   token: initialToken,
-  preview: initialPreview,
   authenticated = false,
   blockedSession = false,
 }: {
   token: string;
-  preview: ActivationPreview | null;
   authenticated?: boolean;
   blockedSession?: boolean;
 }) {
   const router = useRouter();
   const [token, setToken] = useState(initialToken.trim().toUpperCase());
-  const [preview, setPreview] = useState(initialPreview);
-  const [name, setName] = useState(initialPreview?.invitedFullName ?? "");
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [photoConsent, setPhotoConsent] = useState(true);
-  const [now] = useState(() => Date.now());
-  const [verifiedToken, setVerifiedToken] = useState(
-    () => initialPreview ? initialToken.trim().toUpperCase() : "",
-  );
-  const initialError = initialToken && !initialPreview
-    ? "El código no es válido o ya no está disponible."
-    : "";
-
-  const previewIsUsable = Boolean(
-    preview &&
-      preview.status === "pending" &&
-      preview.deliveryStatus === "sent" &&
-      verifiedToken === token.trim().toUpperCase() &&
-      new Date(preview.expiresAt).getTime() > now,
-  );
-  const authenticatedParent = authenticated;
-
-  async function lookupToken(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
-    setError("");
-    setMessage("");
-    setIsLoading(true);
-    const nextPreview = await getActivationPreview(token);
-    setPreview(nextPreview);
-    if (!nextPreview) {
-      setVerifiedToken("");
-      setError("El código no es válido o ya no está disponible.");
-    } else {
-      setVerifiedToken(token.trim().toUpperCase());
-      setName(nextPreview.invitedFullName);
-    }
-    setIsLoading(false);
-  }
 
   async function submitSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setMessage("");
 
-    if (!previewIsUsable || !preview) {
-      setError("Verifica el código de activación.");
-      return;
-    }
-
-    if (!name.trim() || password.length < 8) {
-      setError("Ingresa un nombre y una contraseña de al menos 8 caracteres.");
+    if (!token.trim() || !email.trim() || !name.trim() || password.length < 8) {
+      setError("Ingresa el código, email, nombre y contraseña (mínimo 8 caracteres).");
       return;
     }
 
@@ -294,7 +255,7 @@ export function ActivateScreen({
     const result = await signUpParentAccount({
       token,
       fullName: name,
-      email: preview.email,
+      email,
       password,
     });
     setIsLoading(false);
@@ -304,14 +265,18 @@ export function ActivateScreen({
       return;
     }
 
-    router.push("/login?activation=success");
+    router.push(
+      result.awaitingConfirmation
+        ? "/login?activation=pending"
+        : "/login?activation=success",
+    );
   }
 
   async function acceptExisting(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    if (!previewIsUsable) {
-      setError("Verifica el código de activación.");
+    if (!token.trim() || !name.trim()) {
+      setError("Ingresa el código de invitación y tu nombre.");
       return;
     }
     setIsLoading(true);
@@ -331,81 +296,75 @@ export function ActivateScreen({
       <section className="w-full max-w-[440px]">
         <div className="mb-[22px]"><AuthLogo showName={false} /></div>
         <h1 className="mb-2 font-display text-[32px] leading-[1.15] font-semibold text-ink">Bienvenida a OpenDayCare</h1>
-        <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">Te invitaron a seguir el día de tu hijo. Creá tu contraseña para activar la cuenta.</p>
+        <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">Te invitaron a seguir el día de tu hijo. Completa tus datos para activar la cuenta.</p>
 
-        {!previewIsUsable && (
-          <form onSubmit={lookupToken} className="mb-5 rounded-2xl border border-line bg-white p-4">
+        {blockedSession ? (
+          <div role="alert" className="rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold leading-relaxed text-[#c5413a]">
+            Cierra la sesión actual y vuelve a abrir este enlace con la cuenta del padre invitado.
+          </div>
+        ) : (
+          <form onSubmit={authenticated ? acceptExisting : submitSignup}>
             <Field
               label="CÓDIGO DE INVITACIÓN"
               value={token}
               onChange={(event) => setToken(event.target.value.toUpperCase())}
               autoComplete="one-time-code"
-              className="mb-3 font-display text-lg font-bold tracking-[3px]"
+              required
+              className="font-display font-bold tracking-[3px]"
             />
-            <button type="submit" disabled={isLoading} className="w-full rounded-xl bg-ink px-4 py-3 text-sm font-extrabold text-white disabled:opacity-60">
-              {isLoading ? "Buscando…" : "Continuar"}
+            {!authenticated && (
+              <Field
+                label="EMAIL AL QUE RECIBISTE LA INVITACIÓN"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+                required
+              />
+            )}
+            <Field
+              label="NOMBRE PARA TU CUENTA"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="name"
+              required
+            />
+            {!authenticated && (
+              <Field
+                label="CREAR CONTRASEÑA"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="new-password"
+                required
+                className="border-[#f2a78e]"
+              />
+            )}
+            <label
+              htmlFor="activation-photo-consent"
+              className="mb-6 flex cursor-pointer items-start gap-3 rounded-[14px] bg-[#fbf1d6] p-[14px_16px]"
+            >
+              <input
+                id="activation-photo-consent"
+                type="checkbox"
+                checked={photoConsent}
+                onChange={(event) => setPhotoConsent(event.target.checked)}
+                className="mt-0.5 size-6 shrink-0 accent-[#5fb97e]"
+              />
+              <span className="text-sm leading-[1.45] text-[#8a7234]">Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro de la app.</span>
+            </label>
+            {error && <p role="alert" className="mb-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">{error}</p>}
+            <button type="submit" disabled={isLoading} className="w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:opacity-60">
+              {isLoading ? "Procesando…" : authenticated ? "Aceptar invitación" : "Activar mi cuenta"}
             </button>
           </form>
         )}
 
-        {previewIsUsable && preview ? (
-          <>
-            <div className="mb-[22px] flex items-center gap-[14px] rounded-2xl border-[1.5px] border-[#eadfd0] bg-white p-[14px_16px]">
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#a9d9e8] font-display text-[19px] font-semibold text-[#1f7a93]">{preview.childName.charAt(0)}</span>
-              <div className="min-w-0">
-                <p className="text-[13px] text-muted">Te invitaron a seguir a</p>
-                <p className="truncate font-display text-[17px] font-semibold text-ink">{preview.childName} · {preview.daycareName}</p>
-              </div>
-            </div>
-
-            {blockedSession ? (
-              <div role="alert" className="rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold leading-relaxed text-[#c5413a]">
-                Esta invitación es para <strong>{preview.email}</strong>. Cierra la sesión actual y vuelve a abrir este enlace con la cuenta del padre invitado.
-              </div>
-            ) : <form onSubmit={authenticatedParent ? acceptExisting : submitSignup}>
-              <Field
-                label="CÓDIGO DE ACTIVACIÓN"
-                value={token}
-                onChange={(event) => setToken(event.target.value.toUpperCase())}
-                autoComplete="one-time-code"
-                required
-                className="font-display font-bold tracking-[3px]"
-              />
-              <Field label="EMAIL" type="email" value={preview.email} readOnly disabled className="bg-[#f5eee6]" />
-              <Field label="NOMBRE PARA TU CUENTA" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required />
-              {!authenticated && (
-                <Field label="CREAR CONTRASEÑA" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required className="border-[#f2a78e]" />
-              )}
-              <label
-                htmlFor="activation-photo-consent"
-                className="mb-6 flex cursor-pointer items-start gap-3 rounded-[14px] bg-[#fbf1d6] p-[14px_16px]"
-              >
-                <input
-                  id="activation-photo-consent"
-                  type="checkbox"
-                  checked={photoConsent}
-                  onChange={(event) => setPhotoConsent(event.target.checked)}
-                  className="mt-0.5 size-6 shrink-0 accent-[#5fb97e]"
-                />
-                <span className="text-sm leading-[1.45] text-[#8a7234]">Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro de la app.</span>
-              </label>
-              {message && <p role="status" className="mb-4 rounded-xl bg-[#cfebd8] px-4 py-3 text-sm font-bold text-[#3e8b62]">{message}</p>}
-              {error && <p role="alert" className="mb-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">{error}</p>}
-              <button type="submit" disabled={isLoading} className="w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:opacity-60">
-                 {isLoading ? "Procesando…" : authenticatedParent ? "Aceptar invitación" : "Activar mi cuenta"}
-              </button>
-            </form>}
-
-            {!authenticatedParent && (
-              <p className="mt-[22px] text-center text-[14.5px] text-muted">
-                ¿Ya tenés cuenta? <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-[#c5503a]">Iniciar sesión</Link>
-              </p>
-            )}
-          </>
-        ) : (
-          !error && <p className="rounded-xl bg-[#fffaf2] px-4 py-3 text-sm text-muted">Ingresa el código de cinco caracteres que recibiste por correo.</p>
+        {!authenticated && (
+          <p className="mt-[22px] text-center text-[14.5px] text-muted">
+            ¿Ya tenés cuenta? <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-[#c5503a]">Iniciar sesión</Link>
+          </p>
         )}
-         {(error || initialError) && !preview && <p role="alert" className="mt-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">{error || initialError}</p>}
       </section>
     </main>
   );

@@ -61,6 +61,7 @@ The following project-scoped subagents are registered in `.opencode/agents/` and
 
 - `@accessibility-checker` in `.opencode/agents/accessibility-checker.md`: audits and minimally fixes explicitly selected files against WCAG 2.2 Level AA.
 - `@db-migrator` in `.opencode/agents/db-migrator.md`: reconciles local and remote Supabase migration history, creates and applies approved migrations, and delegates database work for `/spec-impl`.
+- `@db-security-auditor` in `.opencode/agents/db-security-auditor.md`: manually audits Supabase/Postgres RLS, privileges, functions, views, and parent/child/daycare isolation; local and remote corrections require explicit confirmation, and it is not part of `/spec-impl`.
 - `@react-best-practices` in `.opencode/agents/react-best-practices.md`: reviews and improves explicitly selected React files using current React and Next.js practices while preserving behavior.
 - `@spec-verifier` in `.opencode/agents/spec-verifier.md`: verifies spec acceptance criteria with code, build checks, current Next.js guidance, and Playwright evidence; it may edit only `specs/*.md`.
 
