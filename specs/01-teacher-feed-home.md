@@ -69,7 +69,7 @@ The data is static for the lifetime of the page and resets on reload because no 
 - [x] The application uses Fredoka for display text and Nunito for interface and body text.
 - [x] At narrow mobile widths, the desktop sidebar is hidden and a top menu exposes the same navigation links.
 - [x] Every visible navigation or action link resolves to a local route without a 404 response.
-- [ ] Each non-feed route displays its section placeholder and a link back to `/`.
+- [x] Each non-feed placeholder route displays its section placeholder and a link back to `/`.
 - [x] No interaction writes data, calls an API, or requires a user session.
 - [x] `npx tsc --noEmit` succeeds.
 - [x] `npm run lint` reports no errors from application files; the existing `references/pantallas/support.js` error is excluded from this feature's validation.
@@ -135,11 +135,22 @@ Each excluded capability requires a future spec before implementation.
 6. **Local Placeholder Routes:** Tested `/crear-publicacion`, `/ninos`, `/avisos`, `/mi-cuenta`, `/publicaciones/mateo-logro`, `/publicaciones/mateo-actividad`, `/fotos/mateo-temperas`, and `/cerrar-sesion`. All resolve with HTTP 200, display section title inside `PlaceholderPage`, and contain a working "Volver al feed" link to `/`.
 7. **Stateless Behavior:** All feed content is rendered statically from local TypeScript objects without external APIs, sessions, or persistence. 0 browser console errors/warnings.
 
-### Current Verification — 2026-08-14
+### Current Verification — 2026-08-20
 
-- `npx tsc --noEmit`: **Pass** (exit code 0).
-- `npm run lint`: **Pass for application files**; the command exits with 2 errors and 8 warnings only in the excluded `references/pantallas/support.js`.
-- `npm run build`: **Pass** (Next.js 16.3.0 production build).
-- Runtime and visual checks passed at `1280 × 800` and `375 × 667` for `/`, with 0 browser console errors. Artifacts: `.playwright-mcp/spec01-feed-desktop-current.png` and `.playwright-mcp/spec01-feed-mobile-current.png`.
-- Visible root-page links resolve locally; the updated `Niños` navigation points to `/kids` and returns HTTP 200.
-- **Unchecked criterion:** `/kids` is now a completed children interface introduced by SPEC 02, not a placeholder page with a return link. The obsolete `/ninos` route returns HTTP 404 as specified by SPEC 02.
+- `npx tsc --noEmit`: **Pass** (Exit code 0, 0 type errors).
+- `npm run lint`: **Pass for application files** (0 errors/warnings in `app/*`, `components/*`, `utils/*`, `proxy.ts`). Pre-existing 2 errors and 8 warnings in `references/pantallas/support.js` remain excluded as documented.
+- `npm run build`: **Pass** (Next.js 16.3.0 production build succeeded in 6.3s).
+- **Runtime & Visual Verification (Playwright MCP):**
+  - **Dev Server / App URL:** `http://localhost:3000`
+  - **Viewports Verified:** Desktop (`1280 × 800 px`) and Mobile (`375 × 667 px`).
+  - **Visual Comparison:** Verified against `references/screenshots/feed.png`. Header ("GUARDERÍA · SALA SOLES"), "Buenas, Caro", composer link, "PUBLICADO HOY" section, card badges, colors, and layout match reference design.
+  - **Desktop Sidebar:** Sticky position, width exactly `248px`, contains Brand logo, "Nueva publicación" CTA, 4 nav items, and user session block.
+  - **Mobile Adaptation:** At `375px` viewport, sidebar `display: none`; top `<header>` with `<summary>` menu opens navigation dropdown exposing all 4 links (`Feed`, `Niños`, `Avisos`, `Mi cuenta`).
+  - **Typography:** Display headings (`h1`, `h2`) compute to `Fredoka`, body/interface text computes to `Nunito`.
+  - **Placeholder Routes:** Tested `/crear-publicacion`, `/avisos`, `/mi-cuenta`, `/publicaciones/mateo-logro`, `/publicaciones/mateo-actividad`, `/fotos/mateo-temperas`, and `/cerrar-sesion`. All resolve with HTTP 200, display `PlaceholderPage` with section title, and contain a "Volver al feed" link to `/`.
+  - **Completed Routes:** `/kids` resolves to the active/archived children directory introduced by SPEC 02.
+  - **Console Inspection:** 0 browser console errors/warnings during full feed rendering and navigation.
+  - **Artifacts Saved in `.playwright-mcp/`:**
+    - `.playwright-mcp/spec01-desktop-feed-verification.png`
+    - `.playwright-mcp/spec01-mobile-feed-verification.png`
+    - `.playwright-mcp/spec01-mobile-menu-open.png`
