@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.opendaycare.db-audit</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>$HOME/.nvm/versions/node/v24.16.0/bin/node</string>
+    <string>[redacted-personal-path] Persoonales/DevTalles - OpenCode/06-open-daycare/scripts/db-audit.mjs</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>[redacted-personal-path] Persoonales/DevTalles - OpenCode/06-open-daycare</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>$HOME</string>
+    <key>PATH</key>
+    <string>$HOME/.nvm/versions/node/v24.16.0/bin:$HOME/.homebrew/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>OPENCODE_BIN</key>
+    <string>$HOME/.homebrew/bin/opencode</string>
+    <key>OPENCODE_DISABLE_AUTOUPDATE</key>
+    <string>1</string>
+  </dict>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key>
+    <integer>5</integer>
+    <key>Hour</key>
+    <integer>18</integer>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>[redacted-personal-path]</string>
+  <key>StandardErrorPath</key>
+  <string>[redacted-personal-path]</string>
+</dict>
+</plist>
