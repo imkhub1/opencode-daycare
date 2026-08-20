@@ -7,16 +7,20 @@ import { createClient } from "@/utils/supabase/server";
 export type AppProfile = {
   id: string;
   fullName: string;
-  role: "staff" | "parent" | "admin";
-  status: "pending" | "active";
+  role: "staff" | "parent" | "admin" | null;
+  status: "pending" | "active" | null;
+  email: string | null;
 };
 
 export const getCurrentAppProfile = cache(async (): Promise<AppProfile | null> => {
   const supabase = await createClient();
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  const userId = user?.id;
 
-  if (claimsError || typeof userId !== "string") return null;
+  if (userError || !user || typeof userId !== "string") return null;
 
   const { data: profile, error: profileError } = await supabase
     .from("users")
@@ -24,13 +28,26 @@ export const getCurrentAppProfile = cache(async (): Promise<AppProfile | null> =
     .eq("id", userId)
     .maybeSingle();
 
-  if (profileError) throw new Error("No se pudo cargar el perfil actual.");
-  if (!profile) return null;
+  if (profileError || !profile) {
+    const displayName =
+      typeof user.user_metadata?.display_name === "string"
+        ? user.user_metadata.display_name.trim()
+        : "";
+
+    return {
+      id: user.id,
+      fullName: displayName || user.email || "Usuario",
+      role: null,
+      status: null,
+      email: user.email ?? null,
+    };
+  }
 
   return {
     id: profile.id,
     fullName: profile.full_name,
     role: profile.role,
     status: profile.status,
+    email: user.email ?? null,
   };
 });
