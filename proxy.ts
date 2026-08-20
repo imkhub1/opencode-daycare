@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 
-const publicRoutes = new Set(["/login", "/activate"]);
+const publicRoutes = new Set(["/login", "/activate", "/auth/callback"]);
 
 function redirectWithCookies(
   request: NextRequest,
@@ -23,8 +23,21 @@ function redirectWithCookies(
 export async function proxy(request: NextRequest) {
   const { claims, response } = await updateSession(request);
   const isPublicRoute = publicRoutes.has(request.nextUrl.pathname);
+  const invite = request.nextUrl.searchParams.get("invite")?.trim().toUpperCase();
+  const hasValidInvite = Boolean(
+    invite && /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/.test(invite),
+  );
 
-  if (claims && isPublicRoute) {
+  const isActivationReturn =
+    request.nextUrl.pathname === "/activate" &&
+    request.nextUrl.searchParams.has("code");
+  const isAuthCallback = request.nextUrl.pathname === "/auth/callback";
+
+  if (claims && request.nextUrl.pathname === "/login" && hasValidInvite) {
+    return redirectWithCookies(request, `/activate?code=${invite}`, response);
+  }
+
+  if (claims && isPublicRoute && !isActivationReturn && !isAuthCallback) {
     return redirectWithCookies(request, "/", response);
   }
 
