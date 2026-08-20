@@ -43,6 +43,7 @@ function AuthLogo({
 
 function Field({
   label,
+  name,
   type = "text",
   defaultValue,
   value,
@@ -55,6 +56,7 @@ function Field({
   className = "",
 }: {
   label: string;
+  name?: string;
   type?: "email" | "password" | "text";
   defaultValue?: string;
   value?: string;
@@ -73,6 +75,7 @@ function Field({
       </span>
       <input
         type={type}
+        name={name}
         defaultValue={defaultValue}
         value={value}
         onChange={onChange}
@@ -94,7 +97,6 @@ export function LoginScreen({
   invite?: string;
   activation?: string;
 }) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -105,10 +107,13 @@ export function LoginScreen({
     setError("");
     setIsLoading(true);
 
+    const formData = new FormData(event.currentTarget);
+    const submittedEmail = String(formData.get("email") ?? email).trim();
+    const submittedPassword = String(formData.get("password") ?? password);
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: submittedEmail,
+      password: submittedPassword,
     });
 
     if (error) {
@@ -120,11 +125,10 @@ export function LoginScreen({
     const safeInvite = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/i.test(invite.trim())
       ? invite.trim().toUpperCase()
       : "";
-    router.push(
-      safeInvite
-        ? `/activate?code=${encodeURIComponent(safeInvite)}`
-        : "/",
-    );
+    const destination = safeInvite
+      ? `/activate?code=${encodeURIComponent(safeInvite)}`
+      : "/";
+    window.location.assign(destination);
   }
 
   return (
@@ -169,6 +173,7 @@ export function LoginScreen({
           <form onSubmit={handleSubmit}>
             <Field
               label="EMAIL"
+              name="email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -177,6 +182,7 @@ export function LoginScreen({
             />
             <Field
               label="CONTRASEÑA"
+              name="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -219,10 +225,12 @@ export function ActivateScreen({
   token: initialToken,
   preview: initialPreview,
   authenticated = false,
+  blockedSession = false,
 }: {
   token: string;
   preview: ActivationPreview | null;
   authenticated?: boolean;
+  blockedSession?: boolean;
 }) {
   const router = useRouter();
   const [token, setToken] = useState(initialToken.trim().toUpperCase());
@@ -232,7 +240,11 @@ export function ActivateScreen({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [photoConsent, setPhotoConsent] = useState(true);
   const [now] = useState(() => Date.now());
+  const [verifiedToken, setVerifiedToken] = useState(
+    () => initialPreview ? initialToken.trim().toUpperCase() : "",
+  );
   const initialError = initialToken && !initialPreview
     ? "El código no es válido o ya no está disponible."
     : "";
@@ -241,8 +253,10 @@ export function ActivateScreen({
     preview &&
       preview.status === "pending" &&
       preview.deliveryStatus === "sent" &&
+      verifiedToken === token.trim().toUpperCase() &&
       new Date(preview.expiresAt).getTime() > now,
   );
+  const authenticatedParent = authenticated;
 
   async function lookupToken(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -251,8 +265,13 @@ export function ActivateScreen({
     setIsLoading(true);
     const nextPreview = await getActivationPreview(token);
     setPreview(nextPreview);
-    if (!nextPreview) setError("El código no es válido o ya no está disponible.");
-    else setName(nextPreview.invitedFullName);
+    if (!nextPreview) {
+      setVerifiedToken("");
+      setError("El código no es válido o ya no está disponible.");
+    } else {
+      setVerifiedToken(token.trim().toUpperCase());
+      setName(nextPreview.invitedFullName);
+    }
     setIsLoading(false);
   }
 
@@ -261,7 +280,12 @@ export function ActivateScreen({
     setError("");
     setMessage("");
 
-    if (!previewIsUsable || !preview || !name.trim() || password.length < 8) {
+    if (!previewIsUsable || !preview) {
+      setError("Verifica el código de activación.");
+      return;
+    }
+
+    if (!name.trim() || password.length < 8) {
       setError("Ingresa un nombre y una contraseña de al menos 8 caracteres.");
       return;
     }
@@ -280,12 +304,16 @@ export function ActivateScreen({
       return;
     }
 
-    setMessage("Revisa tu correo para confirmar la cuenta. Después volverás aquí para completar la activación.");
+    router.push("/login?activation=success");
   }
 
   async function acceptExisting(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    if (!previewIsUsable) {
+      setError("Verifica el código de activación.");
+      return;
+    }
     setIsLoading(true);
     const result = await acceptExistingParentInvitation(token, name);
     setIsLoading(false);
@@ -330,24 +358,45 @@ export function ActivateScreen({
               </div>
             </div>
 
-            <form onSubmit={authenticated ? acceptExisting : submitSignup}>
+            {blockedSession ? (
+              <div role="alert" className="rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold leading-relaxed text-[#c5413a]">
+                Esta invitación es para <strong>{preview.email}</strong>. Cierra la sesión actual y vuelve a abrir este enlace con la cuenta del padre invitado.
+              </div>
+            ) : <form onSubmit={authenticatedParent ? acceptExisting : submitSignup}>
+              <Field
+                label="CÓDIGO DE ACTIVACIÓN"
+                value={token}
+                onChange={(event) => setToken(event.target.value.toUpperCase())}
+                autoComplete="one-time-code"
+                required
+                className="font-display font-bold tracking-[3px]"
+              />
               <Field label="EMAIL" type="email" value={preview.email} readOnly disabled className="bg-[#f5eee6]" />
               <Field label="NOMBRE PARA TU CUENTA" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required />
               {!authenticated && (
                 <Field label="CREAR CONTRASEÑA" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="new-password" required className="border-[#f2a78e]" />
               )}
-              <div className="mb-6 flex items-start gap-3 rounded-[14px] bg-[#fbf1d6] p-[14px_16px]">
-                <span aria-hidden="true" className="mt-px flex size-6 shrink-0 items-center justify-center rounded-lg bg-[#5fb97e] text-white">✓</span>
-                <p className="text-sm leading-[1.45] text-[#8a7234]">Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro de la app.</p>
-              </div>
+              <label
+                htmlFor="activation-photo-consent"
+                className="mb-6 flex cursor-pointer items-start gap-3 rounded-[14px] bg-[#fbf1d6] p-[14px_16px]"
+              >
+                <input
+                  id="activation-photo-consent"
+                  type="checkbox"
+                  checked={photoConsent}
+                  onChange={(event) => setPhotoConsent(event.target.checked)}
+                  className="mt-0.5 size-6 shrink-0 accent-[#5fb97e]"
+                />
+                <span className="text-sm leading-[1.45] text-[#8a7234]">Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro de la app.</span>
+              </label>
               {message && <p role="status" className="mb-4 rounded-xl bg-[#cfebd8] px-4 py-3 text-sm font-bold text-[#3e8b62]">{message}</p>}
               {error && <p role="alert" className="mb-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">{error}</p>}
               <button type="submit" disabled={isLoading} className="w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:opacity-60">
-                {isLoading ? "Procesando…" : authenticated ? "Aceptar invitación" : "Activar mi cuenta"}
+                 {isLoading ? "Procesando…" : authenticatedParent ? "Aceptar invitación" : "Activar mi cuenta"}
               </button>
-            </form>
+            </form>}
 
-            {!authenticated && (
+            {!authenticatedParent && (
               <p className="mt-[22px] text-center text-[14.5px] text-muted">
                 ¿Ya tenés cuenta? <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-[#c5503a]">Iniciar sesión</Link>
               </p>

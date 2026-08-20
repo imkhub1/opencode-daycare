@@ -28,6 +28,7 @@ import {
   cancelParentInvitation,
   retryParentInvitation,
   type ParentInvitationSummary,
+  type ParentInvitationFormValues,
   type ParentLink,
 } from "@/app/kids/parent-invitations/actions";
 import { Icon } from "@/components/open-daycare";
@@ -630,7 +631,7 @@ function RetryInvitationButton({
   }, [router, state.success]);
 
   return (
-    <form action={formAction} className="mt-2">
+    <form action={formAction} className="inline-flex flex-col items-start">
       <button
         type="submit"
         disabled={pending}
@@ -670,7 +671,7 @@ function CancelInvitationButton({
   return (
     <form
       action={formAction}
-      className="mt-1"
+      className="inline-flex flex-col items-start"
       onSubmit={(event) => {
         if (!window.confirm(`¿Cancelar la invitación de ${parentName}?`)) {
           event.preventDefault();
@@ -680,7 +681,7 @@ function CancelInvitationButton({
       <button
         type="submit"
         disabled={pending}
-        className="text-xs font-extrabold text-[#c5413a] disabled:opacity-60"
+        className="rounded-xl border-[1.5px] border-[#efb4aa] bg-[#fffaf2] px-3 py-2 text-xs font-extrabold text-[#c5413a] disabled:opacity-60"
       >
         {pending ? "Cancelando…" : "Cancelar invitación"}
       </button>
@@ -704,6 +705,7 @@ export function ChildProfile({
 }) {
   const router = useRouter();
   const [isParentDialogOpen, setIsParentDialogOpen] = useState(false);
+  const [editingInvitation, setEditingInvitation] = useState<ParentInvitationSummary | null>(null);
   const parentLinkTriggerRef = useRef<HTMLButtonElement>(null);
   const pendingInvitations = invitations.filter(
     (invitation) => invitation.status === "pending",
@@ -715,6 +717,7 @@ export function ChildProfile({
 
   function closeParentDialog() {
     setIsParentDialogOpen(false);
+    setEditingInvitation(null);
     router.refresh();
     requestAnimationFrame(() => parentLinkTriggerRef.current?.focus());
   }
@@ -772,38 +775,69 @@ export function ChildProfile({
               {linkedParents.length || pendingInvitations.length ? (
                 <>
                   {linkedParents.map((parent) => (
-                  <div key={parent.id} className="flex items-center gap-3">
+                  <div key={parent.id} className="flex items-start gap-3">
                     <InitialAvatar name={parent.fullName} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[14.5px] font-extrabold text-ink">{parent.fullName}</p>
-                      <p className="truncate text-[12.5px] text-[#a89a8b]">{parent.email} · {relationshipLabel(parent.relationship)}</p>
+                      <p className="break-words text-[14.5px] font-extrabold leading-tight text-ink">{parent.fullName}</p>
+                      <p className="mt-1 break-words text-[12.5px] leading-snug text-[#a89a8b]">{relationshipLabel(parent.relationship)}</p>
+                      <p className="break-all text-[12.5px] leading-snug text-[#a89a8b]">{parent.email}</p>
                     </div>
                     <span className="shrink-0 rounded-full bg-[#cfebd8] px-2 py-1 text-[10.5px] font-extrabold text-[#3e8b62]">ACTIVA</span>
                   </div>
                   ))}
                   {pendingInvitations.map((invitation) => (
-                    <div key={invitation.id} className="flex items-start gap-3 rounded-xl bg-[#fffaf2] p-2">
-                      <InitialAvatar name={invitation.fullName} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[14.5px] font-extrabold text-ink">{invitation.fullName}</p>
-                        <p className="truncate text-[12.5px] text-[#a89a8b]">{invitation.email} · {relationshipLabel(invitation.relationship)}</p>
-                        <p className="text-[12px] text-[#a89a8b]">Vence {new Date(invitation.expiresAt).toLocaleDateString("es-AR")}</p>
-                        <p className={`text-[12px] font-bold ${invitation.deliveryStatus === "failed" ? "text-[#c5413a]" : "text-[#3e8b62]"}`}>
-                          {invitation.deliveryStatus === "failed" ? "Error de envío" : "Correo enviado"}
-                        </p>
-                        {invitation.deliveryStatus === "failed" && child.status === "active" && (
-                          <RetryInvitationButton invitationId={invitation.id} />
-                        )}
+                    <article key={invitation.id} className="rounded-[18px] border border-[#f0e6d8] bg-[#fffaf2] p-3.5">
+                      <header className="mb-3 flex items-center justify-between gap-2">
+                        <span className="shrink-0 rounded-full bg-[#f7e7a6] px-2.5 py-1 text-[10.5px] font-extrabold text-[#9a7b1e]">PENDIENTE</span>
                         {child.status === "active" && (
-                          <CancelInvitationButton
-                            invitationId={invitation.id}
-                            childId={child.id}
-                            parentName={invitation.fullName}
-                          />
+                          <button
+                            type="button"
+                            aria-label={`Editar invitación de ${invitation.fullName}`}
+                            onClick={() => setEditingInvitation(invitation)}
+                            className="flex size-8 items-center justify-center rounded-lg text-[#9a8b7c] hover:bg-[#f0e6d8] hover:text-[#c5503a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c5503a]"
+                          >
+                            <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" />
+                            </svg>
+                          </button>
                         )}
+                      </header>
+                      <div className="flex items-start gap-3">
+                        <InitialAvatar name={invitation.fullName} />
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words text-[15px] font-extrabold leading-tight text-ink">{invitation.fullName}</p>
+                          <p className="mt-1.5 text-[12.5px] leading-snug text-[#a89a8b]">{relationshipLabel(invitation.relationship)}</p>
+                        </div>
                       </div>
-                      <span className="shrink-0 rounded-full bg-[#f7e7a6] px-2 py-1 text-[10.5px] font-extrabold text-[#9a7b1e]">PENDIENTE</span>
-                    </div>
+                      <p className="mt-2 whitespace-nowrap text-[12.5px] leading-snug tracking-[-0.01em] text-[#a89a8b]">{invitation.email}</p>
+                      {(invitation.deliveryStatus === "sent" || invitation.deliveryStatus === "failed" || child.status === "active") && (
+                        <footer className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-[#eadfd0] pt-3">
+                          {invitation.deliveryStatus === "failed" && (
+                            <div className="mr-auto self-center">
+                              <p className="text-[11px] font-bold text-[#c5413a]">Error de envío</p>
+                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {new Date(invitation.expiresAt).toLocaleDateString("es-AR")}</p>
+                            </div>
+                          )}
+                          {invitation.deliveryStatus === "failed" && child.status === "active" && (
+                              <RetryInvitationButton invitationId={invitation.id} />
+                          )}
+                          {invitation.deliveryStatus === "sent" && (
+                            <div className="mr-auto self-center">
+                              <p className="text-[11px] font-bold text-[#3e8b62]">Correo enviado</p>
+                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {new Date(invitation.expiresAt).toLocaleDateString("es-AR")}</p>
+                            </div>
+                          )}
+                          {child.status === "active" && (
+                            <CancelInvitationButton
+                              invitationId={invitation.id}
+                              childId={child.id}
+                              parentName={invitation.fullName}
+                            />
+                          )}
+                        </footer>
+                      )}
+                    </article>
                   ))}
                 </>
               ) : (
@@ -830,11 +864,18 @@ export function ChildProfile({
           </section>
         </aside>
       </div>
-      {isParentDialogOpen && (
+      {(isParentDialogOpen || editingInvitation) && (
         <ParentLinkDialog
           childId={child.id}
           childName={child.fullName}
           onClose={closeParentDialog}
+          edit={Boolean(editingInvitation)}
+          invitationId={editingInvitation?.id}
+          initialValues={editingInvitation ? {
+            name: editingInvitation.fullName,
+            email: editingInvitation.email,
+            relationship: relationshipLabel(editingInvitation.relationship) as ParentInvitationFormValues["relationship"],
+          } : undefined}
         />
       )}
     </section>

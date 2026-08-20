@@ -22,7 +22,6 @@ export type ParentInvitationRelationship = "father" | "mother" | "guardian";
 
 export type ParentInvitationEmailInput = {
   fullName: string;
-  email: string;
   childName: string;
   daycareName: string;
   relationship: ParentInvitationRelationship;
@@ -184,7 +183,6 @@ export function buildParentInvitationEmail(input: ParentInvitationEmailInput) {
   const fullName = escapeHtml(input.fullName);
   const childName = escapeHtml(input.childName);
   const daycareName = escapeHtml(input.daycareName);
-  const email = escapeHtml(input.email);
   const escapedRelationship = escapeHtml(relationship);
   const escapedActivationUrl = escapeHtml(activationUrl);
   const escapedExpiration = escapeHtml(expiration);
@@ -204,7 +202,6 @@ export function buildParentInvitationEmail(input: ParentInvitationEmailInput) {
         <p style="margin:0 0 24px;font-size:30px;font-weight:700;letter-spacing:.18em;color:#c5503a">${token}</p>
         <p style="margin:0 0 24px"><a href="${escapedActivationUrl}" style="display:inline-block;border-radius:12px;background:#ee8164;color:#ffffff;padding:13px 18px;text-decoration:none;font-weight:700">Activar mi cuenta</a></p>
         <p style="font-size:14px;color:#75675d">También podés abrir el enlace y escribir manualmente el código. La invitación vence el ${escapedExpiration} (UTC).</p>
-        <p style="font-size:13px;color:#75675d">La invitación fue enviada a ${email}.</p>
       </section>
     </main>
   </body>
@@ -219,8 +216,6 @@ Código de activación: ${token}
 
 La invitación vence el ${expiration} (UTC), dentro de siete días.
 También podés abrir el enlace y escribir manualmente el código.
-
-La invitación fue enviada a ${input.email}.
 
 OpenDayCare`,
   };
