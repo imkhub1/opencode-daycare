@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { PlaceholderPage } from "@/components/open-daycare";
 
 const destinations: Record<string, string> = {
-  "crear-publicacion": "Nueva publicación",
   avisos: "Avisos",
   "mi-cuenta": "Mi cuenta",
   "publicaciones/mateo-logro": "Detalle de publicación",

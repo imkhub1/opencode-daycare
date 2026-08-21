@@ -8,7 +8,7 @@ This repository is part of an **OpenCode course by DevTalles**. The project is d
 
 - `/login` authenticates users with Supabase Auth using email and password.
 - `/activate` validates a parent invitation code and activates or links a parent account.
-- `/` renders the teacher feed for Caro Gimenez in Sala Soles. Post creation is currently client-side and is not persisted.
+- `/` renders the authenticated room feed. Active staff/admin users can create persisted room posts with optional private photos.
 - `/kids` provides the active and archived children directory for active staff and admin users.
 - Staff users can create and update children and send, update, cancel, and resend parent invitations.
 - Parent invitation emails are sent through Resend after the invitation is prepared by Supabase database functions.
