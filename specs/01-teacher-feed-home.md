@@ -1,5 +1,7 @@
 # SPEC 01 — Teacher Feed Home
 
+> **Persistence note:** The static reference feed documented here is the historical visual baseline. SPEC 12 supersedes its mock posts and composer data path with authenticated, persistent room posts.
+
 > **Status:** Implemented
 > **Depends on:** None
 > **Date:** 2026-08-13
