@@ -12,6 +12,7 @@ import {
   signUpParentAccount,
 } from "@/app/activate/actions";
 import { Icon } from "@/components/open-daycare";
+import { clearLogoutHistoryMarker } from "@/components/shared/logout-history";
 import { createClient } from "@/utils/supabase/client";
 
 function AuthLogo({
@@ -120,6 +121,7 @@ export function LoginScreen({
       return;
     }
 
+    clearLogoutHistoryMarker();
     const safeInvite = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/i.test(invite.trim())
       ? invite.trim().toUpperCase()
       : "";

@@ -310,7 +310,7 @@ export async function createChild(
       };
     }
 
-    revalidatePath("/kids");
+    revalidatePath("/staff/kids");
     return { success: true, childId: data.id };
   } catch {
     return { success: false, message: AUTHORIZATION_ERROR, values };
@@ -359,9 +359,9 @@ export async function updateChild(
       };
     }
 
-    revalidatePath("/kids");
-    revalidatePath(`/kids/${childId}`);
-    revalidatePath(`/kids/${childId}/edit`);
+    revalidatePath("/staff/kids");
+    revalidatePath(`/staff/kids/${childId}`);
+    revalidatePath(`/staff/kids/${childId}/edit`);
     return { success: true, childId: data.id };
   } catch {
     return { success: false, message: AUTHORIZATION_ERROR, values };
@@ -391,8 +391,8 @@ async function changeChildStatus(
       return { success: false, message: "El niño no existe o no está disponible." };
     }
 
-    revalidatePath("/kids");
-    revalidatePath(`/kids/${childId}`);
+    revalidatePath("/staff/kids");
+    revalidatePath(`/staff/kids/${childId}`);
     return { success: true, message: "", childId: data.id, status: to };
   } catch {
     return { success: false, message: AUTHORIZATION_ERROR };

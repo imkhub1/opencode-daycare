@@ -1,4 +1,4 @@
-export default function KidsLoading() {
+export default function StaffKidsLoading() {
   return (
     <section aria-label="Cargando niños" className="mx-auto w-full max-w-[880px] animate-pulse px-5 py-8 pb-16 sm:px-10 sm:py-[34px]">
       <div className="mb-6 flex items-end justify-between">

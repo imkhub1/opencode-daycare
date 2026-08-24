@@ -1,0 +1,62 @@
+schema: spec-driven
+
+context: |
+  OpenDayCare is a web app for daycare management: staff and admins share room updates, manage children, and invite parents to activate their accounts. Tech stack: Next.js, TypeScript, and Supabase.
+
+strict_tdd: false
+
+testing:
+  detected: 2026-08-23
+  runner:
+    command: "—"
+    framework: "No test runner configured"
+  layers:
+    unit:
+      available: false
+      tool: "—"
+    integration:
+      available: false
+      tool: "—"
+    e2e:
+      available: false
+      tool: "—"
+  coverage:
+    available: false
+    command: "—"
+  quality:
+    linter:
+      available: true
+      command: "npm run lint"
+    type_checker:
+      available: true
+      command: "npx tsc --noEmit"
+    formatter:
+      available: false
+      command: "—"
+
+rules:
+  proposal:
+    - Keep generated artifacts in English.
+    - State non-goals explicitly and do not implement the staff/family feature during initialization.
+    - Include a rollback plan for risky changes.
+  specs:
+    - Use Given/When/Then scenarios.
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY).
+  design:
+    - Document architecture decisions with rationale.
+    - Include sequence diagrams for complex flows.
+  tasks:
+    - Group tasks by phase with hierarchical numbering.
+    - Keep tasks completable in one session.
+  apply:
+    guidelines:
+      - Follow existing Next.js App Router and Supabase patterns.
+      - Do not implement work outside the approved change scope.
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas.

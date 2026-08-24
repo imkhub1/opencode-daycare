@@ -5,6 +5,8 @@
 > **Date:** 2026-08-14
 > **Objective:** Replace the feed's new-post navigation with an accessible modal that temporarily adds a publication with drag-and-drop photos.
 
+> **Persistence note:** The temporary client-only behavior documented here is superseded by SPEC 12 for the production publishing flow. Its interface-level acceptance criteria remain the historical verification of the original dialog.
+
 ## Scope
 
 **In:**

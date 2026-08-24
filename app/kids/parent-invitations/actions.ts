@@ -306,8 +306,8 @@ export async function createParentInvitation(
         };
       }
 
-      revalidatePath(`/kids/${childId}`);
-      revalidatePath("/kids");
+      revalidatePath(`/staff/kids/${childId}`);
+      revalidatePath("/staff/kids");
       return {
         success: true,
         invitationId: existingInvitationId,
@@ -359,8 +359,8 @@ export async function createParentInvitation(
       };
     }
 
-    revalidatePath(`/kids/${childId}`);
-    revalidatePath("/kids");
+    revalidatePath(`/staff/kids/${childId}`);
+    revalidatePath("/staff/kids");
 
     return { success: true, invitationId: data, token: delivery.token ?? undefined };
   } catch {
@@ -391,7 +391,7 @@ export async function retryParentInvitation(
       };
     }
 
-    revalidatePath("/kids");
+    revalidatePath("/staff/kids");
     return { success: true, invitationId, token: delivery.token ?? undefined };
   } catch {
     return { success: false, message: GENERIC_DELIVERY_ERROR, invitationId };
@@ -433,8 +433,8 @@ export async function editParentInvitation(
       return { success: false, message: GENERIC_UPDATE_ERROR, values };
     }
 
-    revalidatePath(`/kids/${childId}`);
-    revalidatePath("/kids");
+    revalidatePath(`/staff/kids/${childId}`);
+    revalidatePath("/staff/kids");
     return { success: true };
   } catch {
     return { success: false, message: GENERIC_UPDATE_ERROR, values };
@@ -459,8 +459,8 @@ export async function cancelParentInvitation(
       return { success: false as const, message: GENERIC_CANCELLATION_ERROR };
     }
 
-    revalidatePath(`/kids/${childId}`);
-    revalidatePath("/kids");
+    revalidatePath(`/staff/kids/${childId}`);
+    revalidatePath("/staff/kids");
     return { success: true as const };
   } catch {
     return { success: false as const, message: GENERIC_CANCELLATION_ERROR };
