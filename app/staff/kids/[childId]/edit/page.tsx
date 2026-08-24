@@ -5,7 +5,7 @@ import { ChildEditForm } from "@/components/kids";
 
 const ROOM_ORDER = ["Soles", "Lunas", "Estrellas"];
 
-export default async function EditChildPage({
+export default async function StaffEditChildPage({
   params,
 }: {
   params: Promise<{ childId: string }>;

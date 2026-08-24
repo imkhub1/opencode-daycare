@@ -1,20 +1,9 @@
-import { notFound } from "next/navigation";
-import { PlaceholderPage } from "@/components/open-daycare";
+import { redirect } from "next/navigation";
 
-const destinations: Record<string, string> = {
-  avisos: "Avisos",
-  "mi-cuenta": "Mi cuenta",
-  "publicaciones/mateo-logro": "Detalle de publicación",
-  "publicaciones/mateo-actividad": "Detalle de publicación",
-  "fotos/mateo-temperas": "Foto de Mateo",
-  "cerrar-sesion": "Cerrar sesión",
-};
+import { getCurrentAppProfile, getProfileDestination } from "@/utils/supabase/profile";
 
-export default async function PlaceholderRoute({ params }: PageProps<"/[...placeholder]">) {
-  const { placeholder } = await params;
-  const title = destinations[placeholder.join("/")];
-
-  if (!title) notFound();
-
-  return <PlaceholderPage title={title} />;
+export default async function PlaceholderRoute({ params }: { params: Promise<{ placeholder: string[] }> }) {
+  void params;
+  const profile = await getCurrentAppProfile();
+  redirect(getProfileDestination(profile));
 }

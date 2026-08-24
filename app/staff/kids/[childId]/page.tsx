@@ -7,7 +7,7 @@ import {
 } from "@/app/kids/parent-invitations/actions";
 import { ChildProfile } from "@/components/kids";
 
-export default async function ChildPage({
+export default async function StaffChildPage({
   params,
 }: {
   params: Promise<{ childId: string }>;

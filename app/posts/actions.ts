@@ -169,7 +169,7 @@ export async function preparePost(input: PreparePostInput): Promise<PreparePostR
   if (!payload) return { success: false, message: GENERIC_ERROR };
 
   if (payload.status === "published") {
-    revalidatePath("/");
+    revalidatePath("/staff");
     return { success: true, postId: payload.postId, status: "published" };
   }
 
@@ -220,8 +220,8 @@ export async function finalizePost(postId: string): Promise<PostActionResult> {
     return { success: false, message: GENERIC_ERROR };
   }
 
-  revalidatePath("/");
-  revalidatePath("/crear-publicacion");
+  revalidatePath("/staff");
+  revalidatePath("/staff/crear-publicacion");
   return { success: true, postId };
 }
 

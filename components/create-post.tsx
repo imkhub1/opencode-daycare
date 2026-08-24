@@ -95,7 +95,7 @@ export function CreatePost({
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && !isSubmitting) {
         if (onCancel) onCancel();
-        else router.push("/");
+        else router.push("/staff");
         return;
       }
 
@@ -143,7 +143,7 @@ export function CreatePost({
     if (isSubmitting) return;
     resetForm();
     if (onCancel) onCancel();
-    else router.push("/");
+    else router.push("/staff");
   }
 
   function addFiles(files: File[]) {
@@ -266,7 +266,7 @@ export function CreatePost({
     setIsSubmitting(false);
     resetForm();
     if (onSuccess) onSuccess();
-    else router.push("/");
+    else router.push("/staff");
   }
 
   const content = (
