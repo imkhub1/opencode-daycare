@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Fredoka, Nunito } from "next/font/google";
+import Script from "next/script";
 import type { ReactNode } from "react";
-import { AppProfileProvider } from "@/components/shared/AppProfileProvider";
-import { getCurrentAppProfile } from "@/utils/supabase/profile";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -22,21 +21,27 @@ export const metadata: Metadata = {
   description: "La comunidad de tu guarderia",
 };
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  let profile = null;
-  try {
-    profile = await getCurrentAppProfile();
-  } catch {
-    // Keep public/auth routes usable when the application profile read is transiently unavailable.
-  }
-
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="es"
       className={`${fredoka.variable} ${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AppProfileProvider profile={profile}>{children}</AppProfileProvider>
+        <Script id="protected-history-guard" strategy="beforeInteractive">{`
+          (() => {
+            const key = "opendaycare:logged-out";
+            const publicPaths = new Set(["/login", "/activate", "/auth/callback"]);
+            const redirect = (event) => {
+              if (publicPaths.has(location.pathname) || sessionStorage.getItem(key) !== "1") return;
+              event?.stopImmediatePropagation();
+              location.replace("/login");
+            };
+            redirect();
+            addEventListener("pageshow", redirect, true);
+          })();
+        `}</Script>
+        {children}
       </body>
     </html>
   );

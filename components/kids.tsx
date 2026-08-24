@@ -58,7 +58,7 @@ function InitialAvatar({ name, large = false }: { name: string; large?: boolean 
   );
 }
 
-function BackLink({ href = "/kids", children = "Volver a Niños" }) {
+function BackLink({ href = "/staff/kids", children = "Volver a Niños" }) {
   return (
     <Link href={href} className="mb-5 flex items-center gap-1.5 text-sm font-bold text-muted">
       <svg
@@ -457,7 +457,7 @@ function RestoreButton({ childId }: { childId: string }) {
 function ChildCard({ child, archived }: { child: Child; archived: boolean }) {
   return (
     <article className="flex min-w-0 items-center gap-3.5 rounded-[18px] border border-line bg-surface p-4 shadow-sm shadow-[#785a3c]/10">
-      <Link href={`/kids/${child.id}`} className="flex min-w-0 flex-1 items-center gap-3.5 rounded-lg focus-visible:outline-offset-4">
+      <Link href={`/staff/kids/${child.id}`} className="flex min-w-0 flex-1 items-center gap-3.5 rounded-lg focus-visible:outline-offset-4">
         <InitialAvatar name={child.fullName} />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-display text-base font-semibold text-ink">
@@ -526,10 +526,10 @@ export function ChildrenDirectory({
       </header>
 
       <div className="mb-4 flex w-fit rounded-xl border border-line bg-surface p-1 text-sm font-bold">
-        <Link href="/kids" className={`rounded-lg px-3 py-2 ${view === "active" ? "bg-coral-soft text-[#d9583c]" : "text-muted"}`}>
+        <Link href="/staff/kids" className={`rounded-lg px-3 py-2 ${view === "active" ? "bg-coral-soft text-[#d9583c]" : "text-muted"}`}>
           Activos
         </Link>
-        <Link href="/kids?view=archived" className={`rounded-lg px-3 py-2 ${view === "archived" ? "bg-coral-soft text-[#d9583c]" : "text-muted"}`}>
+        <Link href="/staff/kids?view=archived" className={`rounded-lg px-3 py-2 ${view === "archived" ? "bg-coral-soft text-[#d9583c]" : "text-muted"}`}>
           Archivados
         </Link>
       </div>
@@ -593,7 +593,7 @@ function LifecycleButton({ child }: { child: Child }) {
 
   useEffect(() => {
     if (!state.success) return;
-    if (state.status === "archived") router.push("/kids?view=archived");
+    if (state.status === "archived") router.push("/staff/kids?view=archived");
     else router.refresh();
   }, [router, state.status, state.success]);
 
@@ -735,7 +735,7 @@ export function ChildProfile({
 
   return (
     <section className="mx-auto w-full max-w-[820px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20">
-      <BackLink href={child.status === "archived" ? "/kids?view=archived" : "/kids"} />
+      <BackLink href={child.status === "archived" ? "/staff/kids?view=archived" : "/staff/kids"} />
       <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
         <div className="min-w-0 space-y-[18px]">
           <div className="flex flex-wrap items-center gap-[18px]">
@@ -746,7 +746,7 @@ export function ChildProfile({
                 {ageFromIsoDate(child.birthDate)} · Sala {child.roomName}
               </p>
             </div>
-            <Link href={`/kids/${child.id}/edit`} className="rounded-xl border-[1.5px] border-line bg-surface px-4 py-2 text-sm font-bold text-[#6e6359]">
+            <Link href={`/staff/kids/${child.id}/edit`} className="rounded-xl border-[1.5px] border-line bg-surface px-4 py-2 text-sm font-bold text-[#6e6359]">
               Editar
             </Link>
           </div>
@@ -776,7 +776,7 @@ export function ChildProfile({
         </div>
 
         <aside className="space-y-3">
-          <Link href={`/kids/${child.id}/edit`} className="block rounded-[14px] bg-ink px-4 py-3 text-center text-sm font-extrabold text-white">
+          <Link href={`/staff/kids/${child.id}/edit`} className="block rounded-[14px] bg-ink px-4 py-3 text-center text-sm font-extrabold text-white">
             Editar datos
           </Link>
           <LifecycleButton child={child} />
@@ -909,7 +909,7 @@ export function ChildEditForm({ child, rooms }: { child: Child; rooms: Room[] })
   });
 
   useEffect(() => {
-    if (state.success) router.push(`/kids/${child.id}`);
+    if (state.success) router.push(`/staff/kids/${child.id}`);
   }, [child.id, router, state.success]);
 
   function validate(event: FormEvent<HTMLFormElement>) {
@@ -920,10 +920,10 @@ export function ChildEditForm({ child, rooms }: { child: Child; rooms: Room[] })
 
   return (
     <section className="mx-auto w-full max-w-[560px] px-5 py-8 pb-16 sm:py-10">
-      <BackLink href={`/kids/${child.id}`}>Volver al perfil</BackLink>
+      <BackLink href={`/staff/kids/${child.id}`}>Volver al perfil</BackLink>
       <form action={formAction} onSubmit={validate} noValidate className="overflow-hidden rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/15">
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
-          <Link href={`/kids/${child.id}`} className="text-[15px] font-bold text-muted">Cancelar</Link>
+          <Link href={`/staff/kids/${child.id}`} className="text-[15px] font-bold text-muted">Cancelar</Link>
           <h1 className="font-display text-lg font-semibold text-ink">Editar niño</h1>
           <button type="submit" disabled={pending} className="text-[15px] font-extrabold text-[#d9583c] disabled:opacity-60">
             {pending ? "Guardando…" : "Guardar"}

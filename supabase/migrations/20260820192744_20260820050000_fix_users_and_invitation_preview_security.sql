@@ -4,8 +4,24 @@
 -- H-01: Revoke direct access to get_invitation_preview to prevent PII exposure and enumeration
 revoke all on function public.get_invitation_preview(text) from public, anon, authenticated;
 
--- H-04: Revoke EXECUTE on public.rls_auto_enable() from public, anon, authenticated, and service_role
-revoke execute on function public.rls_auto_enable() from public, anon, authenticated, service_role;
+-- H-04: This optional historical helper is absent in some migration histories.
+-- When its zero-argument signature exists, preserve the intended EXECUTE revoke.
+do $$
+begin
+  if exists (
+    select 1
+    from pg_catalog.pg_proc as procedure
+    join pg_catalog.pg_namespace as namespace
+      on namespace.oid = procedure.pronamespace
+    where namespace.nspname = 'public'
+      and procedure.proname = 'rls_auto_enable'
+      and procedure.prokind = 'f'
+      and procedure.pronargs = 0
+  ) then
+    execute 'revoke execute on function public.rls_auto_enable() from public, anon, authenticated, service_role';
+  end if;
+end
+$$;
 
 -- H-05: Update current_user_daycare_id and current_user_role to filter for active status
 create or replace function private.current_user_daycare_id()

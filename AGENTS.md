@@ -12,7 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - This is a single Next.js 16.3 App Router application. `app/layout.tsx` is the root layout and `app/page.tsx` is the current feed entrypoint.
 - `/login` uses Supabase email/password authentication. `/activate` handles parent invitation validation and account activation. `/auth/callback` exchanges Supabase Auth confirmation codes and completes invitation acceptance.
-- `/` renders the teacher feed for Caro Gimenez in Sala Soles. Feed posts and the create-post dialog are currently client-side and are not persisted.
+- `/` renders the authenticated room feed. Active staff/admin users can create persisted room posts with optional private photos.
 - `/kids` and its child routes provide the active and archived children directory for active `staff` and `admin` profiles. Server actions in `app/kids/` enforce the same authorization before database writes.
 - Parent invitations are stored and prepared through Supabase database functions and delivered by Resend server actions in `app/kids/parent-invitations/`.
 - Implement future OpenDayCare features from the source of truth in `references/pantallas/`, `references/screenshots/`, and the relevant spec in `specs/`.
