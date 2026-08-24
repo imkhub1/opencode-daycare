@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppProfile } from "@/components/shared/AppProfileProvider";
+import type { AppProfile } from "@/utils/supabase/profile";
 
 const roleLabels = {
   admin: "Admin",
@@ -8,10 +8,13 @@ const roleLabels = {
   parent: "Familia",
 } as const;
 
-export function SidebarUser() {
-  const profile = useAppProfile();
-  const name = profile?.fullName.trim() || "Usuario";
-  const role = profile?.role ? roleLabels[profile.role] : "Cuenta";
+export function SidebarUser({
+  profile,
+}: {
+  profile: Pick<AppProfile, "fullName" | "role">;
+}) {
+  const name = profile.fullName.trim() || "Usuario";
+  const role = profile.role ? roleLabels[profile.role] : "Cuenta";
   const initial = (Array.from(name)[0] || "U").toLocaleUpperCase("es");
 
   return (

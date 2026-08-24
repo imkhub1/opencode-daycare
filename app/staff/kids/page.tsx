@@ -3,7 +3,7 @@ import { ChildrenDirectory } from "@/components/kids";
 
 const ROOM_ORDER = ["Soles", "Lunas", "Estrellas"];
 
-export default async function KidsPage({
+export default async function StaffKidsPage({
   searchParams,
 }: {
   searchParams: Promise<{ view?: string | string[] }>;
