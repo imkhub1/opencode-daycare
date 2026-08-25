@@ -56,9 +56,9 @@ function Navigation({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold ${active ? "bg-coral-soft text-[#d9583c]" : "text-[#6e6359] hover:bg-[#f6ecdf]"}`}
+            className={`flex items-center gap-3 rounded-xl px-3 py-[11px] text-sm font-semibold ${active ? "bg-coral-soft text-[#d9583c] font-extrabold" : "text-[#6e6359] hover:bg-[#f6ecdf]"}`}
           >
-            <Icon name={item.icon} className="size-5" />
+            <Icon name={item.icon} className="size-[19px]" />
             {item.label}
           </Link>
         );
@@ -70,11 +70,13 @@ function Navigation({
 export function AppShell({
   profile,
   navigation,
+  primaryAction,
   brandSubtitle,
   children,
 }: {
   profile: ShellProfile;
   navigation: AreaNavigationItem[];
+  primaryAction?: AreaNavigationItem;
   brandSubtitle: string;
   children: ReactNode;
 }) {
@@ -84,6 +86,15 @@ export function AppShell({
     <div className="min-h-screen bg-sand md:flex">
       <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-surface px-4 py-6 md:flex">
         <div className="px-2 pb-6"><Brand href={landingHref} subtitle={brandSubtitle} /></div>
+        {primaryAction && (
+          <Link
+            href={primaryAction.href}
+            className="mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
+          >
+            <Icon name={primaryAction.icon} className="size-[17px]" />
+            {primaryAction.label}
+          </Link>
+        )}
         <Navigation items={navigation} />
         <div className="mt-3 border-t border-line pt-4">
           <div className="flex items-center gap-3 px-2">
@@ -102,6 +113,15 @@ export function AppShell({
                 <span className="sr-only">Abrir navegación</span>
               </summary>
               <div className="absolute right-0 top-12 w-56 rounded-2xl border border-line bg-surface p-2 shadow-xl shadow-[#3f362e]/10">
+                {primaryAction && (
+                  <Link
+                    href={primaryAction.href}
+                    className="mb-1 flex items-center gap-3 rounded-xl bg-coral px-3 py-3 text-sm font-bold text-white"
+                  >
+                    <Icon name={primaryAction.icon} className="size-5" />
+                    {primaryAction.label}
+                  </Link>
+                )}
                 <Navigation items={navigation} compact />
               </div>
             </details>
