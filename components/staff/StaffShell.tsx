@@ -5,9 +5,14 @@ import type { AppProfile } from "@/utils/supabase/profile";
 
 const navigation: AreaNavigationItem[] = [
   { href: "/staff", label: "Feed", icon: "home" },
-  { href: "/staff/crear-publicacion", label: "Nueva publicación", icon: "plus" },
   { href: "/staff/kids", label: "Niños", icon: "users" },
 ];
+
+const primaryAction: AreaNavigationItem = {
+  href: "/staff/crear-publicacion",
+  label: "Nueva publicación",
+  icon: "plus",
+};
 
 export function StaffShell({
   profile,
@@ -16,5 +21,14 @@ export function StaffShell({
   profile: Pick<AppProfile, "fullName" | "role">;
   children: ReactNode;
 }) {
-  return <AppShell profile={profile} navigation={navigation} brandSubtitle="Sala Soles">{children}</AppShell>;
+  return (
+    <AppShell
+      profile={profile}
+      navigation={navigation}
+      primaryAction={primaryAction}
+      brandSubtitle="Sala Soles"
+    >
+      {children}
+    </AppShell>
+  );
 }
