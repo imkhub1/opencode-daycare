@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
 
@@ -63,6 +64,12 @@ export type ChildLifecycleState = {
   message: string;
   childId?: string;
   status?: ChildStatus;
+};
+
+export type ChildDeletionState = {
+  success: boolean;
+  message?: string;
+  childId?: string;
 };
 
 type ChildWrite = {
@@ -413,4 +420,51 @@ export async function restoreChild(
 ): Promise<ChildLifecycleState> {
   void _previousState;
   return changeChildStatus(childId, "archived", "active");
+}
+
+export async function deleteChild(
+  childId: string,
+  _previousState: ChildDeletionState,
+  formData: FormData,
+): Promise<ChildDeletionState> {
+  void _previousState;
+  const confirmationName = readText(formData, "confirmationName");
+
+  if (!UUID_PATTERN.test(childId)) {
+    return { success: false, message: "El niño no existe o no está disponible." };
+  }
+
+  try {
+    const supabase = await createAuthorizedClient();
+    const { data: child, error: childError } = await supabase
+      .from("children")
+      .select("full_name, rooms!inner(id)")
+      .eq("id", childId)
+      .maybeSingle();
+
+    if (childError || !child) {
+      return { success: false, message: "El niño no existe o no está disponible." };
+    }
+
+    if (confirmationName !== child.full_name) {
+      return {
+        success: false,
+        message: "Escribe el nombre exacto del niño para confirmar.",
+      };
+    }
+
+    const { data, error } = await supabase.rpc("delete_child", {
+      p_child_id: childId,
+    });
+
+    if (error || data !== true) {
+      return { success: false, message: "No se pudo eliminar el niño. Inténtalo de nuevo." };
+    }
+
+  } catch {
+    return { success: false, message: "No se pudo eliminar el niño. Inténtalo de nuevo." };
+  }
+
+  revalidatePath("/staff/kids");
+  redirect("/staff/kids");
 }
