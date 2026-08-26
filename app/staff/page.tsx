@@ -12,6 +12,8 @@ export default async function StaffHome() {
       rooms={rooms}
       displayName={profile.fullName}
       canCreatePost
+      currentUserId={profile.id}
+      canDeleteAnyPost
     />
   );
 }
