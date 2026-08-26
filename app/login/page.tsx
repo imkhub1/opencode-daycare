@@ -9,13 +9,18 @@ export const metadata: Metadata = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ invite?: string; activation?: string }>;
+  searchParams: Promise<{
+    invite?: string;
+    activation?: string;
+    recovery?: string;
+  }>;
 }) {
   const params = await searchParams;
   return (
     <LoginScreen
       invite={params.invite}
       activation={params.activation}
+      recovery={params.recovery}
       dictionary={await getServerDictionary()}
     />
   );
