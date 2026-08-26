@@ -4,6 +4,8 @@ import Script from "next/script";
 import type { ReactNode } from "react";
 import "./globals.css";
 
+const THEME_INITIALIZER = `(function(){var k="opendaycare:theme",r=document.documentElement,t;try{t=localStorage.getItem(k)}catch(e){}if(t!=="dark"&&t!=="light")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";r.dataset.theme=t;r.style.colorScheme=t})()`;
+
 const fredoka = Fredoka({
   variable: "--font-fredoka",
   subsets: ["latin"],
@@ -26,7 +28,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="es"
       className={`${fredoka.variable} ${nunito.variable} h-full antialiased`}
+      data-theme="light"
+      suppressHydrationWarning
     >
+      <head>
+        <meta name="color-scheme" content="light dark" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: THEME_INITIALIZER,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <Script id="protected-history-guard" strategy="beforeInteractive">{`
           (() => {

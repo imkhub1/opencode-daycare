@@ -22,7 +22,7 @@ export default async function StaffCreatePostPage() {
         {rooms.length > 0 ? (
           <CreatePost rooms={rooms} variant="page" />
         ) : (
-          <section className="w-full rounded-[24px] border border-line bg-surface p-7 text-center shadow-lg shadow-[#785a3c]/10">
+          <section className="w-full rounded-[24px] border border-line bg-surface p-7 text-center shadow-theme-md">
             <h1 className="font-display text-2xl font-semibold text-ink">No tenés una sala asignada</h1>
             <p className="mt-3 text-sm leading-relaxed text-muted">Pedile a un administrador que te asigne una sala para poder publicar.</p>
           </section>

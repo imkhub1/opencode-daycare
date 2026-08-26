@@ -13,6 +13,7 @@ import {
 } from "@/app/activate/actions";
 import { Icon } from "@/components/open-daycare";
 import { clearLogoutHistoryMarker } from "@/components/shared/logout-history";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { createClient } from "@/utils/supabase/client";
 
 function AuthLogo({
@@ -25,13 +26,13 @@ function AuthLogo({
   return (
     <div className="flex items-center gap-3">
       <span
-        className={`flex size-[46px] items-center justify-center rounded-[14px] ${inverse ? "bg-white/20" : "bg-linear-to-br from-[#f8c3a8] to-[#f2937a] shadow-lg shadow-[#ee8164]/25"}`}
+        className={`flex size-[46px] items-center justify-center rounded-[14px] ${inverse ? "bg-control-overlay" : "bg-brand-gradient shadow-theme-sm"}`}
       >
-        <Icon name="sun" className="size-6.5 text-white" />
+        <Icon name="sun" className="size-6.5 text-theme-white-strong" />
       </span>
       {showName && (
         <span
-          className={`font-display text-[21px] font-semibold tracking-wide ${inverse ? "text-white" : "text-ink"}`}
+          className={`font-display text-[21px] font-semibold tracking-wide ${inverse ? "text-theme-white-strong" : "text-ink"}`}
         >
           OpenDayCare
         </span>
@@ -83,7 +84,7 @@ function Field({
         required={required}
         readOnly={readOnly}
         disabled={disabled}
-        className={`w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] text-ink outline-none placeholder:text-[#b6a99b] ${className}`}
+        className={`w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] text-ink outline-none placeholder:text-placeholder ${className}`}
       />
     </label>
   );
@@ -132,10 +133,10 @@ export function LoginScreen({
   }
 
   return (
-    <main className="grid min-h-screen bg-[#fbf4ec] lg:grid-cols-[1.05fr_1fr]">
-      <section className="relative hidden overflow-hidden bg-linear-[155deg] from-[#f6a98e] via-[#f2937a] to-[#ec7e62] p-[56px_60px] text-white lg:flex lg:flex-col lg:justify-between">
-        <span className="absolute -right-[120px] -top-[140px] size-[420px] rounded-full bg-white/12" />
-        <span className="absolute -bottom-[110px] -left-20 size-[300px] rounded-full bg-white/10" />
+    <main className="grid min-h-screen bg-canvas lg:grid-cols-[1.05fr_1fr]">
+      <section className="relative hidden overflow-hidden bg-brand-gradient p-[56px_60px] text-theme-white-strong lg:flex lg:flex-col lg:justify-between">
+        <span className="absolute -right-[120px] -top-[140px] size-[420px] rounded-full bg-theme-white-strong/12" />
+        <span className="absolute -bottom-[110px] -left-20 size-[300px] rounded-full bg-theme-white-strong/10" />
         <div className="relative">
           <AuthLogo inverse />
         </div>
@@ -145,14 +146,15 @@ export function LoginScreen({
             <br />
             compartido con su familia.
           </h1>
-          <p className="max-w-[430px] text-[17px] leading-relaxed text-white/90">
+          <p className="max-w-[430px] text-[17px] leading-relaxed text-theme-white-strong/90">
             Publicá momentos, gestioná las salas y mantené a las familias cerca,
             desde un solo lugar.
           </p>
         </div>
-        <p className="relative text-sm text-white/90">Guardería Sala Soles</p>
+        <p className="relative text-sm text-theme-white-strong/90">Guardería Sala Soles</p>
       </section>
-      <section className="flex items-center justify-center px-5 py-10 sm:p-10">
+      <section className="relative flex items-center justify-center px-5 py-10 sm:p-10">
+        <ThemeToggle className="absolute right-5 top-5 sm:right-10 sm:top-10" />
         <div className="w-full max-w-[392px]">
           <h1 className="mb-1.5 font-display text-[30px] font-semibold text-ink">
             Iniciar sesión
@@ -161,17 +163,17 @@ export function LoginScreen({
             Ingresá para ver el día de hoy.
           </p>
           {activation === "success" && (
-            <p role="status" className="mb-5 rounded-xl bg-[#cfebd8] px-4 py-3 text-sm font-bold text-[#3e8b62]">
+            <p role="status" className="mb-5 rounded-xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
               Tu cuenta fue activada y el vínculo con el niño quedó confirmado.
             </p>
           )}
           {activation === "error" && (
-            <p role="alert" className="mb-5 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">
+            <p role="alert" className="mb-5 rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold text-danger">
               No se pudo completar la activación. Revisa el enlace e inténtalo nuevamente.
             </p>
           )}
           {activation === "pending" && (
-            <p role="status" className="mb-5 rounded-xl bg-[#fff1c7] px-4 py-3 text-sm font-bold text-[#8a7234]">
+            <p role="status" className="mb-5 rounded-xl bg-warning-soft px-4 py-3 text-sm font-bold text-warning">
               Revisa tu correo para confirmar la cuenta y completar la activación.
             </p>
           )}
@@ -197,26 +199,26 @@ export function LoginScreen({
             />
             <button
               type="button"
-              className="mb-5 block w-full text-right text-[13.5px] font-bold text-[#c5503a]"
+              className="mb-5 block w-full text-right text-[13.5px] font-bold text-coral-strong"
             >
               ¿Olvidaste tu contraseña?
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="block w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:cursor-not-allowed disabled:opacity-60"
+              className="block w-full rounded-[15px] bg-coral-gradient px-4 py-[15px] text-center text-base font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
             </button>
             {error && (
-              <p role="alert" className="mt-3 text-center text-sm text-[#c5503a]">
+              <p role="alert" className="mt-3 text-center text-sm text-coral-strong">
                 {error}
               </p>
             )}
           </form>
           <p className="mt-6 text-center text-[14.5px] text-muted">
             ¿Te invitó la guardería?{" "}
-            <Link href="/activate" className="font-extrabold text-[#c5503a]">
+            <Link href="/activate" className="font-extrabold text-coral-strong">
               Activá tu cuenta
             </Link>
           </p>
@@ -294,14 +296,15 @@ export function ActivateScreen({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#fbf4ec] px-5 py-10 sm:p-10">
+    <main className="relative flex min-h-screen items-center justify-center bg-canvas px-5 py-10 sm:p-10">
+      <ThemeToggle className="absolute right-5 top-5 sm:right-10 sm:top-10" />
       <section className="w-full max-w-[440px]">
         <div className="mb-[22px]"><AuthLogo showName={false} /></div>
         <h1 className="mb-2 font-display text-[32px] leading-[1.15] font-semibold text-ink">Bienvenida a OpenDayCare</h1>
         <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">Te invitaron a seguir el día de tu hijo. Completa tus datos para activar la cuenta.</p>
 
         {blockedSession ? (
-          <div role="alert" className="rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold leading-relaxed text-[#c5413a]">
+          <div role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold leading-relaxed text-danger">
             Cierra la sesión actual y vuelve a abrir este enlace con la cuenta del padre invitado.
           </div>
         ) : (
@@ -339,24 +342,24 @@ export function ActivateScreen({
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="new-password"
                 required
-                className="border-[#f2a78e]"
+                className="border-coral"
               />
             )}
             <label
               htmlFor="activation-photo-consent"
-              className="mb-6 flex cursor-pointer items-start gap-3 rounded-[14px] bg-[#fbf1d6] p-[14px_16px]"
+              className="mb-6 flex cursor-pointer items-start gap-3 rounded-[14px] bg-warning-panel p-[14px_16px]"
             >
               <input
                 id="activation-photo-consent"
                 type="checkbox"
                 checked={photoConsent}
                 onChange={(event) => setPhotoConsent(event.target.checked)}
-                className="mt-0.5 size-6 shrink-0 accent-[#5fb97e]"
+                className="mt-0.5 size-6 shrink-0 accent-success"
               />
-              <span className="text-sm leading-[1.45] text-[#8a7234]">Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro de la app.</span>
+              <span className="text-sm leading-[1.45] text-warning">Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro de la app.</span>
             </label>
-            {error && <p role="alert" className="mb-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">{error}</p>}
-            <button type="submit" disabled={isLoading} className="w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:opacity-60">
+            {error && <p role="alert" className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold text-danger">{error}</p>}
+            <button type="submit" disabled={isLoading} className="w-full rounded-[15px] bg-coral-gradient px-4 py-[15px] text-center text-base font-extrabold text-theme-white-strong shadow-theme-sm disabled:opacity-60">
               {isLoading ? "Procesando…" : authenticated ? "Aceptar invitación" : "Activar mi cuenta"}
             </button>
           </form>
@@ -364,7 +367,7 @@ export function ActivateScreen({
 
         {!authenticated && (
           <p className="mt-[22px] text-center text-[14.5px] text-muted">
-            ¿Ya tenés cuenta? <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-[#c5503a]">Iniciar sesión</Link>
+            ¿Ya tenés cuenta? <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-coral-strong">Iniciar sesión</Link>
           </p>
         )}
       </section>

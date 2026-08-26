@@ -1,13 +1,245 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: light;
+  --theme-canvas: #fbf4ec;
+  --theme-sand: #f6ecdf;
+  --theme-surface: #fffdf9;
+  --theme-surface-raised: #ffffff;
+  --theme-surface-soft: #f4ece1;
+  --theme-surface-muted: #f0e6d8;
+  --theme-surface-warm: #fffaf2;
+  --theme-white: #ffffff;
+  --theme-white-strong: #ffffff;
+  --theme-control-overlay: rgb(255 255 255 / 15%);
+  --theme-control-overlay-hover: rgb(255 255 255 / 25%);
+  --theme-art-shadow: rgb(101 73 42 / 20%);
+  --theme-ink: #3f362e;
+  --theme-body: #4a4038;
+  --theme-muted: #94887b;
+  --theme-subtle: #a89a8b;
+  --theme-subtle-strong: #8a7c6d;
+  --theme-nav: #6e6359;
+  --theme-graphic: #c8b8a4;
+  --theme-placeholder: #b6a99b;
+  --theme-line: #ece0d0;
+  --theme-line-soft: #f0e6d8;
+  --theme-line-strong: #dbcdba;
+  --theme-coral: #e0654a;
+  --theme-coral-hover: #a94132;
+  --theme-coral-strong: #c5503a;
+  --theme-coral-deep: #d9583c;
+  --theme-coral-soft: #fbe3d8;
+  --theme-coral-faint: #fff0eb;
+  --theme-coral-border: #edb5a6;
+  --theme-danger: #c5413a;
+  --theme-danger-body: #b25249;
+  --theme-danger-soft: #fbdad6;
+  --theme-danger-border: #efb4aa;
+  --theme-success: #3e8b62;
+  --theme-success-soft: #cfebd8;
+  --theme-warning: #8a7234;
+  --theme-warning-strong: #a88526;
+  --theme-warning-soft: #fff1c7;
+  --theme-warning-panel: #fbf1d6;
+  --theme-warning-border: #e6d08a;
+  --theme-info: #3f5694;
+  --theme-info-strong: #4e72c8;
+  --theme-info-border: #9fb8ec;
+  --theme-info-soft: #e3ecfb;
+  --theme-blue: #1f7a93;
+  --theme-blue-soft: #a9d9e8;
+  --theme-overlay: #3f362e;
+  --theme-overlay-deep: #211b17;
+  --theme-brand-start: #d8785e;
+  --theme-brand-mid: #cc654f;
+  --theme-brand-end: #b95442;
+  --theme-coral-start: #cf674f;
+  --theme-coral-end: #b94d3b;
+  --theme-shadow: rgb(120 90 60 / 10%);
+  --theme-avatar-blue: #a9d9e8;
+  --theme-avatar-blue-ink: #1f7a93;
+  --theme-avatar-pink: #f4b8cc;
+  --theme-avatar-pink-ink: #c44a7a;
+  --theme-avatar-green: #b9dec4;
+  --theme-avatar-green-ink: #3e8b62;
+  --theme-avatar-yellow: #f4dc8e;
+  --theme-avatar-yellow-ink: #9a7b1e;
+  --theme-avatar-purple: #c9b6e8;
+  --theme-avatar-purple-ink: #7b5fc0;
+  --theme-tag-meal: #f5ecd3;
+  --theme-tag-meal-ink: #80651b;
+  --theme-tag-nap: #e7dcf6;
+  --theme-tag-nap-ink: #7b5fc0;
+  --theme-tag-activity: #c7e7f1;
+  --theme-tag-activity-ink: #2e89a6;
+  --theme-tag-achievement: #cfebd8;
+  --theme-tag-achievement-ink: #3e9b6c;
+  --theme-tag-mood: #f9d2de;
+  --theme-tag-mood-ink: #c56486;
+  --theme-tag-photo: #fbd8cc;
+  --theme-tag-photo-ink: #d9684a;
+  --theme-tag-announcement: #ccd8f4;
+  --theme-tag-announcement-ink: #4e72c8;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --theme-canvas: #281f1a;
+  --theme-sand: #211b17;
+  --theme-surface: #2c241f;
+  --theme-surface-raised: #352b24;
+  --theme-surface-soft: #3b3028;
+  --theme-surface-muted: #46372d;
+  --theme-surface-warm: #3b2e25;
+  --theme-white: #fff4e8;
+  --theme-white-strong: #ffffff;
+  --theme-control-overlay: rgb(255 244 232 / 18%);
+  --theme-control-overlay-hover: rgb(255 244 232 / 30%);
+  --theme-art-shadow: rgb(0 0 0 / 45%);
+  --theme-ink: #fff4e8;
+  --theme-body: #f4e5d6;
+  --theme-muted: #c7b4a2;
+  --theme-subtle: #b29e8b;
+  --theme-subtle-strong: #d0bba7;
+  --theme-nav: #dbc4ad;
+  --theme-graphic: #927d6a;
+  --theme-placeholder: #b49f8d;
+  --theme-line: #554338;
+  --theme-line-soft: #49392f;
+  --theme-line-strong: #6b5444;
+  --theme-coral: #f08a6d;
+  --theme-coral-hover: #d87a61;
+  --theme-coral-strong: #ffad91;
+  --theme-coral-deep: #ffaf93;
+  --theme-coral-soft: #55352d;
+  --theme-coral-faint: #4a2e27;
+  --theme-coral-border: #9b5b4e;
+  --theme-danger: #ffaaa0;
+  --theme-danger-body: #f0aaa0;
+  --theme-danger-soft: #57332f;
+  --theme-danger-border: #a65f55;
+  --theme-success: #9cddb0;
+  --theme-success-soft: #294b39;
+  --theme-warning: #f2d48e;
+  --theme-warning-strong: #f4c76e;
+  --theme-warning-soft: #55452b;
+  --theme-warning-panel: #514029;
+  --theme-warning-border: #9b7940;
+  --theme-info: #b8c9ff;
+  --theme-info-strong: #a9c0ff;
+  --theme-info-border: #728bc7;
+  --theme-info-soft: #293753;
+  --theme-blue: #a8e2f0;
+  --theme-blue-soft: #285766;
+  --theme-overlay: #090706;
+  --theme-overlay-deep: #000000;
+  --theme-brand-start: #b8614d;
+  --theme-brand-mid: #a84d3d;
+  --theme-brand-end: #8d3d31;
+  --theme-coral-start: #b95b46;
+  --theme-coral-end: #963c2f;
+  --theme-shadow: rgb(0 0 0 / 32%);
+  --theme-avatar-blue: #285766;
+  --theme-avatar-blue-ink: #b4ebf7;
+  --theme-avatar-pink: #61384b;
+  --theme-avatar-pink-ink: #ffc0d4;
+  --theme-avatar-green: #2b543b;
+  --theme-avatar-green-ink: #b9f0c9;
+  --theme-avatar-yellow: #594b25;
+  --theme-avatar-yellow-ink: #ffe29a;
+  --theme-avatar-purple: #493866;
+  --theme-avatar-purple-ink: #ddc7ff;
+  --theme-tag-meal: #55452b;
+  --theme-tag-meal-ink: #f8d989;
+  --theme-tag-nap: #493866;
+  --theme-tag-nap-ink: #ddc7ff;
+  --theme-tag-activity: #285766;
+  --theme-tag-activity-ink: #b4ebf7;
+  --theme-tag-achievement: #294b39;
+  --theme-tag-achievement-ink: #b9f0c9;
+  --theme-tag-mood: #61384b;
+  --theme-tag-mood-ink: #ffc0d4;
+  --theme-tag-photo: #613b31;
+  --theme-tag-photo-ink: #ffc0aa;
+  --theme-tag-announcement: #293753;
+  --theme-tag-announcement-ink: #b8c9ff;
+}
+
 @theme inline {
-  --color-sand: #f6ecdf;
-  --color-surface: #fffdf9;
-  --color-ink: #3f362e;
-  --color-muted: #94887b;
-  --color-line: #ece0d0;
-  --color-coral: #e0654a;
-  --color-coral-soft: #fbe3d8;
+  --color-canvas: var(--theme-canvas);
+  --color-sand: var(--theme-sand);
+  --color-surface: var(--theme-surface);
+  --color-surface-raised: var(--theme-surface-raised);
+  --color-surface-soft: var(--theme-surface-soft);
+  --color-surface-muted: var(--theme-surface-muted);
+  --color-surface-warm: var(--theme-surface-warm);
+  --color-theme-white: var(--theme-white);
+  --color-theme-white-strong: var(--theme-white-strong);
+  --color-control-overlay: var(--theme-control-overlay);
+  --color-control-overlay-hover: var(--theme-control-overlay-hover);
+  --color-art-shadow: var(--theme-art-shadow);
+  --color-ink: var(--theme-ink);
+  --color-body: var(--theme-body);
+  --color-muted: var(--theme-muted);
+  --color-subtle: var(--theme-subtle);
+  --color-subtle-strong: var(--theme-subtle-strong);
+  --color-nav: var(--theme-nav);
+  --color-graphic: var(--theme-graphic);
+  --color-placeholder: var(--theme-placeholder);
+  --color-line: var(--theme-line);
+  --color-line-soft: var(--theme-line-soft);
+  --color-line-strong: var(--theme-line-strong);
+  --color-coral: var(--theme-coral);
+  --color-coral-hover: var(--theme-coral-hover);
+  --color-coral-strong: var(--theme-coral-strong);
+  --color-coral-deep: var(--theme-coral-deep);
+  --color-coral-soft: var(--theme-coral-soft);
+  --color-coral-faint: var(--theme-coral-faint);
+  --color-coral-border: var(--theme-coral-border);
+  --color-danger: var(--theme-danger);
+  --color-danger-body: var(--theme-danger-body);
+  --color-danger-soft: var(--theme-danger-soft);
+  --color-danger-border: var(--theme-danger-border);
+  --color-success: var(--theme-success);
+  --color-success-soft: var(--theme-success-soft);
+  --color-warning: var(--theme-warning);
+  --color-warning-strong: var(--theme-warning-strong);
+  --color-warning-soft: var(--theme-warning-soft);
+  --color-warning-panel: var(--theme-warning-panel);
+  --color-warning-border: var(--theme-warning-border);
+  --color-info: var(--theme-info);
+  --color-info-strong: var(--theme-info-strong);
+  --color-info-border: var(--theme-info-border);
+  --color-info-soft: var(--theme-info-soft);
+  --color-blue: var(--theme-blue);
+  --color-blue-soft: var(--theme-blue-soft);
+  --color-overlay: var(--theme-overlay);
+  --color-overlay-deep: var(--theme-overlay-deep);
+  --color-avatar-blue: var(--theme-avatar-blue);
+  --color-avatar-blue-ink: var(--theme-avatar-blue-ink);
+  --color-avatar-pink: var(--theme-avatar-pink);
+  --color-avatar-pink-ink: var(--theme-avatar-pink-ink);
+  --color-avatar-green: var(--theme-avatar-green);
+  --color-avatar-green-ink: var(--theme-avatar-green-ink);
+  --color-avatar-yellow: var(--theme-avatar-yellow);
+  --color-avatar-yellow-ink: var(--theme-avatar-yellow-ink);
+  --color-avatar-purple: var(--theme-avatar-purple);
+  --color-avatar-purple-ink: var(--theme-avatar-purple-ink);
+  --color-tag-meal: var(--theme-tag-meal);
+  --color-tag-meal-ink: var(--theme-tag-meal-ink);
+  --color-tag-nap: var(--theme-tag-nap);
+  --color-tag-nap-ink: var(--theme-tag-nap-ink);
+  --color-tag-activity: var(--theme-tag-activity);
+  --color-tag-activity-ink: var(--theme-tag-activity-ink);
+  --color-tag-achievement: var(--theme-tag-achievement);
+  --color-tag-achievement-ink: var(--theme-tag-achievement-ink);
+  --color-tag-mood: var(--theme-tag-mood);
+  --color-tag-mood-ink: var(--theme-tag-mood-ink);
+  --color-tag-photo: var(--theme-tag-photo);
+  --color-tag-photo-ink: var(--theme-tag-photo-ink);
+  --color-tag-announcement: var(--theme-tag-announcement);
+  --color-tag-announcement-ink: var(--theme-tag-announcement-ink);
   --font-sans: var(--font-nunito);
   --font-display: var(--font-fredoka);
 }
@@ -16,9 +248,13 @@
   box-sizing: border-box;
 }
 
+html {
+  background: var(--theme-sand);
+}
+
 body {
-  background: #f6ecdf;
-  color: #3f362e;
+  background: var(--theme-sand);
+  color: var(--theme-ink);
   font-family: var(--font-nunito), system-ui, sans-serif;
 }
 
@@ -28,6 +264,35 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid #e0654a;
+  outline: 3px solid var(--theme-coral);
   outline-offset: 3px;
+}
+
+.bg-brand-gradient {
+  background-image: linear-gradient(
+    155deg,
+    var(--theme-brand-start),
+    var(--theme-brand-mid),
+    var(--theme-brand-end)
+  );
+}
+
+.bg-coral-gradient {
+  background-image: linear-gradient(
+    to bottom,
+    var(--theme-coral-start),
+    var(--theme-coral-end)
+  );
+}
+
+.shadow-theme-sm {
+  box-shadow: 0 4px 14px var(--theme-shadow);
+}
+
+.shadow-theme-md {
+  box-shadow: 0 12px 30px var(--theme-shadow);
+}
+
+.shadow-theme-lg {
+  box-shadow: 0 18px 50px var(--theme-shadow);
 }
