@@ -38,7 +38,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
         aria-pressed={locale === "es"}
         aria-label={dictionary.language.switchToSpanish}
         disabled={isPending}
-        className={`rounded-lg px-2.5 py-1.5 transition ${locale === "es" ? "bg-ink text-white" : "text-muted hover:bg-sand"}`}
+        className={`rounded-lg px-2.5 py-1.5 transition ${locale === "es" ? "bg-ink text-canvas" : "text-nav hover:bg-sand"}`}
       >
         ES
       </button>
@@ -48,7 +48,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
         aria-pressed={locale === "en"}
         aria-label={dictionary.language.switchToEnglish}
         disabled={isPending}
-        className={`rounded-lg px-2.5 py-1.5 transition ${locale === "en" ? "bg-ink text-white" : "text-muted hover:bg-sand"}`}
+        className={`rounded-lg px-2.5 py-1.5 transition ${locale === "en" ? "bg-ink text-canvas" : "text-nav hover:bg-sand"}`}
       >
         EN
       </button>
