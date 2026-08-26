@@ -705,13 +705,14 @@ export function ChildrenDirectory({
   view: ChildStatus;
 }) {
   const router = useRouter();
+  const { locale, dictionary } = useLocale();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const normalizedSearch = search.trim().toLocaleLowerCase("es");
+  const normalizedSearch = search.trim().toLocaleLowerCase(locale);
   const filteredChildren = childRecords
-    .filter((child) => child.fullName.toLocaleLowerCase("es").includes(normalizedSearch))
-    .sort((left, right) => left.fullName.localeCompare(right.fullName, "es", { sensitivity: "base" }));
+    .filter((child) => child.fullName.toLocaleLowerCase(locale).includes(normalizedSearch))
+    .sort((left, right) => left.fullName.localeCompare(right.fullName, locale, { sensitivity: "base" }));
 
   function closeDialog() {
     setDialogOpen(false);
@@ -728,8 +729,8 @@ export function ChildrenDirectory({
     <section className="mx-auto w-full max-w-[880px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20">
       <header className="mb-[22px] flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-coral-deep">GESTIÓN</p>
-          <h1 className="font-display text-3xl font-semibold text-ink">Niños</h1>
+          <p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-coral-deep">{dictionary.kids.management}</p>
+          <h1 className="font-display text-3xl font-semibold text-ink">{dictionary.kids.title}</h1>
         </div>
         <button
           ref={triggerRef}
@@ -738,16 +739,16 @@ export function ChildrenDirectory({
           className="flex items-center gap-2 rounded-[14px] bg-coral-gradient px-[18px] py-[11px] text-sm font-extrabold text-theme-white-strong shadow-theme-sm"
         >
           <Icon name="plus" className="size-[17px]" />
-          Agregar niño
+          {dictionary.kids.addChild}
         </button>
       </header>
 
       <div className="mb-4 flex w-fit rounded-xl border border-line bg-surface p-1 text-sm font-bold">
         <Link href="/staff/kids" className={`rounded-lg px-3 py-2 ${view === "active" ? "bg-coral-soft text-coral-deep" : "text-muted"}`}>
-          Activos
+          {dictionary.kids.activeChildren}
         </Link>
         <Link href="/staff/kids?view=archived" className={`rounded-lg px-3 py-2 ${view === "archived" ? "bg-coral-soft text-coral-deep" : "text-muted"}`}>
-          Archivados
+          {dictionary.kids.archivedChildren}
         </Link>
       </div>
 
@@ -757,10 +758,10 @@ export function ChildrenDirectory({
           <path d="m21 21-4.3-4.3" />
         </svg>
         <input
-          aria-label="Buscar niño"
+          aria-label={dictionary.kids.searchChild}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar niño…"
+          placeholder={dictionary.kids.searchPlaceholder}
           className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-placeholder"
         />
       </label>
@@ -771,10 +772,10 @@ export function ChildrenDirectory({
           <section key={room.id} className="mb-6">
             <div className="mb-3.5 flex items-center gap-3">
               <span className="text-xs font-extrabold tracking-[0.08em] text-ink">
-                SALA {room.name.toLocaleUpperCase("es")}
+                {dictionary.kids.room} {room.name.toLocaleUpperCase(locale)}
               </span>
               <span className="text-[13px] text-subtle">
-                {roomChildren.length} {roomChildren.length === 1 ? "niño" : "niños"}
+                {roomChildren.length} {roomChildren.length === 1 ? dictionary.kids.child : dictionary.kids.children}
               </span>
               <span className="h-px flex-1 bg-line-soft" />
             </div>
@@ -787,10 +788,10 @@ export function ChildrenDirectory({
             ) : (
               <div className="rounded-[18px] border border-dashed border-line-strong bg-surface/55 px-5 py-7 text-center text-sm font-semibold text-muted">
                 {normalizedSearch
-                  ? "No hay nombres que coincidan con la búsqueda."
+                  ? dictionary.kids.noSearchResults
                   : view === "archived"
-                    ? "No hay niños archivados en esta sala."
-                    : "Todavía no hay niños en esta sala."}
+                    ? dictionary.kids.noArchivedChildren
+                    : dictionary.kids.noChildren}
               </div>
             )}
           </section>
