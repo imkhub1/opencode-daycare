@@ -20,6 +20,8 @@ import {
 } from "@/app/posts/types";
 import { createClient } from "@/utils/supabase/client";
 import { Icon } from "@/components/open-daycare";
+import { useLocale } from "@/components/shared/LocaleProvider";
+import { interpolate } from "@/utils/i18n/dictionary";
 
 type LocalPhoto = {
   id: string;
@@ -45,6 +47,7 @@ export function CreatePost({
   onCancel?: () => void;
   onSuccess?: () => void;
 }) {
+  const { dictionary } = useLocale();
   const router = useRouter();
   const [roomId, setRoomId] = useState(rooms.length === 1 ? rooms[0].id : "");
   const [type, setType] = useState<PostType | null>(null);
@@ -152,16 +155,16 @@ export function CreatePost({
 
     files.forEach((file) => {
       if (!(POST_PHOTO_MIME_TYPES as readonly string[]).includes(file.type)) {
-        messages.push(`${file.name} no es una imagen compatible.`);
+        messages.push(interpolate(dictionary.posts.compatibleImage, { name: file.name }));
       } else if (file.size > MAX_POST_PHOTO_BYTES) {
-        messages.push(`${file.name} supera el límite de 10 MB.`);
+        messages.push(interpolate(dictionary.posts.photoTooLarge, { name: file.name }));
       } else {
         validFiles.push(file);
       }
     });
 
     const availableSlots = MAX_POST_PHOTOS - photos.length;
-    if (validFiles.length > availableSlots) messages.push("Podés agregar hasta 6 fotos.");
+    if (validFiles.length > availableSlots) messages.push(dictionary.posts.maxPhotos);
 
     const newPhotos = validFiles
       .slice(0, Math.max(availableSlots, 0))
@@ -192,9 +195,9 @@ export function CreatePost({
     event.preventDefault();
     const nextErrors: FormErrors = {};
 
-    if (!roomId) nextErrors.room = "Elegí una sala.";
-    if (!type) nextErrors.type = "Elegí un tipo de publicación.";
-    if (!description.trim()) nextErrors.description = "Contá cómo le fue hoy.";
+    if (!roomId) nextErrors.room = dictionary.posts.roomRequired;
+    if (!type) nextErrors.type = dictionary.posts.typeRequired;
+    if (!description.trim()) nextErrors.description = dictionary.posts.descriptionRequired;
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -232,7 +235,7 @@ export function CreatePost({
         const photo = photos[index];
         if (!photo) {
           await abortPost(prepared.postId);
-          setSubmitError("No se pudieron preparar todas las fotos.");
+          setSubmitError(dictionary.posts.noPhotosPrepared);
           setIsSubmitting(false);
           return;
         }
@@ -246,7 +249,7 @@ export function CreatePost({
 
         if (error) {
           await abortPost(prepared.postId);
-          setSubmitError("No se pudo subir una de las fotos. Podés intentarlo de nuevo.");
+          setSubmitError(dictionary.posts.photoUploadFailed);
           setIsSubmitting(false);
           return;
         }
@@ -273,11 +276,11 @@ export function CreatePost({
     <form onSubmit={handleSubmit} noValidate>
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-canvas px-5 py-5 sm:px-[26px]">
         <button className="text-sm font-bold text-muted" type="button" onClick={closeForm} disabled={isSubmitting}>
-          Cancelar
+          {dictionary.posts.cancel}
         </button>
-        <h1 id="create-post-title" className="font-display text-lg font-semibold text-ink">Nueva publicación</h1>
+        <h1 id="create-post-title" className="font-display text-lg font-semibold text-ink">{dictionary.posts.title}</h1>
         <button className="text-sm font-extrabold text-coral-deep disabled:opacity-50" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Guardando..." : "Publicar"}
+          {isSubmitting ? dictionary.posts.saving : dictionary.posts.publish}
         </button>
       </header>
 
@@ -289,14 +292,14 @@ export function CreatePost({
         )}
 
         <fieldset className="mb-[22px]">
-          <legend className="mb-2.5 text-xs font-extrabold tracking-[0.7px] text-muted">PARA</legend>
+          <legend className="mb-2.5 text-xs font-extrabold tracking-[0.7px] text-muted">{dictionary.posts.to}</legend>
           {rooms.length === 1 ? (
-            <p className="inline-flex items-center rounded-full border-1.5 border-ink bg-ink px-4 py-2 text-sm font-bold text-theme-white-strong">
-              Toda la sala {rooms[0].name}
+            <p className="inline-flex items-center rounded-full border-1.5 border-ink bg-ink px-4 py-2 text-sm font-bold text-canvas">
+              {interpolate(dictionary.posts.wholeRoom, { room: rooms[0].name })}
             </p>
           ) : (
             <>
-              <label className="sr-only" htmlFor="post-room">Sala destinataria</label>
+              <label className="sr-only" htmlFor="post-room">{dictionary.posts.selectRoom}</label>
               <select
                 ref={roomRef}
                 id="post-room"
@@ -310,8 +313,8 @@ export function CreatePost({
                 className="w-full rounded-[14px] border-1.5 border-line bg-surface-raised px-4 py-3 text-sm font-bold text-ink"
                 disabled={isSubmitting}
               >
-                <option value="">Seleccioná una sala</option>
-                {rooms.map((room) => <option key={room.id} value={room.id}>Toda la sala {room.name}</option>)}
+                <option value="">{dictionary.posts.selectRoom}</option>
+                {rooms.map((room) => <option key={room.id} value={room.id}>{interpolate(dictionary.posts.wholeRoom, { room: room.name })}</option>)}
               </select>
             </>
           )}
@@ -319,7 +322,7 @@ export function CreatePost({
         </fieldset>
 
         <fieldset className="mb-[22px]">
-          <legend className="mb-2.5 text-xs font-extrabold tracking-[0.7px] text-muted">TIPO</legend>
+          <legend className="mb-2.5 text-xs font-extrabold tracking-[0.7px] text-muted">{dictionary.posts.type}</legend>
           <div className="flex flex-wrap gap-2">
             {POST_TYPE_OPTIONS.map((item, index) => (
               <button
@@ -335,7 +338,7 @@ export function CreatePost({
                 className={`rounded-full px-4 py-2 text-[13.5px] font-extrabold ${type === item.value ? item.selected : item.unselected}`}
                 disabled={isSubmitting}
               >
-                {item.label}
+                {dictionary.postTypes[item.value]}
               </button>
             ))}
           </div>
@@ -343,7 +346,7 @@ export function CreatePost({
         </fieldset>
 
         <div className="mb-[22px]">
-          <label htmlFor="post-description" className="mb-2.5 block text-xs font-extrabold tracking-[0.7px] text-muted">DESCRIPCIÓN</label>
+          <label htmlFor="post-description" className="mb-2.5 block text-xs font-extrabold tracking-[0.7px] text-muted">{dictionary.posts.description}</label>
           <textarea
             ref={descriptionRef}
             id="post-description"
@@ -353,7 +356,7 @@ export function CreatePost({
               setDescription(event.target.value);
               setErrors((current) => ({ ...current, description: undefined }));
             }}
-            placeholder="Contá cómo le fue hoy…"
+            placeholder={dictionary.posts.descriptionPlaceholder}
             aria-invalid={!!errors.description}
             aria-describedby={errors.description ? "post-description-error" : undefined}
             className="min-h-[120px] w-full resize-y rounded-[14px] border-1.5 border-line bg-surface-raised px-4 py-3.5 text-[15px] leading-relaxed text-ink placeholder:text-placeholder"
@@ -363,7 +366,7 @@ export function CreatePost({
         </div>
 
         <div>
-          <label htmlFor="post-photos" className="mb-2.5 block text-xs font-extrabold tracking-[0.7px] text-muted">FOTOS</label>
+          <label htmlFor="post-photos" className="mb-2.5 block text-xs font-extrabold tracking-[0.7px] text-muted">{dictionary.posts.photos}</label>
           <input
             ref={fileInputRef}
             className="sr-only"
@@ -386,7 +389,7 @@ export function CreatePost({
                 <button
                   type="button"
                   onClick={() => removePhoto(photo.id)}
-                  aria-label={`Eliminar foto ${photo.file.name}`}
+                  aria-label={interpolate(dictionary.posts.removePhoto, { name: photo.file.name })}
                   className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-overlay/80 text-lg leading-none text-theme-white-strong"
                   disabled={isSubmitting}
                 >
@@ -408,7 +411,7 @@ export function CreatePost({
               >
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="flex size-full cursor-pointer flex-col items-center justify-center gap-1.5" disabled={isSubmitting}>
                   <Icon name="plus" className="size-[22px] text-coral-strong" />
-                  <span className="text-xs">Agregar</span>
+                  <span className="text-xs">{dictionary.posts.add}</span>
                 </button>
               </div>
             )}
@@ -416,10 +419,13 @@ export function CreatePost({
           {errors.photos && <p id="post-photos-error" className="mt-2 text-sm font-bold text-coral-strong">{errors.photos}</p>}
           {isSubmitting && photos.length > 0 && (
             <p className="mt-2 text-sm font-bold text-muted" aria-live="polite">
-              Subiendo foto {Math.min(uploadProgress + 1, photos.length)} de {photos.length}...
+              {interpolate(dictionary.posts.uploadingPhoto, {
+                current: Math.min(uploadProgress + 1, photos.length),
+                total: photos.length,
+              })}
             </p>
           )}
-          <p className="mt-2 text-xs text-muted">Hasta 6 fotos JPEG, PNG, WebP o GIF de 10 MB cada una.</p>
+          <p className="mt-2 text-xs text-muted">{dictionary.posts.photoLimits}</p>
         </div>
       </div>
     </form>
