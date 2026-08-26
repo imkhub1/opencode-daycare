@@ -91,7 +91,7 @@ export function ParentLinkDialog({
   return (
     <div
       role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#3f362e]/45 p-4 sm:p-5"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/45 p-4 sm:p-5"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !pending) onClose();
       }}
@@ -103,7 +103,7 @@ export function ParentLinkDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="link-parent-title"
-        className="max-h-[calc(100dvh-2rem)] w-full max-w-[480px] overflow-y-auto rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25 sm:max-h-[calc(100dvh-3rem)]"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-[480px] overflow-y-auto rounded-[24px] border border-line bg-canvas shadow-theme-lg sm:max-h-[calc(100dvh-3rem)]"
       >
         <input type="hidden" name="childId" value={childId} />
         <input type="hidden" name="invitationId" value={state.invitationId ?? ""} />
@@ -117,14 +117,14 @@ export function ParentLinkDialog({
             <h2 id="link-parent-title" className="font-display text-lg font-semibold text-ink">
               {edit ? dictionary.invitations.saveChanges : dictionary.kids.linkParent}
             </h2>
-            <p className="text-[13px] text-[#a89a8b]">{childName}</p>
+            <p className="text-[13px] text-subtle">{childName}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={pending}
             aria-label={dictionary.common.close}
-            className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted disabled:opacity-50"
+            className="flex size-[34px] items-center justify-center rounded-[10px] bg-surface-muted text-muted disabled:opacity-50"
           >
             <svg aria-hidden="true" className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -138,7 +138,7 @@ export function ParentLinkDialog({
           >
             <svg
               aria-hidden="true"
-              className="size-11 animate-spin text-[#c5503a]"
+              className="size-11 animate-spin text-coral-strong"
               viewBox="0 0 44 44"
               fill="none"
             >
@@ -152,7 +152,7 @@ export function ParentLinkDialog({
             role="status"
             className="flex flex-col items-center px-5 py-9 text-center sm:px-[38px] sm:py-10"
           >
-            <span className="flex size-16 items-center justify-center rounded-full bg-[#dcfce7] text-[#3e9b5b]">
+            <span className="flex size-16 items-center justify-center rounded-full bg-success-soft text-success">
               <svg aria-hidden="true" className="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m5 12 4 4L19 6" />
               </svg>
@@ -161,23 +161,23 @@ export function ParentLinkDialog({
             <p className="mt-2 max-w-[360px] text-[14.5px] leading-relaxed text-muted">
               {dictionary.invitations.sentDescription.replace("{email}", form.email.trim().toLowerCase())}
             </p>
-            <div className="mt-6 w-full rounded-2xl border-[1.5px] border-dashed border-[#e6d08a] bg-[#fbf1d6] px-4 py-5">
-              <p className="text-xs font-extrabold tracking-[0.08em] text-[#a88526]">{dictionary.invitations.invitationCode}</p>
-              <p className="mt-2 font-display text-[34px] font-semibold tracking-[7px] text-[#8a7234]">{state.token}</p>
-              <p className="mt-1 text-[13px] text-[#a88526]">{dictionary.invitations.expiresInSevenDays}</p>
+            <div className="mt-6 w-full rounded-2xl border-[1.5px] border-dashed border-warning-border bg-warning-panel px-4 py-5">
+              <p className="text-xs font-extrabold tracking-[0.08em] text-warning-strong">{dictionary.invitations.invitationCode}</p>
+              <p className="mt-2 font-display text-[34px] font-semibold tracking-[7px] text-warning">{state.token}</p>
+              <p className="mt-1 text-[13px] text-warning-strong">{dictionary.invitations.expiresInSevenDays}</p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="mt-6 flex w-full items-center justify-center rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
+              className="mt-6 flex w-full items-center justify-center rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm"
             >
               {dictionary.invitations.close}
             </button>
           </div>
         ) : (
           <div className="space-y-[18px] p-5 sm:p-[26px]">
-            <div className="flex gap-3 rounded-[14px] bg-[#e3ecfb] p-4 text-[13.5px] leading-relaxed text-[#3f5694]">
-              <svg aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-[#4e72c8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="flex gap-3 rounded-[14px] bg-info-soft p-4 text-[13.5px] leading-relaxed text-info">
+              <svg aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-info-strong" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
@@ -197,9 +197,9 @@ export function ParentLinkDialog({
                 placeholder={dictionary.invitations.parentNamePlaceholder}
                 aria-invalid={Boolean(errors.name)}
                 aria-describedby={errors.name ? "link-parent-name-error" : undefined}
-                className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+                className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] outline-none placeholder:text-placeholder"
               />
-              {errors.name && <p id="link-parent-name-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">{errors.name}</p>}
+              {errors.name && <p id="link-parent-name-error" className="mt-1.5 text-sm font-bold text-danger">{errors.name}</p>}
             </label>
 
             <label className="block" htmlFor="link-parent-email">
@@ -214,9 +214,9 @@ export function ParentLinkDialog({
                 placeholder={dictionary.invitations.emailPlaceholder}
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "link-parent-email-error" : undefined}
-                className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+                className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] outline-none placeholder:text-placeholder"
               />
-              {errors.email && <p id="link-parent-email-error" className="mt-1.5 text-sm font-bold text-[#c5413a]">{errors.email}</p>}
+              {errors.email && <p id="link-parent-email-error" className="mt-1.5 text-sm font-bold text-danger">{errors.email}</p>}
             </label>
 
             <fieldset>
@@ -230,7 +230,7 @@ export function ParentLinkDialog({
                       type="button"
                       aria-pressed={selected}
                       onClick={() => setForm((current) => ({ ...current, relationship }))}
-                      className={`min-w-0 flex-1 rounded-full border-[1.5px] px-1 py-[11px] text-sm font-extrabold ${selected ? "border-[#9fb8ec] bg-[#ccd8f4] text-[#4e72c8]" : "border-line bg-surface text-[#6e6359]"}`}
+                      className={`min-w-0 flex-1 rounded-full border-[1.5px] px-1 py-[11px] text-sm font-extrabold ${selected ? "border-info-border bg-tag-announcement text-info-strong" : "border-line bg-surface text-nav"}`}
                     >
                       {dictionary.invitations[relationship]}
                     </button>
@@ -240,14 +240,14 @@ export function ParentLinkDialog({
             </fieldset>
 
             {state.message && (
-              <p role="alert" className="rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">
+              <p role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold text-danger">
                 {state.message}
               </p>
             )}
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
+              className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm"
             >
               {edit ? dictionary.invitations.saveChanges : state.invitationId ? dictionary.invitations.retryDelivery : dictionary.invitations.sendInvitation}
             </button>

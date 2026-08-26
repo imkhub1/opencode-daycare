@@ -103,7 +103,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
               loading={index === 0 ? "eager" : "lazy"}
               className="object-cover transition duration-300 group-hover:scale-105"
             />
-            <span className="absolute inset-0 flex items-center justify-center bg-[#3f362e]/0 text-sm font-extrabold text-white opacity-0 transition group-hover:bg-[#3f362e]/25 group-hover:opacity-100 group-focus-visible:bg-[#3f362e]/25 group-focus-visible:opacity-100">
+            <span className="absolute inset-0 flex items-center justify-center bg-overlay/0 text-sm font-extrabold text-theme-white-strong opacity-0 transition group-hover:bg-overlay/25 group-hover:opacity-100 group-focus-visible:bg-overlay/25 group-focus-visible:opacity-100">
               {dictionary.feed.viewPhoto}
             </span>
           </button>
@@ -112,7 +112,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
 
       {selectedPhoto && selectedIndex !== null && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-[#211b17]/90 p-4 sm:p-8"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay-deep/90 p-4 sm:p-8"
           onClick={(event) => {
             if (event.target === event.currentTarget) closePhoto();
           }}
@@ -130,7 +130,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
               type="button"
               onClick={closePhoto}
               aria-label={dictionary.common.close}
-              className="absolute right-0 top-0 z-10 flex size-11 items-center justify-center rounded-full bg-white/15 text-3xl leading-none text-white transition hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="absolute right-0 top-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <span aria-hidden="true">×</span>
             </button>
@@ -141,7 +141,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
                   type="button"
                   onClick={() => movePhoto(-1)}
                   aria-label={dictionary.feed.previousPhoto}
-                  className="absolute left-0 z-10 flex size-11 items-center justify-center rounded-full bg-white/15 text-3xl leading-none text-white transition hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  className="absolute left-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   <span aria-hidden="true">‹</span>
                 </button>
@@ -149,7 +149,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
                   type="button"
                   onClick={() => movePhoto(1)}
                   aria-label={dictionary.feed.nextPhoto}
-                  className="absolute right-0 z-10 flex size-11 items-center justify-center rounded-full bg-white/15 text-3xl leading-none text-white transition hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  className="absolute right-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   <span aria-hidden="true">›</span>
                 </button>
@@ -166,7 +166,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
                 className="object-contain"
               />
             </div>
-            <p className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white">
+            <p className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-control-overlay px-3 py-1 text-xs font-bold text-theme-white-strong">
               {dictionary.feed.photoCounter.replace("{current}", String(selectedIndex + 1)).replace("{total}", String(photos.length))}
             </p>
           </div>
