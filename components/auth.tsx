@@ -206,12 +206,12 @@ export function LoginScreen({
           )}
           {recovery === "success" && (
             <p role="status" className="mb-5 rounded-xl bg-success-soft px-4 py-3 text-sm font-bold text-success">
-              Tu contraseña fue actualizada. Ya puedes iniciar sesión.
+              {dictionary.auth.recoverySuccess}
             </p>
           )}
           {recovery === "error" && (
             <p role="alert" className="mb-5 rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold text-danger">
-              El enlace de recuperación no es válido o ya expiró. Solicita uno nuevo.
+              {dictionary.auth.recoveryInvalidLink}
             </p>
           )}
           <form onSubmit={handleSubmit}>
@@ -265,6 +265,7 @@ export function LoginScreen({
 }
 
 export function ForgotPasswordScreen({ initialEmail = "" }: { initialEmail?: string }) {
+  const { dictionary } = useLocale();
   const [email, setEmail] = useState(initialEmail);
   const [status, setStatus] = useState<"idle" | "success">("idle");
   const [error, setError] = useState("");
@@ -276,7 +277,7 @@ export function ForgotPasswordScreen({ initialEmail = "" }: { initialEmail?: str
     setError("");
 
     if (!normalizedEmail || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-      setError("Ingresa un email válido.");
+      setError(dictionary.auth.recoveryEmailInvalid);
       return;
     }
 
@@ -289,13 +290,13 @@ export function ForgotPasswordScreen({ initialEmail = "" }: { initialEmail?: str
       );
 
       if (resetError) {
-        setError("No se pudo procesar la solicitud. Intenta nuevamente.");
+        setError(dictionary.auth.recoveryRequestError);
         return;
       }
 
       setStatus("success");
     } catch {
-      setError("No se pudo procesar la solicitud. Intenta nuevamente.");
+      setError(dictionary.auth.recoveryRequestError);
     } finally {
       setIsLoading(false);
     }
@@ -304,16 +305,16 @@ export function ForgotPasswordScreen({ initialEmail = "" }: { initialEmail?: str
   return (
     <AuthShell>
       <div className="mb-[22px]"><AuthLogo showName={false} /></div>
-      <h1 className="mb-1.5 font-display text-[30px] font-semibold text-ink">Recuperar contraseña</h1>
-      <p className="mb-7 text-[15px] leading-relaxed text-muted">Ingresa tu email y te enviaremos instrucciones para crear una nueva contraseña.</p>
+      <h1 className="mb-1.5 font-display text-[30px] font-semibold text-ink">{dictionary.auth.recoveryTitle}</h1>
+      <p className="mb-7 text-[15px] leading-relaxed text-muted">{dictionary.auth.recoveryDescription}</p>
       {status === "success" ? (
         <p role="status" className="rounded-xl bg-success-soft px-4 py-3 text-sm font-bold leading-relaxed text-success">
-          Si existe una cuenta asociada a ese email, recibirás un enlace para recuperar tu contraseña. Revisa también tu carpeta de spam.
+          {dictionary.auth.recoveryRequestSuccess}
         </p>
       ) : (
         <form onSubmit={handleSubmit} noValidate>
           <Field
-            label="EMAIL"
+            label={dictionary.auth.email}
             name="email"
             type="email"
             value={email}
@@ -323,24 +324,25 @@ export function ForgotPasswordScreen({ initialEmail = "" }: { initialEmail?: str
           />
           {error && <p role="alert" className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold text-danger">{error}</p>}
           <button type="submit" disabled={isLoading} className="w-full rounded-[15px] bg-coral-gradient px-4 py-[15px] text-center text-base font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-not-allowed disabled:opacity-60">
-            {isLoading ? "Enviando…" : "Enviar instrucciones"}
+            {isLoading ? dictionary.auth.recoverySending : dictionary.auth.recoverySubmit}
           </button>
         </form>
       )}
       <p className="mt-6 text-center text-[14.5px] text-muted">
-        <Link href="/login" className="font-extrabold text-coral-strong">Volver a iniciar sesión</Link>
+        <Link href="/login" className="font-extrabold text-coral-strong">{dictionary.auth.recoveryBackToLogin}</Link>
       </p>
     </AuthShell>
   );
 }
 
 export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: boolean }) {
+  const { dictionary } = useLocale();
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [hasSession, setHasSession] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(hasRecoveryMarker);
-  const [error, setError] = useState(hasRecoveryMarker ? "" : "El enlace de recuperación no es válido o ya expiró. Solicita uno nuevo.");
+  const [error, setError] = useState(hasRecoveryMarker ? "" : dictionary.auth.recoveryInvalidLink);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -352,21 +354,21 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
       setHasSession(sessionIsValid);
       setIsCheckingSession(false);
       if (hasRecoveryMarker && !sessionIsValid) {
-        setError("El enlace de recuperación no es válido o ya expiró. Solicita uno nuevo.");
+        setError(dictionary.auth.recoveryInvalidLink);
       }
     }).catch(() => {
       if (!isMounted) return;
       setHasSession(false);
       setIsCheckingSession(false);
       if (hasRecoveryMarker) {
-        setError("El enlace de recuperación no es válido o ya expiró. Solicita uno nuevo.");
+        setError(dictionary.auth.recoveryInvalidLink);
       }
     });
 
     return () => {
       isMounted = false;
     };
-  }, [hasRecoveryMarker]);
+  }, [hasRecoveryMarker, dictionary.auth.recoveryInvalidLink]);
 
   const canUpdate = hasRecoveryMarker && hasSession && !isCheckingSession;
 
@@ -375,15 +377,15 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
     setError("");
 
     if (!canUpdate) {
-      setError("El enlace de recuperación no es válido o ya expiró. Solicita uno nuevo.");
+      setError(dictionary.auth.recoveryInvalidLink);
       return;
     }
     if (password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres.");
+      setError(dictionary.auth.recoveryPasswordTooShort);
       return;
     }
     if (password !== confirmation) {
-      setError("Las contraseñas no coinciden.");
+      setError(dictionary.auth.recoveryPasswordMismatch);
       return;
     }
 
@@ -392,7 +394,7 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
-        setError("No se pudo actualizar la contraseña. Solicita un enlace nuevo e inténtalo nuevamente.");
+        setError(dictionary.auth.recoveryUpdateError);
         return;
       }
 
@@ -403,12 +405,12 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
           credentials: "same-origin",
         });
       } catch {
-        setError("La contraseña fue actualizada, pero no pudimos cerrar este enlace de recuperación. Cierra esta pestaña e inicia sesión nuevamente.");
+        setError(dictionary.auth.recoveryCleanupError);
         return;
       }
 
       if (!clearResponse.ok) {
-        setError("La contraseña fue actualizada, pero no pudimos cerrar este enlace de recuperación. Cierra esta pestaña e inicia sesión nuevamente.");
+        setError(dictionary.auth.recoveryCleanupError);
         return;
       }
 
@@ -416,18 +418,18 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
       try {
         ({ error: signOutError } = await supabase.auth.signOut({ scope: "local" }));
       } catch {
-        setError("La contraseña fue actualizada. Cierra esta pestaña e inicia sesión nuevamente.");
+        setError(dictionary.auth.recoverySignOutError);
         return;
       }
 
       if (signOutError) {
-        setError("La contraseña fue actualizada. Cierra esta pestaña e inicia sesión nuevamente.");
+        setError(dictionary.auth.recoverySignOutError);
         return;
       }
 
       router.replace("/login?recovery=success");
     } catch {
-      setError("No se pudo actualizar la contraseña. Solicita un enlace nuevo e inténtalo nuevamente.");
+      setError(dictionary.auth.recoveryUpdateError);
     } finally {
       setIsLoading(false);
     }
@@ -436,11 +438,11 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
   return (
     <AuthShell>
       <div className="mb-[22px]"><AuthLogo showName={false} /></div>
-      <h1 className="mb-1.5 font-display text-[30px] font-semibold text-ink">Crear nueva contraseña</h1>
-      <p className="mb-7 text-[15px] leading-relaxed text-muted">Elige una contraseña nueva para volver a entrar a tu cuenta.</p>
+      <h1 className="mb-1.5 font-display text-[30px] font-semibold text-ink">{dictionary.auth.recoveryResetTitle}</h1>
+      <p className="mb-7 text-[15px] leading-relaxed text-muted">{dictionary.auth.recoveryResetDescription}</p>
       <form onSubmit={handleSubmit} noValidate>
         <Field
-          label="NUEVA CONTRASEÑA"
+          label={dictionary.auth.recoveryNewPassword}
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -449,7 +451,7 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
           disabled={!canUpdate || isLoading}
         />
         <Field
-          label="CONFIRMAR CONTRASEÑA"
+          label={dictionary.auth.recoveryConfirmPassword}
           type="password"
           value={confirmation}
           onChange={(event) => setConfirmation(event.target.value)}
@@ -457,14 +459,14 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
           required
           disabled={!canUpdate || isLoading}
         />
-        {isCheckingSession && <p role="status" className="mb-4 rounded-xl bg-warning-soft px-4 py-3 text-sm font-bold text-warning">Verificando el enlace de recuperación…</p>}
+        {isCheckingSession && <p role="status" className="mb-4 rounded-xl bg-warning-soft px-4 py-3 text-sm font-bold text-warning">{dictionary.auth.recoveryVerifying}</p>}
         {error && <p role="alert" className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold leading-relaxed text-danger">{error}</p>}
         <button type="submit" disabled={!canUpdate || isLoading} className="w-full rounded-[15px] bg-coral-gradient px-4 py-[15px] text-center text-base font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-not-allowed disabled:opacity-60">
-          {isLoading ? "Actualizando…" : "Actualizar contraseña"}
+          {isLoading ? dictionary.auth.recoveryUpdating : dictionary.auth.recoveryResetSubmit}
         </button>
       </form>
       <p className="mt-6 text-center text-[14.5px] text-muted">
-        <Link href="/login" className="font-extrabold text-coral-strong">Volver a iniciar sesión</Link>
+        <Link href="/login" className="font-extrabold text-coral-strong">{dictionary.auth.recoveryBackToLogin}</Link>
       </p>
     </AuthShell>
   );
