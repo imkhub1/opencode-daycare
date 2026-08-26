@@ -15,9 +15,11 @@ import {
 import {
   archiveChild,
   createChild,
+  deleteChild,
   restoreChild,
   updateChild,
   type Child,
+  type ChildDeletionState,
   type ChildFormState,
   type ChildFormValues,
   type ChildLifecycleState,
@@ -36,6 +38,7 @@ import { ParentLinkDialog } from "@/components/parent-link-dialog";
 
 const INITIAL_FORM_STATE: ChildFormState = { success: false };
 const INITIAL_LIFECYCLE_STATE: ChildLifecycleState = { success: false, message: "" };
+const INITIAL_DELETION_STATE: ChildDeletionState = { success: false };
 const avatarTones = [
   "bg-[#a9d9e8] text-[#1f7a93]",
   "bg-[#f4b8cc] text-[#c44a7a]",
@@ -163,12 +166,14 @@ function ChildFormFields({
   values,
   setValues,
   errors,
+  disabled = false,
 }: {
   idPrefix: string;
   rooms: Room[];
   values: ChildFormValues;
   setValues: Dispatch<SetStateAction<ChildFormValues>>;
   errors: FormErrors;
+  disabled?: boolean;
 }) {
   function update<Key extends keyof ChildFormValues>(key: Key, value: ChildFormValues[Key]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -184,6 +189,7 @@ function ChildFormFields({
           id={`${idPrefix}-full-name`}
           name="fullName"
           required
+          disabled={disabled}
           autoComplete="off"
           aria-invalid={Boolean(errors.fullName)}
           aria-describedby={errors.fullName ? `${idPrefix}-full-name-error` : undefined}
@@ -208,6 +214,7 @@ function ChildFormFields({
             id={`${idPrefix}-birth-date`}
             name="birthDate"
             required
+            disabled={disabled}
             inputMode="numeric"
             aria-invalid={Boolean(errors.birthDate)}
             aria-describedby={errors.birthDate ? `${idPrefix}-birth-date-error` : undefined}
@@ -232,6 +239,7 @@ function ChildFormFields({
             type="date"
             name="enrolledAt"
             required
+            disabled={disabled}
             max={localToday()}
             aria-invalid={Boolean(errors.enrolledAt)}
             aria-describedby={errors.enrolledAt ? `${idPrefix}-enrolled-at-error` : undefined}
@@ -253,6 +261,7 @@ function ChildFormFields({
           id={`${idPrefix}-room-id`}
           name="roomId"
           required
+          disabled={disabled}
           aria-invalid={Boolean(errors.roomId)}
           aria-describedby={errors.roomId ? `${idPrefix}-room-error` : undefined}
           value={values.roomId}
@@ -279,6 +288,7 @@ function ChildFormFields({
         <input
           id={`${idPrefix}-allergies`}
           name="allergies"
+          disabled={disabled}
           value={values.allergies}
           onChange={(event) => update("allergies", event.target.value)}
           placeholder="Ej. Maní, Lactosa"
@@ -293,6 +303,7 @@ function ChildFormFields({
         <textarea
           id={`${idPrefix}-medical-notes`}
           name="medicalNotes"
+          disabled={disabled}
           value={values.medicalNotes}
           onChange={(event) => update("medicalNotes", event.target.value)}
           placeholder="Indicaciones, medicación, contactos…"
@@ -306,6 +317,7 @@ function ChildFormFields({
           type="checkbox"
           name="photoConsent"
           value="true"
+          disabled={disabled}
           checked={values.photoConsent}
           onChange={(event) => update("photoConsent", event.target.checked)}
           className="size-5 accent-[#e0654a]"
@@ -427,26 +439,210 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
   );
 }
 
-function RestoreButton({ childId }: { childId: string }) {
+function ChildEditDialog({
+  child,
+  rooms,
+  onClose,
+}: {
+  child: Child;
+  rooms: Room[];
+  onClose: () => void;
+}) {
   const router = useRouter();
-  const action = restoreChild.bind(null, childId);
-  const [state, formAction, pending] = useActionState(action, INITIAL_LIFECYCLE_STATE);
+  const updateAction = updateChild.bind(null, child.id);
+  const [state, formAction, pending] = useActionState(updateAction, INITIAL_FORM_STATE);
+  const [localErrors, setLocalErrors] = useState<FormErrors>({});
+  const [values, setValues] = useState<ChildFormValues>(() => ({
+    fullName: child.fullName,
+    birthDate: isoToDisplayDate(child.birthDate),
+    enrolledAt: child.enrolledAt,
+    roomId: child.roomId,
+    allergies: child.allergyTags.join(", "),
+    medicalNotes: child.medicalNotes ?? "",
+    photoConsent: child.photoConsent,
+  }));
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const [lifecyclePending, setLifecyclePending] = useState(false);
+  const [deletionPending, setDeletionPending] = useState(false);
+  const mutationPending = pending || lifecyclePending || deletionPending;
+  const closeAllowed = !mutationPending;
 
   useEffect(() => {
-    if (state.success) router.refresh();
-  }, [router, state.success]);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    dialogRef.current?.querySelector<HTMLInputElement>("input[name='fullName']")?.focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && closeAllowed) {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])",
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [closeAllowed, onClose]);
+
+  useEffect(() => {
+    if (state.success) {
+      onClose();
+      router.refresh();
+    }
+  }, [onClose, router, state.success]);
+
+  function validate(event: FormEvent<HTMLFormElement>) {
+    const errors = validateLocally(values);
+    setLocalErrors(errors);
+    if (Object.keys(errors).length) event.preventDefault();
+  }
 
   return (
-    <form action={formAction} className="shrink-0">
+    <div
+      role="presentation"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#3f362e]/45 p-4 sm:p-5"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && closeAllowed) onClose();
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-child-title"
+        aria-describedby="edit-child-description"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-[520px] min-w-0 overflow-y-auto overflow-x-hidden rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25 sm:max-h-[calc(100dvh-3rem)]"
+      >
+        <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
+          <button type="button" onClick={onClose} disabled={!closeAllowed} className="text-[15px] font-bold text-muted disabled:opacity-50">
+            Cancelar
+          </button>
+          <div>
+            <h2 id="edit-child-title" className="font-display text-lg font-semibold text-ink">Editar niño</h2>
+            <p id="edit-child-description" className="sr-only">
+              Edita los datos y gestiona el estado de {child.fullName}.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={!closeAllowed}
+            aria-label="Cerrar"
+            className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted disabled:opacity-50"
+          >
+            <span aria-hidden="true" className="text-xl leading-none">×</span>
+          </button>
+        </header>
+        <form action={formAction} onSubmit={validate} noValidate className="p-5 sm:p-[26px]">
+          <ChildFormFields
+            idPrefix="edit-child"
+            rooms={rooms}
+            values={values}
+            setValues={setValues}
+            errors={{ ...state.errors, ...localErrors }}
+            disabled={!closeAllowed}
+          />
+          {state.message && (
+            <p role="alert" className="mt-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">
+              {state.message}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={mutationPending}
+            className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25 disabled:cursor-wait disabled:opacity-70"
+          >
+            {pending ? "Guardando…" : "Guardar cambios"}
+          </button>
+        </form>
+        <div className="border-t border-line p-5 sm:p-[26px] sm:pt-5">
+          <p className="mb-3 text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">GESTIÓN DEL NIÑO</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <LifecycleButton
+              child={child}
+              disabled={mutationPending}
+              onPendingChange={setLifecyclePending}
+            />
+            <DeleteChildButton
+              child={child}
+              disabled={mutationPending}
+              onPendingChange={setDeletionPending}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteChildButton({
+  child,
+  disabled = false,
+  onPendingChange,
+}: {
+  child: Child;
+  disabled?: boolean;
+  onPendingChange: (pending: boolean) => void;
+}) {
+  const action = deleteChild.bind(null, child.id);
+  const [state, formAction, pending] = useActionState(action, INITIAL_DELETION_STATE);
+  const [confirmationName, setConfirmationName] = useState("");
+  const matchesName = confirmationName === child.fullName;
+  const confirmationHintId = `delete-child-confirmation-hint-${child.id}`;
+  const confirmationErrorId = `delete-child-error-${child.id}`;
+
+  useEffect(() => {
+    onPendingChange(pending);
+  }, [onPendingChange, pending]);
+
+  return (
+    <form action={formAction} className="min-w-0 flex-1 space-y-2">
+      <input
+        type="text"
+        name="confirmationName"
+        disabled={disabled || pending}
+        required
+        value={confirmationName}
+        onChange={(event) => setConfirmationName(event.target.value)}
+        placeholder={child.fullName}
+        aria-label={`Escribe ${child.fullName} para eliminarlo`}
+        aria-invalid={Boolean(state.message)}
+        aria-describedby={state.message ? `${confirmationHintId} ${confirmationErrorId}` : confirmationHintId}
+        className="w-full min-w-0 rounded-[14px] border-[1.5px] border-[#efb4aa] bg-[#fffaf2] px-3 py-3 text-sm outline-none placeholder:text-[#b6a99b]"
+      />
+      <p id={confirmationHintId} className="text-xs leading-relaxed text-muted">
+        Escribe exactamente{" "}
+        <strong className="font-extrabold text-ink">{child.fullName}</strong> para confirmar.
+      </p>
       <button
         type="submit"
-        disabled={pending}
-        className="rounded-xl bg-[#cfebd8] px-3 py-2 text-xs font-extrabold text-[#3e8b62] disabled:opacity-60"
+        disabled={pending || disabled || !matchesName}
+        aria-disabled={pending || disabled || !matchesName}
+        className="w-full rounded-[14px] border border-[#efb4aa] bg-[#fff4f1] px-4 py-3 text-sm font-extrabold text-[#c5413a] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? "Restaurando…" : "Restaurar"}
+        {pending ? "Eliminando…" : "Eliminar permanentemente"}
       </button>
       {state.message && !state.success && (
-        <p aria-live="polite" className="mt-1 max-w-36 text-right text-xs font-bold text-[#c5413a]">
+        <p id={confirmationErrorId} role="alert" className="text-sm font-bold text-[#c5413a]">
           {state.message}
         </p>
       )}
@@ -473,7 +669,6 @@ function ChildCard({ child, archived }: { child: Child; archived: boolean }) {
           </span>
         )}
       </Link>
-      {archived && <RestoreButton childId={child.id} />}
     </article>
   );
 }
@@ -585,11 +780,23 @@ export function ChildrenDirectory({
   );
 }
 
-function LifecycleButton({ child }: { child: Child }) {
+function LifecycleButton({
+  child,
+  disabled = false,
+  onPendingChange,
+}: {
+  child: Child;
+  disabled?: boolean;
+  onPendingChange: (pending: boolean) => void;
+}) {
   const router = useRouter();
   const archived = child.status === "archived";
   const action = (archived ? restoreChild : archiveChild).bind(null, child.id);
   const [state, formAction, pending] = useActionState(action, INITIAL_LIFECYCLE_STATE);
+
+  useEffect(() => {
+    onPendingChange(pending);
+  }, [onPendingChange, pending]);
 
   useEffect(() => {
     if (!state.success) return;
@@ -600,13 +807,14 @@ function LifecycleButton({ child }: { child: Child }) {
   return (
     <form
       action={formAction}
+      className="min-w-0 flex-1"
       onSubmit={(event) => {
         if (!archived && !window.confirm(`¿Archivar a ${child.fullName}?`)) event.preventDefault();
       }}
     >
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || disabled}
         className={`w-full rounded-[14px] px-4 py-3 text-sm font-extrabold disabled:opacity-60 ${archived ? "bg-[#cfebd8] text-[#3e8b62]" : "border border-[#efb4aa] bg-[#fff4f1] text-[#c5413a]"}`}
       >
         {pending ? "Guardando…" : archived ? "Restaurar niño" : "Archivar niño"}
@@ -707,17 +915,21 @@ function CancelInvitationButton({
 
 export function ChildProfile({
   child,
+  rooms,
   linkedParents,
   invitations,
 }: {
   child: Child;
+  rooms: Room[];
   linkedParents: ParentLink[];
   invitations: ParentInvitationSummary[];
 }) {
   const router = useRouter();
   const [isParentDialogOpen, setIsParentDialogOpen] = useState(false);
   const [editingInvitation, setEditingInvitation] = useState<ParentInvitationSummary | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const parentLinkTriggerRef = useRef<HTMLButtonElement>(null);
+  const editTriggerRef = useRef<HTMLButtonElement>(null);
   const pendingInvitations = invitations.filter(
     (invitation) => invitation.status === "pending",
   );
@@ -733,6 +945,11 @@ export function ChildProfile({
     requestAnimationFrame(() => parentLinkTriggerRef.current?.focus());
   }
 
+  function closeEditDialog() {
+    setIsEditDialogOpen(false);
+    requestAnimationFrame(() => editTriggerRef.current?.focus());
+  }
+
   return (
     <section className="mx-auto w-full max-w-[820px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20">
       <BackLink href={child.status === "archived" ? "/staff/kids?view=archived" : "/staff/kids"} />
@@ -746,9 +963,6 @@ export function ChildProfile({
                 {ageFromIsoDate(child.birthDate)} · Sala {child.roomName}
               </p>
             </div>
-            <Link href={`/staff/kids/${child.id}/edit`} className="rounded-xl border-[1.5px] border-line bg-surface px-4 py-2 text-sm font-bold text-[#6e6359]">
-              Editar
-            </Link>
           </div>
 
           <div className="flex gap-3.5 rounded-2xl bg-[#fbdad6] p-4 sm:p-[18px]">
@@ -776,10 +990,14 @@ export function ChildProfile({
         </div>
 
         <aside className="space-y-3">
-          <Link href={`/staff/kids/${child.id}/edit`} className="block rounded-[14px] bg-ink px-4 py-3 text-center text-sm font-extrabold text-white">
+          <button
+            ref={editTriggerRef}
+            type="button"
+            onClick={() => setIsEditDialogOpen(true)}
+            className="block w-full rounded-[14px] bg-ink px-4 py-3 text-center text-sm font-extrabold text-white"
+          >
             Editar datos
-          </Link>
-          <LifecycleButton child={child} />
+          </button>
           <section className="rounded-2xl border border-line bg-surface p-4 sm:p-[18px]">
             <h2 className="mb-3.5 text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">PADRES VINCULADOS</h2>
             <div className="flex flex-col gap-3.5">
@@ -889,61 +1107,9 @@ export function ChildProfile({
           } : undefined}
         />
       )}
-    </section>
-  );
-}
-
-export function ChildEditForm({ child, rooms }: { child: Child; rooms: Room[] }) {
-  const router = useRouter();
-  const action = updateChild.bind(null, child.id);
-  const [state, formAction, pending] = useActionState(action, INITIAL_FORM_STATE);
-  const [localErrors, setLocalErrors] = useState<FormErrors>({});
-  const [values, setValues] = useState<ChildFormValues>({
-    fullName: child.fullName,
-    birthDate: isoToDisplayDate(child.birthDate),
-    enrolledAt: child.enrolledAt,
-    roomId: child.roomId,
-    allergies: child.allergyTags.join(", "),
-    medicalNotes: child.medicalNotes ?? "",
-    photoConsent: child.photoConsent,
-  });
-
-  useEffect(() => {
-    if (state.success) router.push(`/staff/kids/${child.id}`);
-  }, [child.id, router, state.success]);
-
-  function validate(event: FormEvent<HTMLFormElement>) {
-    const errors = validateLocally(values);
-    setLocalErrors(errors);
-    if (Object.keys(errors).length) event.preventDefault();
-  }
-
-  return (
-    <section className="mx-auto w-full max-w-[560px] px-5 py-8 pb-16 sm:py-10">
-      <BackLink href={`/staff/kids/${child.id}`}>Volver al perfil</BackLink>
-      <form action={formAction} onSubmit={validate} noValidate className="overflow-hidden rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/15">
-        <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
-          <Link href={`/staff/kids/${child.id}`} className="text-[15px] font-bold text-muted">Cancelar</Link>
-          <h1 className="font-display text-lg font-semibold text-ink">Editar niño</h1>
-          <button type="submit" disabled={pending} className="text-[15px] font-extrabold text-[#d9583c] disabled:opacity-60">
-            {pending ? "Guardando…" : "Guardar"}
-          </button>
-        </header>
-        <div className="p-5 sm:p-[26px]">
-          <ChildFormFields
-            idPrefix="edit-child"
-            rooms={rooms}
-            values={values}
-            setValues={setValues}
-            errors={{ ...state.errors, ...localErrors }}
-          />
-          {state.message && (
-            <p aria-live="polite" className="mt-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">
-              {state.message}
-            </p>
-          )}
-        </div>
-      </form>
+      {isEditDialogOpen && (
+        <ChildEditDialog child={child} rooms={rooms} onClose={closeEditDialog} />
+      )}
     </section>
   );
 }
