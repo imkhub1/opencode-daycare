@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 
-import { getChild } from "@/app/kids/actions";
+import { getChild, getRooms } from "@/app/kids/actions";
 import {
   getChildInvitations,
   getChildParentLinks,
 } from "@/app/kids/parent-invitations/actions";
 import { ChildProfile } from "@/components/kids";
+
+const ROOM_ORDER = ["Soles", "Lunas", "Estrellas"];
 
 export default async function StaffChildPage({
   params,
@@ -17,10 +19,18 @@ export default async function StaffChildPage({
 
   if (!child) notFound();
 
-  const [linkedParentsResult, invitationsResult] = await Promise.allSettled([
-    getChildParentLinks(child.id),
-    getChildInvitations(child.id),
+  const [rooms, linkedParentsResult, invitationsResult] = await Promise.all([
+    getRooms(),
+    Promise.resolve(getChildParentLinks(child.id)).then(
+      (value) => ({ status: "fulfilled" as const, value }),
+      () => ({ status: "rejected" as const }),
+    ),
+    Promise.resolve(getChildInvitations(child.id)).then(
+      (value) => ({ status: "fulfilled" as const, value }),
+      () => ({ status: "rejected" as const }),
+    ),
   ]);
+  rooms.sort((left, right) => ROOM_ORDER.indexOf(left.name) - ROOM_ORDER.indexOf(right.name));
   const linkedParents =
     linkedParentsResult.status === "fulfilled" ? linkedParentsResult.value : [];
   const invitations =
@@ -29,6 +39,7 @@ export default async function StaffChildPage({
   return (
     <ChildProfile
       child={child}
+      rooms={rooms}
       linkedParents={linkedParents}
       invitations={invitations}
     />
