@@ -49,7 +49,7 @@ export function FeedClient({
     <>
       <main className="mx-auto max-w-[760px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20">
         <header className="mb-6">
-          <p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-[#d9583c]">{headerLabel}</p>
+          <p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-coral-deep">{headerLabel}</p>
           <h1 className="font-display text-3xl font-semibold text-ink">Buenas, {firstName}</h1>
           <p className="mt-1 text-sm text-muted">Las novedades de tu comunidad</p>
         </header>
@@ -58,10 +58,10 @@ export function FeedClient({
           <button
             type="button"
             onClick={openCreate}
-            className="mb-6 flex w-full items-center gap-3.5 rounded-[18px] border border-line bg-surface px-4 py-3.5 text-left shadow-sm shadow-[#785a3c]/10"
+            className="mb-6 flex w-full items-center gap-3.5 rounded-[18px] border border-line bg-surface px-4 py-3.5 text-left shadow-theme-sm"
           >
             <Avatar>{firstName.charAt(0).toLocaleUpperCase("es")}</Avatar>
-            <span className="flex-1 text-[15px] text-[#a89a8b]">Compartí un momento…</span>
+            <span className="flex-1 text-[15px] text-subtle">Compartí un momento…</span>
             <span className="flex size-10 items-center justify-center rounded-xl bg-coral-soft text-coral">
               <Icon name="camera" className="size-5" />
             </span>
@@ -69,8 +69,8 @@ export function FeedClient({
         )}
 
         <div className="mb-3.5 flex items-center gap-3.5">
-          <span className="text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">PUBLICACIONES</span>
-          <span className="h-px flex-1 bg-[#e7dac8]" />
+          <span className="text-xs font-extrabold tracking-[0.08em] text-subtle-strong">PUBLICACIONES</span>
+          <span className="h-px flex-1 bg-line-soft" />
         </div>
 
         {posts.length > 0 ? (
@@ -84,8 +84,8 @@ export function FeedClient({
             ))}
           </div>
         ) : (
-          <section className="rounded-[20px] border border-dashed border-[#dbcdba] bg-surface px-6 py-12 text-center">
-            <Icon name="megaphone" className="mx-auto mb-3 size-8 text-[#c8b8a4]" />
+          <section className="rounded-[20px] border border-dashed border-line-strong bg-surface px-6 py-12 text-center">
+            <Icon name="megaphone" className="mx-auto mb-3 size-8 text-graphic" />
             <h2 className="font-display text-xl font-semibold text-ink">Todavía no hay publicaciones</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted">
               Las novedades de tu sala aparecerán acá cuando el equipo comparta un momento.

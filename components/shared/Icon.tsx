@@ -11,6 +11,7 @@ export type IconName =
   | "megaphone"
   | "menu"
   | "message"
+  | "moon"
   | "plus"
   | "sun"
   | "trash"
@@ -29,6 +30,7 @@ export function Icon({ name, className = "" }: { name: IconName; className?: str
     megaphone: <><path d="m3 11 18-5v12L3 14v-3z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" /></>,
     menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>,
     message: <path d="M21 11.5a8.5 8.5 0 0 1-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5Z" />,
+    moon: <path d="M20.5 15.5A8.5 8.5 0 0 1 8.5 3.5 8.5 8.5 0 1 0 20.5 15.5Z" />,
     plus: <path d="M12 5v14M5 12h14" />,
     sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
     trash: <><path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="M6 7l1 14h10l1-14M9 7V4h6v3" /></>,

@@ -40,11 +40,11 @@ const INITIAL_FORM_STATE: ChildFormState = { success: false };
 const INITIAL_LIFECYCLE_STATE: ChildLifecycleState = { success: false, message: "" };
 const INITIAL_DELETION_STATE: ChildDeletionState = { success: false };
 const avatarTones = [
-  "bg-[#a9d9e8] text-[#1f7a93]",
-  "bg-[#f4b8cc] text-[#c44a7a]",
-  "bg-[#b9dec4] text-[#3e8b62]",
-  "bg-[#f4dc8e] text-[#9a7b1e]",
-  "bg-[#c9b6e8] text-[#7b5fc0]",
+  "bg-avatar-blue text-avatar-blue-ink",
+  "bg-avatar-pink text-avatar-pink-ink",
+  "bg-avatar-green text-avatar-green-ink",
+  "bg-avatar-yellow text-avatar-yellow-ink",
+  "bg-avatar-purple text-avatar-purple-ink",
 ];
 
 type FormErrors = Partial<Record<keyof ChildFormValues, string>>;
@@ -225,10 +225,10 @@ function ChildFormFields({
           value={values.fullName}
           onChange={(event) => update("fullName", event.target.value)}
           placeholder="Ej. Martina López"
-          className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+          className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] outline-none placeholder:text-placeholder"
         />
         {errors.fullName && (
-          <p id={`${idPrefix}-full-name-error`} className="mt-1.5 text-sm font-bold text-[#c5413a]">
+            <p id={`${idPrefix}-full-name-error`} className="mt-1.5 text-sm font-bold text-danger">
             {errors.fullName}
           </p>
         )}
@@ -249,10 +249,10 @@ function ChildFormFields({
             aria-describedby={errors.birthDate ? `${idPrefix}-birth-date-error` : undefined}
             value={values.birthDate}
             onChange={(event) => update("birthDate", event.target.value)}
-            className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] text-ink outline-none"
+            className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] text-ink outline-none"
           />
           {errors.birthDate && (
-            <p id={`${idPrefix}-birth-date-error`} className="mt-1.5 text-sm font-bold text-[#c5413a]">
+            <p id={`${idPrefix}-birth-date-error`} className="mt-1.5 text-sm font-bold text-danger">
               {errors.birthDate}
             </p>
           )}
@@ -273,10 +273,10 @@ function ChildFormFields({
             aria-describedby={errors.enrolledAt ? `${idPrefix}-enrolled-at-error` : undefined}
             value={values.enrolledAt}
             onChange={(event) => update("enrolledAt", event.target.value)}
-            className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] text-ink outline-none"
+            className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] text-ink outline-none"
           />
           {errors.enrolledAt && (
-            <p id={`${idPrefix}-enrolled-at-error`} className="mt-1.5 text-sm font-bold text-[#c5413a]">
+            <p id={`${idPrefix}-enrolled-at-error`} className="mt-1.5 text-sm font-bold text-danger">
               {errors.enrolledAt}
             </p>
           )}
@@ -295,7 +295,7 @@ function ChildFormFields({
             aria-describedby={errors.roomId ? `${idPrefix}-room-error` : undefined}
             value={values.roomId}
             onChange={(event) => update("roomId", event.target.value)}
-            className="w-full appearance-none rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] pr-12 text-[15px] font-bold text-ink outline-none"
+            className="w-full appearance-none rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] pr-12 text-[15px] font-bold text-ink outline-none"
           >
             {rooms.map((room) => (
               <option key={room.id} value={room.id}>
@@ -309,7 +309,7 @@ function ChildFormFields({
           />
         </div>
         {errors.roomId && (
-          <p id={`${idPrefix}-room-error`} className="mt-1.5 text-sm font-bold text-[#c5413a]">
+          <p id={`${idPrefix}-room-error`} className="mt-1.5 text-sm font-bold text-danger">
             {errors.roomId}
           </p>
         )}
@@ -326,7 +326,7 @@ function ChildFormFields({
           value={values.allergies}
           onChange={(event) => update("allergies", event.target.value)}
           placeholder="Ej. Maní, Lactosa"
-          className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+          className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] outline-none placeholder:text-placeholder"
         />
       </label>
 
@@ -341,11 +341,11 @@ function ChildFormFields({
           value={values.medicalNotes}
           onChange={(event) => update("medicalNotes", event.target.value)}
           placeholder="Indicaciones, medicación, contactos…"
-          className="min-h-[90px] w-full resize-y rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] leading-relaxed outline-none placeholder:text-[#b6a99b]"
+          className="min-h-[90px] w-full resize-y rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] leading-relaxed outline-none placeholder:text-placeholder"
         />
       </label>
 
-      <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-line bg-white px-4 py-3.5" htmlFor={`${idPrefix}-photo-consent`}>
+      <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-line bg-surface-raised px-4 py-3.5" htmlFor={`${idPrefix}-photo-consent`}>
         <input
           id={`${idPrefix}-photo-consent`}
           type="checkbox"
@@ -354,7 +354,7 @@ function ChildFormFields({
           disabled={disabled}
           checked={values.photoConsent}
           onChange={(event) => update("photoConsent", event.target.checked)}
-          className="size-5 accent-[#e0654a]"
+          className="size-5 accent-coral"
         />
         <span className="text-[15px] font-bold text-ink">Autoriza fotografías</span>
       </label>
@@ -415,7 +415,7 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
   return (
     <div
       role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#3f362e]/45 p-4 sm:p-5"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/45 p-4 sm:p-5"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !pending) onClose();
       }}
@@ -428,7 +428,7 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-child-title"
-        className="max-h-full w-full max-w-[520px] overflow-y-auto rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25"
+        className="max-h-full w-full max-w-[520px] overflow-y-auto rounded-[24px] border border-line bg-canvas shadow-theme-lg"
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
           <h2 id="add-child-title" className="font-display text-lg font-semibold text-ink">
@@ -439,7 +439,7 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
             onClick={onClose}
             disabled={pending}
             aria-label="Cerrar"
-            className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted disabled:opacity-50"
+            className="flex size-[34px] items-center justify-center rounded-[10px] bg-surface-muted text-muted disabled:opacity-50"
           >
             <span aria-hidden="true" className="text-xl leading-none">×</span>
           </button>
@@ -453,14 +453,14 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
             errors={errors}
           />
           {state.message && (
-            <p aria-live="polite" className="mt-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">
+            <p aria-live="polite" className="mt-4 rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold text-danger">
               {state.message}
             </p>
           )}
           <button
             type="submit"
             disabled={pending}
-            className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25 disabled:cursor-wait disabled:opacity-70"
+            className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-wait disabled:opacity-70"
           >
             {pending ? "Guardando…" : "Guardar"}
           </button>
@@ -545,7 +545,7 @@ function ChildEditDialog({
   return (
     <div
       role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#3f362e]/45 p-4 sm:p-5"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-overlay/45 p-4 sm:p-5"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && closeAllowed) onClose();
       }}
@@ -556,7 +556,7 @@ function ChildEditDialog({
         aria-modal="true"
         aria-labelledby="edit-child-title"
         aria-describedby="edit-child-description"
-        className="max-h-[calc(100dvh-2rem)] w-full max-w-[520px] min-w-0 overflow-y-auto overflow-x-hidden rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25 sm:max-h-[calc(100dvh-3rem)]"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-[520px] min-w-0 overflow-y-auto overflow-x-hidden rounded-[24px] border border-line bg-canvas shadow-theme-lg sm:max-h-[calc(100dvh-3rem)]"
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
           <div>
@@ -570,7 +570,7 @@ function ChildEditDialog({
             onClick={onClose}
             disabled={!closeAllowed}
             aria-label="Cerrar"
-            className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted disabled:opacity-50"
+            className="flex size-[34px] items-center justify-center rounded-[10px] bg-surface-muted text-muted disabled:opacity-50"
           >
             <span aria-hidden="true" className="text-xl leading-none">×</span>
           </button>
@@ -585,7 +585,7 @@ function ChildEditDialog({
             disabled={!closeAllowed}
           />
           {state.message && (
-            <p role="alert" className="mt-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">
+            <p role="alert" className="mt-4 rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold text-danger">
               {state.message}
             </p>
           )}
@@ -593,13 +593,13 @@ function ChildEditDialog({
             type="submit"
             disabled={submitDisabled}
             aria-disabled={submitDisabled}
-            className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? "Guardando…" : "Guardar cambios"}
           </button>
         </form>
         <div className="border-t border-line p-5 sm:p-[26px] sm:pt-5">
-          <p className="mb-3 text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">GESTIÓN DEL NIÑO</p>
+          <p className="mb-3 text-xs font-extrabold tracking-[0.08em] text-subtle-strong">GESTIÓN DEL NIÑO</p>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
             <LifecycleButton
               child={child}
@@ -651,7 +651,7 @@ function DeleteChildButton({
         aria-label={`Escribe ${child.fullName} para eliminarlo`}
         aria-invalid={Boolean(state.message)}
         aria-describedby={state.message ? `${confirmationHintId} ${confirmationErrorId}` : confirmationHintId}
-        className="w-full min-w-0 rounded-[14px] border-[1.5px] border-[#efb4aa] bg-[#fffaf2] px-3 py-3 text-sm outline-none placeholder:text-[#b6a99b]"
+        className="w-full min-w-0 rounded-[14px] border-[1.5px] border-danger-border bg-surface-warm px-3 py-3 text-sm outline-none placeholder:text-placeholder"
       />
       <p id={confirmationHintId} className="text-xs leading-relaxed text-muted">
         Escribe exactamente{" "}
@@ -661,12 +661,12 @@ function DeleteChildButton({
         type="submit"
         disabled={pending || disabled || !matchesName}
         aria-disabled={pending || disabled || !matchesName}
-        className="w-full rounded-[14px] border border-[#efb4aa] bg-[#fff4f1] px-4 py-3 text-sm font-extrabold text-[#c5413a] disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-[14px] border border-danger-border bg-coral-faint px-4 py-3 text-sm font-extrabold text-danger disabled:cursor-not-allowed disabled:opacity-50"
       >
         {pending ? "Eliminando…" : "Eliminar permanentemente"}
       </button>
       {state.message && !state.success && (
-        <p id={confirmationErrorId} role="alert" className="text-sm font-bold text-[#c5413a]">
+        <p id={confirmationErrorId} role="alert" className="text-sm font-bold text-danger">
           {state.message}
         </p>
       )}
@@ -676,19 +676,19 @@ function DeleteChildButton({
 
 function ChildCard({ child, archived }: { child: Child; archived: boolean }) {
   return (
-    <article className="flex min-w-0 items-center gap-3.5 rounded-[18px] border border-line bg-surface p-4 shadow-sm shadow-[#785a3c]/10">
+    <article className="flex min-w-0 items-center gap-3.5 rounded-[18px] border border-line bg-surface p-4 shadow-theme-sm">
       <Link href={`/staff/kids/${child.id}`} className="flex min-w-0 flex-1 items-center gap-3.5 rounded-lg focus-visible:outline-offset-4">
         <InitialAvatar name={child.fullName} />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-display text-base font-semibold text-ink">
             {child.fullName}
           </span>
-          <span className="mt-0.5 block text-[13px] text-[#a89a8b]">
+          <span className="mt-0.5 block text-[13px] text-subtle">
             {ageFromIsoDate(child.birthDate)} · Sala {child.roomName}
           </span>
         </span>
         {child.allergyTags[0] && !archived && (
-          <span className="hidden shrink-0 rounded-full bg-[#fbd8cc] px-2.5 py-1 text-[11px] font-extrabold text-[#d9684a] sm:block">
+          <span className="hidden shrink-0 rounded-full bg-tag-photo px-2.5 py-1 text-[11px] font-extrabold text-tag-photo-ink sm:block">
             {child.allergyTags[0].toLocaleUpperCase("es")}
           </span>
         )}
@@ -730,14 +730,14 @@ export function ChildrenDirectory({
     <section className="mx-auto w-full max-w-[880px] px-5 py-8 pb-16 sm:px-10 sm:py-[34px] sm:pb-20">
       <header className="mb-[22px] flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-[#d9583c]">GESTIÓN</p>
+          <p className="mb-1 text-xs font-extrabold tracking-[0.08em] text-coral-deep">GESTIÓN</p>
           <h1 className="font-display text-3xl font-semibold text-ink">Niños</h1>
         </div>
         <button
           ref={triggerRef}
           type="button"
           onClick={() => setDialogOpen(true)}
-          className="flex items-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-[18px] py-[11px] text-sm font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
+          className="flex items-center gap-2 rounded-[14px] bg-coral-gradient px-[18px] py-[11px] text-sm font-extrabold text-theme-white-strong shadow-theme-sm"
         >
           <Icon name="plus" className="size-[17px]" />
           Agregar niño
@@ -745,16 +745,16 @@ export function ChildrenDirectory({
       </header>
 
       <div className="mb-4 flex w-fit rounded-xl border border-line bg-surface p-1 text-sm font-bold">
-        <Link href="/staff/kids" className={`rounded-lg px-3 py-2 ${view === "active" ? "bg-coral-soft text-[#d9583c]" : "text-muted"}`}>
+        <Link href="/staff/kids" className={`rounded-lg px-3 py-2 ${view === "active" ? "bg-coral-soft text-coral-deep" : "text-muted"}`}>
           Activos
         </Link>
-        <Link href="/staff/kids?view=archived" className={`rounded-lg px-3 py-2 ${view === "archived" ? "bg-coral-soft text-[#d9583c]" : "text-muted"}`}>
+        <Link href="/staff/kids?view=archived" className={`rounded-lg px-3 py-2 ${view === "archived" ? "bg-coral-soft text-coral-deep" : "text-muted"}`}>
           Archivados
         </Link>
       </div>
 
       <label className="mb-[22px] flex items-center gap-3 rounded-[14px] border border-line bg-surface px-4 py-3">
-        <svg aria-hidden="true" className="size-[18px] shrink-0 text-[#b0a290]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <svg aria-hidden="true" className="size-[18px] shrink-0 text-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <circle cx="11" cy="11" r="7" />
           <path d="m21 21-4.3-4.3" />
         </svg>
@@ -763,7 +763,7 @@ export function ChildrenDirectory({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Buscar niño…"
-          className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-[#b6a99b]"
+          className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-placeholder"
         />
       </label>
 
@@ -775,10 +775,10 @@ export function ChildrenDirectory({
               <span className="text-xs font-extrabold tracking-[0.08em] text-ink">
                 SALA {room.name.toLocaleUpperCase("es")}
               </span>
-              <span className="text-[13px] text-[#a89a8b]">
+              <span className="text-[13px] text-subtle">
                 {roomChildren.length} {roomChildren.length === 1 ? "niño" : "niños"}
               </span>
-              <span className="h-px flex-1 bg-[#e7dac8]" />
+              <span className="h-px flex-1 bg-line-soft" />
             </div>
             {roomChildren.length ? (
               <div className="grid gap-3.5 sm:grid-cols-2">
@@ -787,7 +787,7 @@ export function ChildrenDirectory({
                 ))}
               </div>
             ) : (
-              <div className="rounded-[18px] border border-dashed border-[#d8cbba] bg-surface/55 px-5 py-7 text-center text-sm font-semibold text-muted">
+              <div className="rounded-[18px] border border-dashed border-line-strong bg-surface/55 px-5 py-7 text-center text-sm font-semibold text-muted">
                 {normalizedSearch
                   ? "No hay nombres que coincidan con la búsqueda."
                   : view === "archived"
@@ -839,12 +839,12 @@ function LifecycleButton({
       <button
         type="submit"
         disabled={pending || disabled}
-        className={`w-full rounded-[14px] px-4 py-3 text-sm font-extrabold disabled:opacity-60 ${archived ? "bg-[#cfebd8] text-[#3e8b62]" : "border border-[#efb4aa] bg-[#fff4f1] text-[#c5413a]"}`}
+        className={`w-full rounded-[14px] px-4 py-3 text-sm font-extrabold disabled:opacity-60 ${archived ? "bg-success-soft text-success" : "border border-danger-border bg-coral-faint text-danger"}`}
       >
         {pending ? "Guardando…" : archived ? "Restaurar niño" : "Archivar niño"}
       </button>
       {state.message && !state.success && (
-        <p aria-live="polite" className="mt-2 text-sm font-bold text-[#c5413a]">
+        <p aria-live="polite" className="mt-2 text-sm font-bold text-danger">
           {state.message}
         </p>
       )}
@@ -878,12 +878,12 @@ function RetryInvitationButton({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-xl bg-[#fff0eb] px-3 py-2 text-xs font-extrabold text-[#c5503a] disabled:opacity-60"
+        className="rounded-xl bg-coral-faint px-3 py-2 text-xs font-extrabold text-coral-strong disabled:opacity-60"
       >
         {pending ? "Reintentando…" : "Reintentar envío"}
       </button>
       {state.message && !state.success && (
-        <p role="alert" className="mt-1 text-xs font-bold text-[#c5413a]">
+        <p role="alert" className="mt-1 text-xs font-bold text-danger">
           {state.message}
         </p>
       )}
@@ -924,12 +924,12 @@ function CancelInvitationButton({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-xl border-[1.5px] border-[#efb4aa] bg-[#fffaf2] px-3 py-2 text-xs font-extrabold text-[#c5413a] disabled:opacity-60"
+        className="rounded-xl border-[1.5px] border-danger-border bg-surface-warm px-3 py-2 text-xs font-extrabold text-danger disabled:opacity-60"
       >
         {pending ? "Cancelando…" : "Cancelar invitación"}
       </button>
       {state.message && !state.success && (
-        <p role="alert" className="mt-1 text-xs font-bold text-[#c5413a]">
+        <p role="alert" className="mt-1 text-xs font-bold text-danger">
           {state.message}
         </p>
       )}
@@ -989,11 +989,11 @@ export function ChildProfile({
             </div>
           </div>
 
-          <div className="flex gap-3.5 rounded-2xl bg-[#fbdad6] p-4 sm:p-[18px]">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-[11px] bg-[#f4a8a0] text-white">!</span>
+          <div className="flex gap-3.5 rounded-2xl bg-danger-soft p-4 sm:p-[18px]">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-[11px] bg-danger-border text-theme-white-strong">!</span>
             <div className="min-w-0">
-              <h2 className="text-[15px] font-extrabold text-[#c5413a]">Alergias y notas</h2>
-              <p className="mt-0.5 break-words text-[14.5px] leading-relaxed text-[#b25249]">{medicalSummary}</p>
+              <h2 className="text-[15px] font-extrabold text-danger">Alergias y notas</h2>
+              <p className="mt-0.5 break-words text-[14.5px] leading-relaxed text-danger-body">{medicalSummary}</p>
             </div>
           </div>
 
@@ -1005,7 +1005,7 @@ export function ChildProfile({
               ["Autoriza fotografías", child.photoConsent ? "Sí" : "No"],
               ["Estado", child.status === "active" ? "Activo" : "Archivado"],
             ].map(([label, value], index, rows) => (
-              <div key={label} className={`flex justify-between gap-4 px-[18px] py-[15px] ${index < rows.length - 1 ? "border-b border-[#f0e6d8]" : ""}`}>
+              <div key={label} className={`flex justify-between gap-4 px-[18px] py-[15px] ${index < rows.length - 1 ? "border-b border-line-soft" : ""}`}>
                 <dt className="text-[14.5px] text-muted">{label}</dt>
                 <dd className="text-right text-[14.5px] font-extrabold text-ink">{value}</dd>
               </div>
@@ -1018,12 +1018,12 @@ export function ChildProfile({
             ref={editTriggerRef}
             type="button"
             onClick={() => setIsEditDialogOpen(true)}
-            className="block w-full rounded-[14px] bg-ink px-4 py-3 text-center text-sm font-extrabold text-white"
+            className="block w-full rounded-[14px] bg-ink px-4 py-3 text-center text-sm font-extrabold text-surface-raised"
           >
             Editar datos
           </button>
           <section className="rounded-2xl border border-line bg-surface p-4 sm:p-[18px]">
-            <h2 className="mb-3.5 text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">PADRES VINCULADOS</h2>
+            <h2 className="mb-3.5 text-xs font-extrabold tracking-[0.08em] text-subtle-strong">PADRES VINCULADOS</h2>
             <div className="flex flex-col gap-3.5">
               {linkedParents.length || pendingInvitations.length ? (
                 <>
@@ -1032,22 +1032,22 @@ export function ChildProfile({
                     <InitialAvatar name={parent.fullName} />
                     <div className="min-w-0 flex-1">
                       <p className="break-words text-[14.5px] font-extrabold leading-tight text-ink">{parent.fullName}</p>
-                      <p className="mt-1 break-words text-[12.5px] leading-snug text-[#a89a8b]">{relationshipLabel(parent.relationship)}</p>
-                      <p className="break-all text-[12.5px] leading-snug text-[#a89a8b]">{parent.email}</p>
+                      <p className="mt-1 break-words text-[12.5px] leading-snug text-subtle">{relationshipLabel(parent.relationship)}</p>
+                      <p className="break-all text-[12.5px] leading-snug text-subtle">{parent.email}</p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-[#cfebd8] px-2 py-1 text-[10.5px] font-extrabold text-[#3e8b62]">ACTIVA</span>
+                    <span className="shrink-0 rounded-full bg-success-soft px-2 py-1 text-[10.5px] font-extrabold text-success">ACTIVA</span>
                   </div>
                   ))}
                   {pendingInvitations.map((invitation) => (
-                    <article key={invitation.id} className="rounded-[18px] border border-[#f0e6d8] bg-[#fffaf2] p-3.5">
+                    <article key={invitation.id} className="rounded-[18px] border border-line-soft bg-surface-warm p-3.5">
                       <header className="mb-3 flex items-center justify-between gap-2">
-                        <span className="shrink-0 rounded-full bg-[#f7e7a6] px-2.5 py-1 text-[10.5px] font-extrabold text-[#9a7b1e]">PENDIENTE</span>
+                        <span className="shrink-0 rounded-full bg-warning-soft px-2.5 py-1 text-[10.5px] font-extrabold text-warning">PENDIENTE</span>
                         {child.status === "active" && (
                           <button
                             type="button"
                             aria-label={`Editar invitación de ${invitation.fullName}`}
                             onClick={() => setEditingInvitation(invitation)}
-                            className="flex size-8 items-center justify-center rounded-lg text-[#9a8b7c] hover:bg-[#f0e6d8] hover:text-[#c5503a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c5503a]"
+                            className="flex size-8 items-center justify-center rounded-lg text-subtle hover:bg-surface-muted hover:text-coral-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
                           >
                             <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M12 20h9" />
@@ -1060,16 +1060,16 @@ export function ChildProfile({
                         <InitialAvatar name={invitation.fullName} />
                         <div className="min-w-0 flex-1">
                           <p className="break-words text-[15px] font-extrabold leading-tight text-ink">{invitation.fullName}</p>
-                          <p className="mt-1.5 text-[12.5px] leading-snug text-[#a89a8b]">{relationshipLabel(invitation.relationship)}</p>
+                          <p className="mt-1.5 text-[12.5px] leading-snug text-subtle">{relationshipLabel(invitation.relationship)}</p>
                         </div>
                       </div>
-                      <p className="mt-2 whitespace-nowrap text-[12.5px] leading-snug tracking-[-0.01em] text-[#a89a8b]">{invitation.email}</p>
+                      <p className="mt-2 whitespace-nowrap text-[12.5px] leading-snug tracking-[-0.01em] text-subtle">{invitation.email}</p>
                       {(invitation.deliveryStatus === "sent" || invitation.deliveryStatus === "failed" || child.status === "active") && (
-                        <footer className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-[#eadfd0] pt-3">
+                        <footer className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-line pt-3">
                           {invitation.deliveryStatus === "failed" && (
                             <div className="mr-auto self-center">
-                              <p className="text-[11px] font-bold text-[#c5413a]">Error de envío</p>
-                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {isoToDisplayDate(invitation.expiresAt.slice(0, 10))}</p>
+                              <p className="text-[11px] font-bold text-danger">Error de envío</p>
+                              <p className="mt-0.5 text-[11px] text-subtle">Vence {isoToDisplayDate(invitation.expiresAt.slice(0, 10))}</p>
                             </div>
                           )}
                           {invitation.deliveryStatus === "failed" && child.status === "active" && (
@@ -1077,8 +1077,8 @@ export function ChildProfile({
                           )}
                           {invitation.deliveryStatus === "sent" && (
                             <div className="mr-auto self-center">
-                              <p className="text-[11px] font-bold text-[#3e8b62]">Correo enviado</p>
-                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {isoToDisplayDate(invitation.expiresAt.slice(0, 10))}</p>
+                              <p className="text-[11px] font-bold text-success">Correo enviado</p>
+                              <p className="mt-0.5 text-[11px] text-subtle">Vence {isoToDisplayDate(invitation.expiresAt.slice(0, 10))}</p>
                             </div>
                           )}
                           {child.status === "active" && (
@@ -1103,10 +1103,10 @@ export function ChildProfile({
                   onClick={() => setIsParentDialogOpen(true)}
                   className="flex items-center gap-3 pt-2 text-left"
                 >
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-[#d8cbba] text-[#b0a290]">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full border-[1.5px] border-dashed border-line-strong text-placeholder">
                     <Icon name="plus" className="size-[18px]" />
                   </span>
-                  <span className="text-[14.5px] font-extrabold text-[#c5503a]">
+                  <span className="text-[14.5px] font-extrabold text-coral-strong">
                     {linkedParents.length || pendingInvitations.length
                       ? "Vincular otro padre"
                       : "Vincular padre"}
@@ -1143,11 +1143,11 @@ export function KidsReadError({ onRetry }: { onRetry?: () => void }) {
 
   return (
     <section className="mx-auto flex min-h-[60vh] w-full max-w-[620px] items-center px-5 py-10">
-      <div className="w-full rounded-[22px] border border-line bg-surface p-7 text-center shadow-sm shadow-[#785a3c]/10">
-        <p className="text-xs font-extrabold tracking-[0.08em] text-[#d9583c]">NO PUDIMOS CARGAR</p>
+      <div className="w-full rounded-[22px] border border-line bg-surface p-7 text-center shadow-theme-sm">
+        <p className="text-xs font-extrabold tracking-[0.08em] text-coral-deep">NO PUDIMOS CARGAR</p>
         <h1 className="mt-2 font-display text-2xl font-semibold text-ink">No se pudieron cargar los niños</h1>
         <p className="mt-2 text-sm text-muted">Revisa tu conexión e inténtalo nuevamente.</p>
-        <button onClick={onRetry ?? router.refresh} className="mt-5 rounded-[14px] bg-coral px-5 py-3 text-sm font-extrabold text-white">
+        <button onClick={onRetry ?? router.refresh} className="mt-5 rounded-[14px] bg-coral px-5 py-3 text-sm font-extrabold text-theme-white-strong">
           Reintentar
         </button>
       </div>

@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { Icon, type IconName } from "@/components/shared/Icon";
 import { LogoutButton } from "@/components/shared/LogoutButton";
 import { SidebarUser } from "@/components/shared/SidebarUser";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import type { AppProfile } from "@/utils/supabase/profile";
 
 export type AreaNavigationItem = {
@@ -20,12 +21,12 @@ type ShellProfile = Pick<AppProfile, "fullName" | "role">;
 export function Brand({ href, subtitle }: { href: string; subtitle: string }) {
   return (
     <Link href={href} className="flex items-center gap-3">
-      <span className="flex size-10 items-center justify-center rounded-xl bg-linear-to-br from-[#f8c3a8] to-[#f2937a] text-white">
+      <span className="flex size-10 items-center justify-center rounded-xl bg-brand-gradient text-theme-white-strong">
         <Icon name="sun" className="size-5" />
       </span>
       <span>
         <span className="block font-display text-lg font-semibold leading-none text-ink">OpenDayCare</span>
-        <span className="mt-1 block text-xs text-[#a89a8b]">{subtitle}</span>
+        <span className="mt-1 block text-xs text-subtle">{subtitle}</span>
       </span>
     </Link>
   );
@@ -56,7 +57,7 @@ function Navigation({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 rounded-xl px-3 py-[11px] text-sm font-semibold ${active ? "bg-coral-soft text-[#d9583c] font-extrabold" : "text-[#6e6359] hover:bg-[#f6ecdf]"}`}
+            className={`flex items-center gap-3 rounded-xl px-3 py-[11px] text-sm font-semibold ${active ? "bg-coral-soft text-coral-deep font-extrabold" : "text-nav hover:bg-sand"}`}
           >
             <Icon name={item.icon} className="size-[19px]" />
             {item.label}
@@ -89,7 +90,7 @@ export function AppShell({
         {primaryAction && (
           <Link
             href={primaryAction.href}
-            className="mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3 text-sm font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
+            className="mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-coral-gradient px-3 py-3 text-sm font-extrabold text-theme-white-strong shadow-theme-sm"
           >
             <Icon name={primaryAction.icon} className="size-[17px]" />
             {primaryAction.label}
@@ -97,6 +98,10 @@ export function AppShell({
         )}
         <Navigation items={navigation} />
         <div className="mt-3 border-t border-line pt-4">
+          <div className="mb-3 flex items-center justify-between gap-2 px-2">
+            <span className="sr-only">Tema</span>
+            <ThemeToggle className="w-full justify-center" />
+          </div>
           <div className="flex items-center gap-3 px-2">
             <SidebarUser profile={profile} />
             <LogoutButton><Icon name="log-out" className="size-4" /></LogoutButton>
@@ -105,18 +110,20 @@ export function AppShell({
       </aside>
       <div className="min-w-0 flex-1">
         <header className="sticky top-0 z-10 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur md:hidden">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <Brand href={landingHref} subtitle={brandSubtitle} />
-            <details className="relative">
+            <div className="flex shrink-0 items-center gap-2">
+              <ThemeToggle />
+              <details className="relative">
               <summary className="flex size-10 cursor-pointer list-none items-center justify-center rounded-xl bg-sand text-ink">
                 <Icon name="menu" className="size-5" />
                 <span className="sr-only">Abrir navegación</span>
               </summary>
-              <div className="absolute right-0 top-12 w-56 rounded-2xl border border-line bg-surface p-2 shadow-xl shadow-[#3f362e]/10">
+              <div className="absolute right-0 top-12 w-56 rounded-2xl border border-line bg-surface p-2 shadow-theme-md">
                 {primaryAction && (
                   <Link
                     href={primaryAction.href}
-                    className="mb-1 flex items-center gap-3 rounded-xl bg-coral px-3 py-3 text-sm font-bold text-white"
+                    className="mb-1 flex items-center gap-3 rounded-xl bg-coral px-3 py-3 text-sm font-bold text-theme-white-strong"
                   >
                     <Icon name={primaryAction.icon} className="size-5" />
                     {primaryAction.label}
@@ -124,7 +131,8 @@ export function AppShell({
                 )}
                 <Navigation items={navigation} compact />
               </div>
-            </details>
+              </details>
+            </div>
           </div>
         </header>
         {children}
