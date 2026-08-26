@@ -2,27 +2,28 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 export { Icon, type IconName } from "@/components/shared/Icon";
-import { POST_TYPE_LABELS, type FeedPost, type PostType } from "@/app/posts/types";
+import type { FeedPost, PostType } from "@/app/posts/types";
 import { DeletePostButton } from "@/components/delete-post-button";
 import { PostPhotoGallery } from "@/components/post-photo-gallery";
+import type { Dictionary } from "@/utils/i18n/dictionary";
 
 export function Avatar({ children, tone = "coral" }: { children: ReactNode; tone?: "coral" | "blue" }) {
-  const colors = tone === "coral" ? "bg-[#f2937a] text-white" : "bg-[#a9d9e8] text-[#1f7a93]";
+  const colors = tone === "coral" ? "bg-brand-gradient text-theme-white-strong" : "bg-avatar-blue text-avatar-blue-ink";
   return <span className={`flex size-11 shrink-0 items-center justify-center rounded-full font-display text-lg font-semibold ${colors}`}>{children}</span>;
 }
 
 const postStyle: Record<PostType, string> = {
-  meal: "bg-[#f5ecd3] text-[#80651b]",
-  nap: "bg-[#e7dcf6] text-[#7b5fc0]",
-  activity: "bg-[#c7e7f1] text-[#2e89a6]",
-  achievement: "bg-[#cfebd8] text-[#3e9b6c]",
-  mood: "bg-[#f9d2de] text-[#c56486]",
-  photo: "bg-[#fbd8cc] text-[#d9684a]",
-  announcement: "bg-[#ccd8f4] text-[#4e72c8]",
+  meal: "bg-tag-meal text-tag-meal-ink",
+  nap: "bg-tag-nap text-tag-nap-ink",
+  activity: "bg-tag-activity text-tag-activity-ink",
+  achievement: "bg-tag-achievement text-tag-achievement-ink",
+  mood: "bg-tag-mood text-tag-mood-ink",
+  photo: "bg-tag-photo text-tag-photo-ink",
+  announcement: "bg-tag-announcement text-tag-announcement-ink",
 };
 
-function formatPublicationDate(value: string) {
-  return new Intl.DateTimeFormat("es-AR", {
+function formatPublicationDate(value: string, locale: "es" | "en") {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-AR" : "en-US", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "America/Argentina/Buenos_Aires",
@@ -33,33 +34,33 @@ function initialFor(name: string) {
   return name.trim().charAt(0).toLocaleUpperCase("es") || "U";
 }
 
-export function PostCard({ post, canDelete = false }: { post: FeedPost; canDelete?: boolean }) {
-  const audience = `Para: toda la sala ${post.roomName}`;
-  const photoLabel = post.photos.length === 1 ? "1 foto" : `${post.photos.length} fotos`;
+export function PostCard({ post, canDelete = false, dictionary }: { post: FeedPost; canDelete?: boolean; dictionary: Dictionary }) {
+  const audience = dictionary.feed.audience.replace("{room}", post.roomName);
+  const photoLabel = `${post.photos.length} ${post.photos.length === 1 ? dictionary.feed.photo : dictionary.feed.photos}`;
 
   return (
-    <article className="rounded-[20px] border border-line bg-surface p-5 shadow-sm shadow-[#785a3c]/10 sm:p-[22px]">
+    <article className="rounded-[20px] border border-line bg-surface p-5 shadow-theme-sm sm:p-[22px]">
       <div className="mb-4 flex flex-wrap items-start gap-3">
         <Avatar tone="blue">{initialFor(post.authorName)}</Avatar>
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-[17px] font-semibold text-ink">{post.authorName}</h2>
-          <p className="text-xs text-[#a89a8b]">
-            <time dateTime={post.publishedAt}>{formatPublicationDate(post.publishedAt)}</time> · publicado por el equipo
+          <p className="text-xs text-subtle">
+            <time dateTime={post.publishedAt}>{formatPublicationDate(post.publishedAt, dictionary.locale)}</time> · {dictionary.feed.postedByTeam}
           </p>
         </div>
         <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
           <span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold tracking-wide ${postStyle[post.type]}`}>
             <span className="size-2 rounded-full bg-current" />
-            {POST_TYPE_LABELS[post.type]}
+            {dictionary.postTypes[post.type]}
           </span>
           {canDelete && <DeletePostButton postId={post.id} />}
         </div>
       </div>
-      <p className="mb-2.5 text-xs text-[#a89a8b]">{audience}</p>
-      <p className="text-[15.5px] leading-relaxed text-[#4a4038]">{post.body}</p>
+      <p className="mb-2.5 text-xs text-subtle">{audience}</p>
+      <p className="text-[15.5px] leading-relaxed text-body">{post.body}</p>
       {post.photos.length > 0 && <PostPhotoGallery photos={post.photos} />}
-      <div className="mt-4 flex items-center justify-between border-t border-[#f0e6d8] pt-3.5 text-xs font-bold text-muted">
-        <span>{post.photos.length > 0 ? photoLabel : "Publicación de sala"}</span>
+      <div className="mt-4 flex items-center justify-between border-t border-line-soft pt-3.5 text-xs font-bold text-muted">
+        <span>{post.photos.length > 0 ? photoLabel : dictionary.feed.roomPost}</span>
         <span>{post.roomName}</span>
       </div>
     </article>
@@ -67,5 +68,5 @@ export function PostCard({ post, canDelete = false }: { post: FeedPost; canDelet
 }
 
 export function PlaceholderPage({ title }: { title: string }) {
-  return <main className="flex min-h-screen items-center justify-center bg-sand px-5"><section className="w-full max-w-md rounded-3xl border border-line bg-surface p-8 text-center shadow-lg shadow-[#785a3c]/10"><p className="mb-2 text-xs font-extrabold tracking-widest text-coral">OPENDAYCARE</p><h1 className="font-display text-3xl font-semibold text-ink">{title}</h1><p className="mt-3 text-muted">Esta pantalla estará disponible próximamente.</p><Link href="/" className="mt-7 inline-flex rounded-xl bg-coral px-5 py-3 text-sm font-extrabold text-white">Volver al inicio</Link></section></main>;
+  return <main className="flex min-h-screen items-center justify-center bg-sand px-5"><section className="w-full max-w-md rounded-3xl border border-line bg-surface p-8 text-center shadow-theme-md"><p className="mb-2 text-xs font-extrabold tracking-widest text-coral">OPENDAYCARE</p><h1 className="font-display text-3xl font-semibold text-ink">{title}</h1><p className="mt-3 text-muted">Esta pantalla estará disponible próximamente.</p><Link href="/" className="mt-7 inline-flex rounded-xl bg-coral px-5 py-3 text-sm font-extrabold text-theme-white-strong">Volver al inicio</Link></section></main>;
 }

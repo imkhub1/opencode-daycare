@@ -1,6 +1,7 @@
 import { ActivateScreen } from "@/components/auth";
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentAppProfile } from "@/utils/supabase/profile";
+import { getServerDictionary } from "@/utils/i18n/server";
 
 export default async function ActivatePage({
   searchParams,
@@ -24,6 +25,7 @@ export default async function ActivatePage({
       token={code}
       authenticated={authenticatedParent}
       blockedSession={Boolean(user && !authenticatedParent)}
+      dictionary={await getServerDictionary()}
     />
   );
 }
