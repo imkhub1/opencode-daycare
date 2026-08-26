@@ -22,7 +22,7 @@ export default async function StaffCreatePostPage() {
           <span aria-hidden="true">← </span>{dictionary.common.backToFeed}
         </Link>
         {rooms.length > 0 ? (
-          <CreatePost rooms={rooms} variant="page" dictionary={dictionary} />
+          <CreatePost rooms={rooms} variant="page" />
         ) : (
           <section className="w-full rounded-[24px] border border-line bg-surface p-7 text-center shadow-theme-md">
             <h1 className="font-display text-2xl font-semibold text-ink">{dictionary.kids.noRoomAssigned}</h1>

@@ -98,7 +98,7 @@ export function FeedClient({
         )}
       </main>
       {isCreateOpen && (
-         <CreatePost rooms={rooms} onCancel={closeCreate} onSuccess={handlePublished} dictionary={dictionary} />
+         <CreatePost rooms={rooms} onCancel={closeCreate} onSuccess={handlePublished} />
       )}
     </>
   );
