@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 export { Icon, type IconName } from "@/components/shared/Icon";
 import { POST_TYPE_LABELS, type FeedPost, type PostType } from "@/app/posts/types";
+import { DeletePostButton } from "@/components/delete-post-button";
 import { PostPhotoGallery } from "@/components/post-photo-gallery";
 
 export function Avatar({ children, tone = "coral" }: { children: ReactNode; tone?: "coral" | "blue" }) {
@@ -20,10 +21,10 @@ const postStyle: Record<PostType, string> = {
   announcement: "bg-[#ccd8f4] text-[#4e72c8]",
 };
 
-function formatPostTime(value: string) {
+function formatPublicationDate(value: string) {
   return new Intl.DateTimeFormat("es-AR", {
-    hour: "2-digit",
-    minute: "2-digit",
+    dateStyle: "medium",
+    timeStyle: "short",
     timeZone: "America/Argentina/Buenos_Aires",
   }).format(new Date(value));
 }
@@ -32,11 +33,37 @@ function initialFor(name: string) {
   return name.trim().charAt(0).toLocaleUpperCase("es") || "U";
 }
 
-export function PostCard({ post }: { post: FeedPost }) {
+export function PostCard({ post, canDelete = false }: { post: FeedPost; canDelete?: boolean }) {
   const audience = `Para: toda la sala ${post.roomName}`;
   const photoLabel = post.photos.length === 1 ? "1 foto" : `${post.photos.length} fotos`;
 
-  return <article className="rounded-[20px] border border-line bg-surface p-5 shadow-sm shadow-[#785a3c]/10 sm:p-[22px]"><div className="mb-4 flex items-center gap-3"><Avatar tone="blue">{initialFor(post.authorName)}</Avatar><div className="min-w-0 flex-1"><h2 className="font-display text-[17px] font-semibold text-ink">{post.authorName}</h2><p className="text-xs text-[#a89a8b]">{formatPostTime(post.publishedAt)} · publicado por el equipo</p></div><span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold tracking-wide ${postStyle[post.type]}`}><span className="size-2 rounded-full bg-current" />{POST_TYPE_LABELS[post.type]}</span></div><p className="mb-2.5 text-xs text-[#a89a8b]">{audience}</p><p className="text-[15.5px] leading-relaxed text-[#4a4038]">{post.body}</p>{post.photos.length > 0 && <PostPhotoGallery photos={post.photos} />}<div className="mt-4 flex items-center justify-between border-t border-[#f0e6d8] pt-3.5 text-xs font-bold text-muted"><span>{post.photos.length > 0 ? photoLabel : "Publicación de sala"}</span><span>{post.roomName}</span></div></article>;
+  return (
+    <article className="rounded-[20px] border border-line bg-surface p-5 shadow-sm shadow-[#785a3c]/10 sm:p-[22px]">
+      <div className="mb-4 flex flex-wrap items-start gap-3">
+        <Avatar tone="blue">{initialFor(post.authorName)}</Avatar>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-[17px] font-semibold text-ink">{post.authorName}</h2>
+          <p className="text-xs text-[#a89a8b]">
+            <time dateTime={post.publishedAt}>{formatPublicationDate(post.publishedAt)}</time> · publicado por el equipo
+          </p>
+        </div>
+        <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
+          <span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold tracking-wide ${postStyle[post.type]}`}>
+            <span className="size-2 rounded-full bg-current" />
+            {POST_TYPE_LABELS[post.type]}
+          </span>
+          {canDelete && <DeletePostButton postId={post.id} />}
+        </div>
+      </div>
+      <p className="mb-2.5 text-xs text-[#a89a8b]">{audience}</p>
+      <p className="text-[15.5px] leading-relaxed text-[#4a4038]">{post.body}</p>
+      {post.photos.length > 0 && <PostPhotoGallery photos={post.photos} />}
+      <div className="mt-4 flex items-center justify-between border-t border-[#f0e6d8] pt-3.5 text-xs font-bold text-muted">
+        <span>{post.photos.length > 0 ? photoLabel : "Publicación de sala"}</span>
+        <span>{post.roomName}</span>
+      </div>
+    </article>
+  );
 }
 
 export function PlaceholderPage({ title }: { title: string }) {
