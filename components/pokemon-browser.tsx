@@ -92,7 +92,7 @@ export function PokemonBrowser() {
     pokemon?.sprites.other?.["official-artwork"]?.front_default;
 
   return (
-    <section className="w-full max-w-2xl rounded-[28px] border border-line bg-surface p-5 shadow-xl shadow-[#785a3c]/10 sm:p-8">
+    <section className="w-full max-w-2xl rounded-[28px] border border-line bg-surface p-5 shadow-theme-lg sm:p-8">
       <div className="mb-7 flex items-start justify-between gap-4">
         <div>
           <p className="mb-1 text-xs font-extrabold tracking-[0.14em] text-coral">
@@ -105,14 +105,14 @@ export function PokemonBrowser() {
             Descubrí cada especie con los controles de navegación.
           </p>
         </div>
-        <span className="rounded-full bg-coral-soft px-3 py-1.5 text-xs font-extrabold text-[#c5503a]">
+        <span className="rounded-full bg-coral-soft px-3 py-1.5 text-xs font-extrabold text-coral-strong">
           #{String(pokemonId).padStart(4, "0")}
         </span>
       </div>
 
-      <div className="relative flex min-h-[350px] items-center justify-center overflow-hidden rounded-[22px] bg-[#f4ece1] p-6">
+      <div className="relative flex min-h-[350px] items-center justify-center overflow-hidden rounded-[22px] bg-surface-soft p-6">
         <div
-          className="absolute -right-14 -top-16 size-48 rounded-full border-[18px] border-[#eadcc9]"
+          className="absolute -right-14 -top-16 size-48 rounded-full border-[18px] border-line-strong"
           aria-hidden="true"
         />
         {isLoading && (
@@ -134,7 +134,7 @@ export function PokemonBrowser() {
                 setError(null);
                 setReloadKey((current) => current + 1);
               }}
-              className="mt-5 rounded-xl bg-coral px-4 py-2 text-sm font-extrabold text-white"
+              className="mt-5 rounded-xl bg-coral px-4 py-2 text-sm font-extrabold text-theme-white-strong"
             >
               Reintentar
             </button>
@@ -149,10 +149,10 @@ export function PokemonBrowser() {
                 width={280}
                 height={280}
                 priority
-                className="mx-auto size-56 object-contain drop-shadow-[0_18px_12px_rgba(101,73,42,0.2)] sm:size-64"
+                className="mx-auto size-56 object-contain drop-shadow-[0_18px_12px_var(--theme-art-shadow)] sm:size-64"
               />
             ) : (
-              <div className="mx-auto flex size-56 items-center justify-center rounded-2xl bg-[#eadcc9]/50 text-center text-sm font-bold text-muted sm:size-64">
+              <div className="mx-auto flex size-56 items-center justify-center rounded-2xl bg-line-strong/50 text-center text-sm font-bold text-muted sm:size-64">
                 Sin imagen disponible
               </div>
             )}
@@ -164,20 +164,20 @@ export function PokemonBrowser() {
                 {pokemon.types.map(({ type }) => (
                   <span
                     key={type.name}
-                    className="rounded-full bg-[#dceee5] px-3 py-1 text-xs font-extrabold capitalize text-[#3e8b62]"
+                    className="rounded-full bg-success-soft px-3 py-1 text-xs font-extrabold capitalize text-success"
                   >
                     {type.name}
                   </span>
                 ))}
               </div>
               <dl className="mt-6 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-xl bg-white/70 p-3">
+                <div className="rounded-xl bg-surface-raised/70 p-3">
                   <dt className="text-xs text-muted">Altura</dt>
                   <dd className="mt-1 font-extrabold text-ink">
                     {pokemon.height / 10} m
                   </dd>
                 </div>
-                <div className="rounded-xl bg-white/70 p-3">
+                <div className="rounded-xl bg-surface-raised/70 p-3">
                   <dt className="text-xs text-muted">Peso</dt>
                   <dd className="mt-1 font-extrabold text-ink">
                     {pokemon.weight / 10} kg
@@ -195,7 +195,7 @@ export function PokemonBrowser() {
           onClick={() => moveBy(-1)}
           disabled={pokemonId === FIRST_POKEMON || isLoading}
           aria-label="Pokémon anterior"
-          className="rounded-xl border border-line bg-white px-4 py-3 text-sm font-extrabold text-ink transition hover:bg-[#f4ece1] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm font-extrabold text-ink transition hover:bg-surface-soft disabled:cursor-not-allowed disabled:opacity-40"
         >
           ← Anterior
         </button>
@@ -207,7 +207,7 @@ export function PokemonBrowser() {
           onClick={() => moveBy(1)}
           disabled={pokemonId === LAST_POKEMON || isLoading}
           aria-label="Pokémon siguiente"
-          className="rounded-xl bg-coral px-4 py-3 text-sm font-extrabold text-white transition hover:bg-[#c9573f] disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-xl bg-coral px-4 py-3 text-sm font-extrabold text-theme-white-strong transition hover:bg-coral-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
           Siguiente →
         </button>

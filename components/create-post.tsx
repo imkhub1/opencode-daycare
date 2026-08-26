@@ -20,6 +20,7 @@ import {
 } from "@/app/posts/types";
 import { createClient } from "@/utils/supabase/client";
 import { Icon } from "@/components/open-daycare";
+import type { Dictionary } from "@/utils/i18n/dictionary";
 
 type LocalPhoto = {
   id: string;
@@ -39,11 +40,13 @@ export function CreatePost({
   variant = "modal",
   onCancel,
   onSuccess,
+  dictionary,
 }: {
   rooms: PostRoom[];
   variant?: "modal" | "page";
   onCancel?: () => void;
   onSuccess?: () => void;
+  dictionary: Dictionary;
 }) {
   const router = useRouter();
   const [roomId, setRoomId] = useState(rooms.length === 1 ? rooms[0].id : "");
@@ -271,19 +274,19 @@ export function CreatePost({
 
   const content = (
     <form onSubmit={handleSubmit} noValidate>
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-[#fbf4ec] px-5 py-5 sm:px-[26px]">
+      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-canvas px-5 py-5 sm:px-[26px]">
         <button className="text-sm font-bold text-muted" type="button" onClick={closeForm} disabled={isSubmitting}>
           Cancelar
         </button>
         <h1 id="create-post-title" className="font-display text-lg font-semibold text-ink">Nueva publicación</h1>
-        <button className="text-sm font-extrabold text-[#d9583c] disabled:opacity-50" type="submit" disabled={isSubmitting}>
+        <button className="text-sm font-extrabold text-coral-deep disabled:opacity-50" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Guardando..." : "Publicar"}
         </button>
       </header>
 
       <div className="p-5 sm:p-[26px]">
         {submitError && (
-          <p className="mb-5 rounded-xl border border-[#edb5a6] bg-[#fff0eb] px-3.5 py-3 text-sm font-bold text-[#c5503a]" role="alert">
+          <p className="mb-5 rounded-xl border border-coral-border bg-coral-faint px-3.5 py-3 text-sm font-bold text-coral-strong" role="alert">
             {submitError}
           </p>
         )}
@@ -291,7 +294,7 @@ export function CreatePost({
         <fieldset className="mb-[22px]">
           <legend className="mb-2.5 text-xs font-extrabold tracking-[0.7px] text-muted">PARA</legend>
           {rooms.length === 1 ? (
-            <p className="inline-flex items-center rounded-full border-1.5 border-ink bg-ink px-4 py-2 text-sm font-bold text-white">
+            <p className="inline-flex items-center rounded-full border-1.5 border-ink bg-ink px-4 py-2 text-sm font-bold text-theme-white-strong">
               Toda la sala {rooms[0].name}
             </p>
           ) : (
@@ -307,7 +310,7 @@ export function CreatePost({
                 }}
                 aria-invalid={!!errors.room}
                 aria-describedby={errors.room ? "post-room-error" : undefined}
-                className="w-full rounded-[14px] border-1.5 border-[#eadfd0] bg-white px-4 py-3 text-sm font-bold text-ink"
+                className="w-full rounded-[14px] border-1.5 border-line bg-surface-raised px-4 py-3 text-sm font-bold text-ink"
                 disabled={isSubmitting}
               >
                 <option value="">Seleccioná una sala</option>
@@ -315,7 +318,7 @@ export function CreatePost({
               </select>
             </>
           )}
-          {errors.room && <p id="post-room-error" className="mt-2 text-sm font-bold text-[#c5503a]">{errors.room}</p>}
+          {errors.room && <p id="post-room-error" className="mt-2 text-sm font-bold text-coral-strong">{errors.room}</p>}
         </fieldset>
 
         <fieldset className="mb-[22px]">
@@ -339,7 +342,7 @@ export function CreatePost({
               </button>
             ))}
           </div>
-          {errors.type && <p id="post-type-error" className="mt-2 text-sm font-bold text-[#c5503a]">{errors.type}</p>}
+          {errors.type && <p id="post-type-error" className="mt-2 text-sm font-bold text-coral-strong">{errors.type}</p>}
         </fieldset>
 
         <div className="mb-[22px]">
@@ -356,10 +359,10 @@ export function CreatePost({
             placeholder="Contá cómo le fue hoy…"
             aria-invalid={!!errors.description}
             aria-describedby={errors.description ? "post-description-error" : undefined}
-            className="min-h-[120px] w-full resize-y rounded-[14px] border-1.5 border-[#eadfd0] bg-white px-4 py-3.5 text-[15px] leading-relaxed text-ink placeholder:text-[#b6a99b]"
+            className="min-h-[120px] w-full resize-y rounded-[14px] border-1.5 border-line bg-surface-raised px-4 py-3.5 text-[15px] leading-relaxed text-ink placeholder:text-placeholder"
             disabled={isSubmitting}
           />
-          {errors.description && <p id="post-description-error" className="mt-2 text-sm font-bold text-[#c5503a]">{errors.description}</p>}
+          {errors.description && <p id="post-description-error" className="mt-2 text-sm font-bold text-coral-strong">{errors.description}</p>}
         </div>
 
         <div>
@@ -381,13 +384,13 @@ export function CreatePost({
           />
           <div className="flex flex-wrap gap-3">
             {photos.map((photo) => (
-              <div key={photo.id} className="relative size-24 overflow-hidden rounded-[14px] border border-line bg-[#f4ece1]">
+              <div key={photo.id} className="relative size-24 overflow-hidden rounded-[14px] border border-line bg-surface-soft">
                 <Image className="object-cover" src={photo.previewUrl} alt={photo.file.name} fill sizes="96px" unoptimized />
                 <button
                   type="button"
                   onClick={() => removePhoto(photo.id)}
                   aria-label={`Eliminar foto ${photo.file.name}`}
-                  className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-[#3f362e]/80 text-lg leading-none text-white"
+                  className="absolute right-1.5 top-1.5 flex size-6 items-center justify-center rounded-full bg-overlay/80 text-lg leading-none text-theme-white-strong"
                   disabled={isSubmitting}
                 >
                   <span aria-hidden="true">×</span>
@@ -404,16 +407,16 @@ export function CreatePost({
                   }
                 }}
                 onDrop={handleDrop}
-                className={`flex size-24 flex-col items-center justify-center gap-1.5 rounded-[14px] border-2 border-dashed bg-[#f4ece1] ${isDragging ? "border-coral text-coral" : "border-[#dbcdba] text-[#b0a290]"}`}
+                className={`flex size-24 flex-col items-center justify-center gap-1.5 rounded-[14px] border-2 border-dashed bg-surface-soft ${isDragging ? "border-coral text-coral" : "border-line-strong text-placeholder"}`}
               >
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="flex size-full cursor-pointer flex-col items-center justify-center gap-1.5" disabled={isSubmitting}>
-                  <Icon name="plus" className="size-[22px] text-[#c5503a]" />
+                  <Icon name="plus" className="size-[22px] text-coral-strong" />
                   <span className="text-xs">Agregar</span>
                 </button>
               </div>
             )}
           </div>
-          {errors.photos && <p id="post-photos-error" className="mt-2 text-sm font-bold text-[#c5503a]">{errors.photos}</p>}
+          {errors.photos && <p id="post-photos-error" className="mt-2 text-sm font-bold text-coral-strong">{errors.photos}</p>}
           {isSubmitting && photos.length > 0 && (
             <p className="mt-2 text-sm font-bold text-muted" aria-live="polite">
               Subiendo foto {Math.min(uploadProgress + 1, photos.length)} de {photos.length}...
@@ -426,12 +429,12 @@ export function CreatePost({
   );
 
   if (variant === "page") {
-    return <section className="w-full max-w-[580px] overflow-hidden rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#785a3c]/10">{content}</section>;
+    return <section className="w-full max-w-[580px] overflow-hidden rounded-[24px] border border-line bg-canvas shadow-theme-md">{content}</section>;
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#3f362e]/45 p-0 sm:items-center sm:p-6" onClick={(event) => { if (event.target === event.currentTarget) closeForm(); }} role="presentation">
-      <section ref={dialogRef} aria-labelledby="create-post-title" aria-modal="true" className="max-h-[calc(100dvh-1rem)] w-full max-w-[580px] overflow-y-auto rounded-t-[24px] border border-line bg-[#fbf4ec] shadow-2xl shadow-[#3f362e]/30 sm:max-h-[calc(100dvh-3rem)] sm:rounded-[24px]" role="dialog">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-overlay/45 p-0 sm:items-center sm:p-6" onClick={(event) => { if (event.target === event.currentTarget) closeForm(); }} role="presentation">
+      <section ref={dialogRef} aria-labelledby="create-post-title" aria-modal="true" className="max-h-[calc(100dvh-1rem)] w-full max-w-[580px] overflow-y-auto rounded-t-[24px] border border-line bg-canvas shadow-theme-lg sm:max-h-[calc(100dvh-3rem)] sm:rounded-[24px]" role="dialog">
         {content}
       </section>
     </div>

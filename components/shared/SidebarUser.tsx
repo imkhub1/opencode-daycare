@@ -1,33 +1,31 @@
 "use client";
 
 import type { AppProfile } from "@/utils/supabase/profile";
-
-const roleLabels = {
-  admin: "Admin",
-  staff: "Personal",
-  parent: "Familia",
-} as const;
+import { useLocale } from "@/components/shared/LocaleProvider";
 
 export function SidebarUser({
   profile,
 }: {
   profile: Pick<AppProfile, "fullName" | "role">;
 }) {
-  const name = profile.fullName.trim() || "Usuario";
-  const role = profile.role ? roleLabels[profile.role] : "Cuenta";
-  const initial = (Array.from(name)[0] || "U").toLocaleUpperCase("es");
+  const { locale, dictionary } = useLocale();
+  const name = profile.fullName.trim() || dictionary.navigation.account;
+  const role = profile.role
+    ? dictionary.navigation[profile.role === "admin" ? "admin" : profile.role === "staff" ? "staff" : "family"]
+    : dictionary.navigation.account;
+  const initial = name.charAt(0).toLocaleUpperCase(locale);
 
   return (
     <>
       <span
         aria-hidden="true"
-        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#f2937a] font-display text-lg font-semibold text-white"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-gradient font-display text-lg font-semibold text-theme-white-strong"
       >
         {initial}
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-extrabold text-ink">{name}</p>
-        <p className="text-xs text-[#a89a8b]">{role}</p>
+        <p className="text-xs text-subtle">{role}</p>
       </div>
     </>
   );

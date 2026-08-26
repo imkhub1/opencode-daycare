@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { getCurrentAppProfile, type AppProfile } from "@/utils/supabase/profile";
+import { getServerDictionary } from "@/utils/i18n/server";
 import {
   POST_PHOTO_BUCKET,
   POST_TYPE_OPTIONS,
@@ -24,6 +25,7 @@ function isPublishProfile(
 export async function getPostRooms(
   profile: AppProfile | null = null,
 ): Promise<PostRoom[]> {
+  const dictionary = await getServerDictionary();
   const currentProfile = profile ?? (await getCurrentAppProfile());
   if (!isPublishProfile(currentProfile)) return [];
 
@@ -33,7 +35,7 @@ export async function getPostRooms(
     .select("id, name")
     .order("name");
 
-  if (roomError) throw new Error("No se pudieron cargar las salas para publicar.");
+  if (roomError) throw new Error(dictionary.actions.posts.loadRooms);
 
   const rooms = (roomRows ?? []) as PostRoom[];
   if (currentProfile.role === "admin") return rooms;
@@ -43,7 +45,7 @@ export async function getPostRooms(
     .select("room_id")
     .eq("user_id", currentProfile.id);
 
-  if (assignmentError) throw new Error("No se pudieron cargar tus salas.");
+  if (assignmentError) throw new Error(dictionary.actions.posts.loadAssignedRooms);
 
   const assignedRoomIds = new Set(
     ((assignments ?? []) as { room_id: string }[]).map((assignment) => assignment.room_id),
@@ -119,6 +121,7 @@ function parseFeedPost(value: unknown) {
 }
 
 export async function getFeedPosts(): Promise<FeedPost[]> {
+  const dictionary = await getServerDictionary();
   const profile = await getCurrentAppProfile();
   if (!profile?.status || !profile.role) return [];
 
@@ -129,7 +132,7 @@ export async function getFeedPosts(): Promise<FeedPost[]> {
     p_offset: 0,
   });
 
-  if (error) throw new Error("No se pudo cargar el feed.");
+  if (error) throw new Error(dictionary.actions.posts.loadFeed);
 
   const rawPosts = Array.isArray(data) ? data : [];
   const parsedPosts = rawPosts
