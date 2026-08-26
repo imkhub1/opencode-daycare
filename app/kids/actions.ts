@@ -147,10 +147,7 @@ function validIsoDate(value: string) {
 }
 
 function parseBirthDate(value: string) {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
-  if (!match) return null;
-
-  const isoDate = `${match[3]}-${match[2]}-${match[1]}`;
+  const isoDate = value.trim();
   return validIsoDate(isoDate) ? isoDate : null;
 }
 
@@ -176,7 +173,7 @@ function validateChild(values: ChildFormValues): {
   const enrolledAt = values.enrolledAt.trim();
 
   if (!fullName) errors.fullName = "Escribe el nombre completo.";
-  if (!birthDate) errors.birthDate = "Usa una fecha válida en formato DD/MM/AAAA.";
+  if (!birthDate) errors.birthDate = "Selecciona una fecha de nacimiento válida.";
   if (!validIsoDate(enrolledAt)) {
     errors.enrolledAt = "Selecciona una fecha de inscripción válida.";
   }

@@ -81,13 +81,6 @@ function BackLink({ href = "/staff/kids", children = "Volver a Niños" }) {
   );
 }
 
-function formatBirthDate(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)]
-    .filter(Boolean)
-    .join("/");
-}
-
 function isoToDisplayDate(value: string) {
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
@@ -101,18 +94,13 @@ function localToday() {
   return `${year}-${month}-${day}`;
 }
 
-function parseDisplayDate(value: string) {
-  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
-  if (!match) return null;
+function isValidIsoDate(value: string) {
+  const isoDate = value.trim();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
+  if (!match || Number(match[1]) < 1) return false;
 
-  const iso = `${match[3]}-${match[2]}-${match[1]}`;
-  const date = new Date(`${iso}T00:00:00`);
-  return !Number.isNaN(date.getTime()) &&
-    date.getFullYear() === Number(match[3]) &&
-    date.getMonth() + 1 === Number(match[2]) &&
-    date.getDate() === Number(match[1])
-    ? iso
-    : null;
+  const date = new Date(`${isoDate}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === isoDate;
 }
 
 function ageFromIsoDate(value: string) {
@@ -130,18 +118,18 @@ function ageFromIsoDate(value: string) {
 
 function validateLocally(values: ChildFormValues): FormErrors {
   const errors: FormErrors = {};
-  const birthDate = parseDisplayDate(values.birthDate);
+  const birthDate = isValidIsoDate(values.birthDate) ? values.birthDate : null;
 
   if (!values.fullName.trim()) errors.fullName = "Escribe el nombre completo.";
-  if (!birthDate) errors.birthDate = "Usa una fecha válida en formato DD/MM/AAAA.";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(values.enrolledAt)) {
+  if (!birthDate) errors.birthDate = "Selecciona una fecha de nacimiento válida.";
+  if (!isValidIsoDate(values.enrolledAt)) {
     errors.enrolledAt = "Selecciona una fecha de inscripción válida.";
   } else if (values.enrolledAt > localToday()) {
     errors.enrolledAt = "La inscripción no puede ser posterior a hoy.";
   }
   if (!values.roomId) errors.roomId = "Selecciona una sala válida.";
 
-  if (birthDate && values.enrolledAt && birthDate >= values.enrolledAt) {
+  if (birthDate && isValidIsoDate(values.enrolledAt) && birthDate >= values.enrolledAt) {
     errors.birthDate = "El nacimiento debe ser anterior a la inscripción.";
   }
 
@@ -158,6 +146,47 @@ function emptyForm(rooms: Room[]): ChildFormValues {
     medicalNotes: "",
     photoConsent: true,
   };
+}
+
+function childFormValues(child: Child): ChildFormValues {
+  return {
+    fullName: child.fullName.trim(),
+    birthDate: child.birthDate.slice(0, 10),
+    enrolledAt: child.enrolledAt.slice(0, 10),
+    roomId: child.roomId,
+    allergies: child.allergyTags.join(", "),
+    medicalNotes: child.medicalNotes ?? "",
+    photoConsent: child.photoConsent,
+  };
+}
+
+function normalizeAllergyValues(value: string) {
+  return [...new Set(value.split(",").map((allergy) => allergy.trim().toLowerCase()).filter(Boolean))].join(",");
+}
+
+function normalizeChildFormValues(values: ChildFormValues): ChildFormValues {
+  return {
+    fullName: values.fullName.trim(),
+    birthDate: values.birthDate.trim(),
+    enrolledAt: values.enrolledAt.trim(),
+    roomId: values.roomId.trim(),
+    allergies: normalizeAllergyValues(values.allergies),
+    medicalNotes: values.medicalNotes.trim(),
+    photoConsent: values.photoConsent,
+  };
+}
+
+function areChildFormValuesEqual(left: ChildFormValues, right: ChildFormValues) {
+  const normalizedLeft = normalizeChildFormValues(left);
+  const normalizedRight = normalizeChildFormValues(right);
+
+  return normalizedLeft.fullName === normalizedRight.fullName &&
+    normalizedLeft.birthDate === normalizedRight.birthDate &&
+    normalizedLeft.enrolledAt === normalizedRight.enrolledAt &&
+    normalizedLeft.roomId === normalizedRight.roomId &&
+    normalizedLeft.allergies === normalizedRight.allergies &&
+    normalizedLeft.medicalNotes === normalizedRight.medicalNotes &&
+    normalizedLeft.photoConsent === normalizedRight.photoConsent;
 }
 
 function ChildFormFields({
@@ -212,16 +241,15 @@ function ChildFormFields({
           </span>
           <input
             id={`${idPrefix}-birth-date`}
+            type="date"
             name="birthDate"
             required
             disabled={disabled}
-            inputMode="numeric"
             aria-invalid={Boolean(errors.birthDate)}
             aria-describedby={errors.birthDate ? `${idPrefix}-birth-date-error` : undefined}
             value={values.birthDate}
-            onChange={(event) => update("birthDate", formatBirthDate(event.target.value))}
-            placeholder="dd/mm/aaaa"
-            className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
+            onChange={(event) => update("birthDate", event.target.value)}
+            className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] text-ink outline-none"
           />
           {errors.birthDate && (
             <p id={`${idPrefix}-birth-date-error`} className="mt-1.5 text-sm font-bold text-[#c5413a]">
@@ -257,23 +285,29 @@ function ChildFormFields({
 
       <label className="block" htmlFor={`${idPrefix}-room-id`}>
         <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">SALA</span>
-        <select
-          id={`${idPrefix}-room-id`}
-          name="roomId"
-          required
-          disabled={disabled}
-          aria-invalid={Boolean(errors.roomId)}
-          aria-describedby={errors.roomId ? `${idPrefix}-room-error` : undefined}
-          value={values.roomId}
-          onChange={(event) => update("roomId", event.target.value)}
-          className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] font-bold text-ink outline-none"
-        >
-          {rooms.map((room) => (
-            <option key={room.id} value={room.id}>
-              {room.name}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            id={`${idPrefix}-room-id`}
+            name="roomId"
+            required
+            disabled={disabled}
+            aria-invalid={Boolean(errors.roomId)}
+            aria-describedby={errors.roomId ? `${idPrefix}-room-error` : undefined}
+            value={values.roomId}
+            onChange={(event) => update("roomId", event.target.value)}
+            className="w-full appearance-none rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] pr-12 text-[15px] font-bold text-ink outline-none"
+          >
+            {rooms.map((room) => (
+              <option key={room.id} value={room.id}>
+                {room.name}
+              </option>
+            ))}
+          </select>
+          <Icon
+            name="chevron-down"
+            className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-muted"
+          />
+        </div>
         {errors.roomId && (
           <p id={`${idPrefix}-room-error`} className="mt-1.5 text-sm font-bold text-[#c5413a]">
             {errors.roomId}
@@ -397,9 +431,6 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
         className="max-h-full w-full max-w-[520px] overflow-y-auto rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25"
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
-          <button type="button" onClick={onClose} disabled={pending} className="text-[15px] font-bold text-muted disabled:opacity-50">
-            Cancelar
-          </button>
           <h2 id="add-child-title" className="font-display text-lg font-semibold text-ink">
             Agregar niño
           </h2>
@@ -452,20 +483,15 @@ function ChildEditDialog({
   const updateAction = updateChild.bind(null, child.id);
   const [state, formAction, pending] = useActionState(updateAction, INITIAL_FORM_STATE);
   const [localErrors, setLocalErrors] = useState<FormErrors>({});
-  const [values, setValues] = useState<ChildFormValues>(() => ({
-    fullName: child.fullName,
-    birthDate: isoToDisplayDate(child.birthDate),
-    enrolledAt: child.enrolledAt,
-    roomId: child.roomId,
-    allergies: child.allergyTags.join(", "),
-    medicalNotes: child.medicalNotes ?? "",
-    photoConsent: child.photoConsent,
-  }));
+  const [initialValues] = useState(() => childFormValues(child));
+  const [values, setValues] = useState(initialValues);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [lifecyclePending, setLifecyclePending] = useState(false);
   const [deletionPending, setDeletionPending] = useState(false);
   const mutationPending = pending || lifecyclePending || deletionPending;
   const closeAllowed = !mutationPending;
+  const isDirty = !areChildFormValuesEqual(values, initialValues);
+  const submitDisabled = !isDirty || mutationPending;
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -533,9 +559,6 @@ function ChildEditDialog({
         className="max-h-[calc(100dvh-2rem)] w-full max-w-[520px] min-w-0 overflow-y-auto overflow-x-hidden rounded-[24px] border border-line bg-[#fbf4ec] shadow-xl shadow-[#3f362e]/25 sm:max-h-[calc(100dvh-3rem)]"
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
-          <button type="button" onClick={onClose} disabled={!closeAllowed} className="text-[15px] font-bold text-muted disabled:opacity-50">
-            Cancelar
-          </button>
           <div>
             <h2 id="edit-child-title" className="font-display text-lg font-semibold text-ink">Editar niño</h2>
             <p id="edit-child-description" className="sr-only">
@@ -568,8 +591,9 @@ function ChildEditDialog({
           )}
           <button
             type="submit"
-            disabled={mutationPending}
-            className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25 disabled:cursor-wait disabled:opacity-70"
+            disabled={submitDisabled}
+            aria-disabled={submitDisabled}
+            className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? "Guardando…" : "Guardar cambios"}
           </button>
