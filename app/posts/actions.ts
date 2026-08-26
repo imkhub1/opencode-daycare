@@ -30,6 +30,7 @@ const POST_TYPES = new Set<PostType>([
 ]);
 
 const GENERIC_ERROR = "No se pudo guardar la publicación. Inténtalo de nuevo.";
+const DELETE_ERROR = "No se pudo eliminar la publicación. Inténtalo de nuevo.";
 
 function isPublishProfile(profile: Awaited<ReturnType<typeof getCurrentAppProfile>>) {
   return (
@@ -237,5 +238,61 @@ export async function abortPost(postId: string): Promise<PostActionResult> {
   const { error } = await supabase.rpc("abort_post", { p_post_id: postId });
   if (error) return { success: false, message: GENERIC_ERROR };
 
+  return { success: true, postId };
+}
+
+export async function deletePost(
+  postId: string,
+  _previousState: PostActionResult,
+): Promise<PostActionResult> {
+  void _previousState;
+
+  if (!UUID_PATTERN.test(postId)) return { success: false, message: DELETE_ERROR };
+
+  const supabase = await createClient();
+  const { data: postPhotoRows, error: photoError } = await supabase
+    .from("post_photos")
+    .select("storage_path")
+    .eq("post_id", postId);
+
+  if (photoError) {
+    return { success: false, message: DELETE_ERROR };
+  }
+
+  const photoPaths = (postPhotoRows ?? []).map((photo) => photo.storage_path);
+
+  if (photoPaths.some((path) => typeof path !== "string" || path.length === 0)) {
+    return { success: false, message: DELETE_ERROR };
+  }
+
+  if (photoPaths.length > 0) {
+    const { data: removedPhotos, error: storageError } = await supabase.storage
+      .from(POST_PHOTO_BUCKET)
+      .remove(photoPaths);
+
+    if (
+      storageError ||
+      !removedPhotos ||
+      removedPhotos.length !== photoPaths.length ||
+      new Set(removedPhotos.map((photo) => photo.name)).size !== photoPaths.length ||
+      photoPaths.some((path) => !removedPhotos.some((photo) => photo.name === path))
+    ) {
+      return { success: false, message: DELETE_ERROR };
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", postId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) {
+    return { success: false, message: "No tienes permiso para eliminar esta publicación." };
+  }
+
+  revalidatePath("/staff");
+  revalidatePath("/family");
   return { success: true, postId };
 }

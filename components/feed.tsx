@@ -12,11 +12,15 @@ export function FeedClient({
   rooms,
   displayName,
   canCreatePost,
+  currentUserId,
+  canDeleteAnyPost,
 }: {
   posts: FeedPost[];
   rooms: PostRoom[];
   displayName: string;
   canCreatePost: boolean;
+  currentUserId: string;
+  canDeleteAnyPost: boolean;
 }) {
   const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -71,7 +75,13 @@ export function FeedClient({
 
         {posts.length > 0 ? (
           <div className="flex flex-col gap-4">
-            {posts.map((post) => <PostCard key={post.id} post={post} />)}
+            {posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                canDelete={canDeleteAnyPost || post.authorId === currentUserId}
+              />
+            ))}
           </div>
         ) : (
           <section className="rounded-[20px] border border-dashed border-[#dbcdba] bg-surface px-6 py-12 text-center">
