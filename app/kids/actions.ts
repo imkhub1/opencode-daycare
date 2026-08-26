@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
+import { getServerDictionary } from "@/utils/i18n/server";
+import type { Dictionary } from "@/utils/i18n/dictionary";
 
-const AUTHORIZATION_ERROR = "No tienes permiso para gestionar niños.";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -83,6 +84,7 @@ type ChildWrite = {
 };
 
 async function createAuthorizedClient() {
+  const authorizationError = (await getServerDictionary()).actions.authorizationError;
   const supabase = await createClient();
   const {
     data: { user },
@@ -90,7 +92,7 @@ async function createAuthorizedClient() {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    throw new Error(AUTHORIZATION_ERROR);
+    throw new Error(authorizationError);
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -105,7 +107,7 @@ async function createAuthorizedClient() {
     profile.status !== "active" ||
     (profile.role !== "staff" && profile.role !== "admin")
   ) {
-    throw new Error(AUTHORIZATION_ERROR);
+    throw new Error(authorizationError);
   }
 
   return supabase;
@@ -163,7 +165,7 @@ function normalizeAllergies(value: string) {
   ];
 }
 
-function validateChild(values: ChildFormValues): {
+function validateChild(values: ChildFormValues, dictionary: Dictionary): {
   errors: Partial<Record<keyof ChildFormValues, string>>;
   data?: ChildWrite;
 } {
@@ -172,20 +174,20 @@ function validateChild(values: ChildFormValues): {
   const birthDate = parseBirthDate(values.birthDate);
   const enrolledAt = values.enrolledAt.trim();
 
-  if (!fullName) errors.fullName = "Escribe el nombre completo.";
-  if (!birthDate) errors.birthDate = "Selecciona una fecha de nacimiento válida.";
+  if (!fullName) errors.fullName = dictionary.kids.validation.fullName;
+  if (!birthDate) errors.birthDate = dictionary.kids.validation.birthDate;
   if (!validIsoDate(enrolledAt)) {
-    errors.enrolledAt = "Selecciona una fecha de inscripción válida.";
+    errors.enrolledAt = dictionary.kids.validation.enrollmentDate;
   }
   if (!UUID_PATTERN.test(values.roomId)) {
-    errors.roomId = "Selecciona una sala válida.";
+    errors.roomId = dictionary.kids.validation.room;
   }
 
   if (birthDate && validIsoDate(enrolledAt)) {
     if (birthDate >= enrolledAt) {
-      errors.birthDate = "El nacimiento debe ser anterior a la inscripción.";
+      errors.birthDate = dictionary.kids.validation.birthBeforeEnrollment;
     } else if (enrolledAt > new Date().toISOString().slice(0, 10)) {
-      errors.enrolledAt = "La inscripción no puede ser posterior a hoy.";
+      errors.enrolledAt = dictionary.kids.validation.enrollmentAfterToday;
     }
   }
 
@@ -238,19 +240,21 @@ function mapChild(row: {
 }
 
 export async function getRooms(): Promise<Room[]> {
+  const dictionary = await getServerDictionary();
   const supabase = await createAuthorizedClient();
   const { data, error } = await supabase
     .from("rooms")
     .select("id, name")
     .order("name");
 
-  if (error) throw new Error("No se pudieron cargar las salas.");
+  if (error) throw new Error(dictionary.actions.children.loadRooms);
   return data;
 }
 
 export async function getChildren(status: ChildStatus = "active"): Promise<Child[]> {
+  const dictionary = await getServerDictionary();
   if (status !== "active" && status !== "archived") {
-    throw new Error("La vista de niños solicitada no es válida.");
+    throw new Error(dictionary.actions.children.invalidView);
   }
 
   const supabase = await createAuthorizedClient();
@@ -262,11 +266,12 @@ export async function getChildren(status: ChildStatus = "active"): Promise<Child
     .eq("status", status)
     .order("full_name");
 
-  if (error) throw new Error("No se pudieron cargar los niños.");
+  if (error) throw new Error(dictionary.actions.children.loadChildren);
   return data.map(mapChild);
 }
 
 export async function getChild(childId: string): Promise<Child | null> {
+  const dictionary = await getServerDictionary();
   if (!UUID_PATTERN.test(childId)) return null;
 
   const supabase = await createAuthorizedClient();
@@ -278,7 +283,7 @@ export async function getChild(childId: string): Promise<Child | null> {
     .eq("id", childId)
     .maybeSingle();
 
-  if (error) throw new Error("No se pudo cargar el niño.");
+  if (error) throw new Error(dictionary.actions.children.loadChild);
   return data ? mapChild(data) : null;
 }
 
@@ -286,13 +291,14 @@ export async function createChild(
   _previousState: ChildFormState,
   formData: FormData,
 ): Promise<ChildFormState> {
+  const dictionary = await getServerDictionary();
   const values = readChildFormValues(formData);
-  const validation = validateChild(values);
+  const validation = validateChild(values, dictionary);
 
   if (!validation.data) {
     return {
       success: false,
-      message: "Revisa los campos indicados.",
+       message: dictionary.actions.children.reviewFields,
       errors: validation.errors,
       values,
     };
@@ -309,7 +315,7 @@ export async function createChild(
     if (error || !data) {
       return {
         success: false,
-        message: "No se pudo guardar el niño. Inténtalo de nuevo.",
+        message: dictionary.actions.children.saveChild,
         values,
       };
     }
@@ -317,7 +323,7 @@ export async function createChild(
     revalidatePath("/staff/kids");
     return { success: true, childId: data.id };
   } catch {
-    return { success: false, message: AUTHORIZATION_ERROR, values };
+    return { success: false, message: dictionary.actions.authorizationError, values };
   }
 }
 
@@ -326,13 +332,14 @@ export async function updateChild(
   _previousState: ChildFormState,
   formData: FormData,
 ): Promise<ChildFormState> {
+  const dictionary = await getServerDictionary();
   const values = readChildFormValues(formData);
-  const validation = validateChild(values);
+  const validation = validateChild(values, dictionary);
 
   if (!UUID_PATTERN.test(childId)) {
     return {
       success: false,
-      message: "El niño no existe o no está disponible.",
+       message: dictionary.actions.children.unavailableChild,
       values,
     };
   }
@@ -340,7 +347,7 @@ export async function updateChild(
   if (!validation.data) {
     return {
       success: false,
-      message: "Revisa los campos indicados.",
+       message: dictionary.actions.children.reviewFields,
       errors: validation.errors,
       values,
     };
@@ -358,7 +365,7 @@ export async function updateChild(
     if (error || !data) {
       return {
         success: false,
-        message: "El niño no existe o no está disponible.",
+        message: dictionary.actions.children.unavailableChild,
         values,
       };
     }
@@ -368,7 +375,7 @@ export async function updateChild(
     revalidatePath(`/staff/kids/${childId}/edit`);
     return { success: true, childId: data.id };
   } catch {
-    return { success: false, message: AUTHORIZATION_ERROR, values };
+    return { success: false, message: dictionary.actions.authorizationError, values };
   }
 }
 
@@ -377,8 +384,9 @@ async function changeChildStatus(
   from: ChildStatus,
   to: ChildStatus,
 ): Promise<ChildLifecycleState> {
+  const dictionary = await getServerDictionary();
   if (!UUID_PATTERN.test(childId)) {
-    return { success: false, message: "El niño no existe o no está disponible." };
+    return { success: false, message: dictionary.actions.children.unavailableChild };
   }
 
   try {
@@ -392,14 +400,14 @@ async function changeChildStatus(
       .maybeSingle();
 
     if (error || !data) {
-      return { success: false, message: "El niño no existe o no está disponible." };
+      return { success: false, message: dictionary.actions.children.unavailableChild };
     }
 
     revalidatePath("/staff/kids");
     revalidatePath(`/staff/kids/${childId}`);
     return { success: true, message: "", childId: data.id, status: to };
   } catch {
-    return { success: false, message: AUTHORIZATION_ERROR };
+    return { success: false, message: dictionary.actions.authorizationError };
   }
 }
 
@@ -425,10 +433,11 @@ export async function deleteChild(
   formData: FormData,
 ): Promise<ChildDeletionState> {
   void _previousState;
+  const dictionary = await getServerDictionary();
   const confirmationName = readText(formData, "confirmationName");
 
   if (!UUID_PATTERN.test(childId)) {
-    return { success: false, message: "El niño no existe o no está disponible." };
+    return { success: false, message: dictionary.actions.children.unavailableChild };
   }
 
   try {
@@ -440,13 +449,13 @@ export async function deleteChild(
       .maybeSingle();
 
     if (childError || !child) {
-      return { success: false, message: "El niño no existe o no está disponible." };
+      return { success: false, message: dictionary.actions.children.unavailableChild };
     }
 
     if (confirmationName !== child.full_name) {
       return {
         success: false,
-        message: "Escribe el nombre exacto del niño para confirmar.",
+        message: dictionary.actions.children.exactName,
       };
     }
 
@@ -455,11 +464,11 @@ export async function deleteChild(
     });
 
     if (error || data !== true) {
-      return { success: false, message: "No se pudo eliminar el niño. Inténtalo de nuevo." };
+      return { success: false, message: dictionary.actions.children.deleteChild };
     }
 
   } catch {
-    return { success: false, message: "No se pudo eliminar el niño. Inténtalo de nuevo." };
+    return { success: false, message: dictionary.actions.children.deleteChild };
   }
 
   revalidatePath("/staff/kids");

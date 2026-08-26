@@ -5,6 +5,7 @@ export { Icon, type IconName } from "@/components/shared/Icon";
 import { POST_TYPE_LABELS, type FeedPost, type PostType } from "@/app/posts/types";
 import { DeletePostButton } from "@/components/delete-post-button";
 import { PostPhotoGallery } from "@/components/post-photo-gallery";
+import type { Dictionary } from "@/utils/i18n/dictionary";
 
 export function Avatar({ children, tone = "coral" }: { children: ReactNode; tone?: "coral" | "blue" }) {
   const colors = tone === "coral" ? "bg-[#f2937a] text-white" : "bg-[#a9d9e8] text-[#1f7a93]";
@@ -21,8 +22,8 @@ const postStyle: Record<PostType, string> = {
   announcement: "bg-[#ccd8f4] text-[#4e72c8]",
 };
 
-function formatPublicationDate(value: string) {
-  return new Intl.DateTimeFormat("es-AR", {
+function formatPublicationDate(value: string, locale: "es" | "en") {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-AR" : "en-US", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "America/Argentina/Buenos_Aires",
@@ -33,9 +34,9 @@ function initialFor(name: string) {
   return name.trim().charAt(0).toLocaleUpperCase("es") || "U";
 }
 
-export function PostCard({ post, canDelete = false }: { post: FeedPost; canDelete?: boolean }) {
-  const audience = `Para: toda la sala ${post.roomName}`;
-  const photoLabel = post.photos.length === 1 ? "1 foto" : `${post.photos.length} fotos`;
+export function PostCard({ post, canDelete = false, dictionary }: { post: FeedPost; canDelete?: boolean; dictionary: Dictionary }) {
+  const audience = dictionary.feed.audience.replace("{room}", post.roomName);
+  const photoLabel = `${post.photos.length} ${post.photos.length === 1 ? dictionary.feed.photo : dictionary.feed.photos}`;
 
   return (
     <article className="rounded-[20px] border border-line bg-surface p-5 shadow-sm shadow-[#785a3c]/10 sm:p-[22px]">
@@ -44,13 +45,13 @@ export function PostCard({ post, canDelete = false }: { post: FeedPost; canDelet
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-[17px] font-semibold text-ink">{post.authorName}</h2>
           <p className="text-xs text-[#a89a8b]">
-            <time dateTime={post.publishedAt}>{formatPublicationDate(post.publishedAt)}</time> · publicado por el equipo
+            <time dateTime={post.publishedAt}>{formatPublicationDate(post.publishedAt, dictionary.locale)}</time> · {dictionary.feed.postedByTeam}
           </p>
         </div>
         <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
           <span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold tracking-wide ${postStyle[post.type]}`}>
             <span className="size-2 rounded-full bg-current" />
-            {POST_TYPE_LABELS[post.type]}
+            {dictionary.postTypes[post.type]}
           </span>
           {canDelete && <DeletePostButton postId={post.id} />}
         </div>
@@ -59,7 +60,7 @@ export function PostCard({ post, canDelete = false }: { post: FeedPost; canDelet
       <p className="text-[15.5px] leading-relaxed text-[#4a4038]">{post.body}</p>
       {post.photos.length > 0 && <PostPhotoGallery photos={post.photos} />}
       <div className="mt-4 flex items-center justify-between border-t border-[#f0e6d8] pt-3.5 text-xs font-bold text-muted">
-        <span>{post.photos.length > 0 ? photoLabel : "Publicación de sala"}</span>
+        <span>{post.photos.length > 0 ? photoLabel : dictionary.feed.roomPost}</span>
         <span>{post.roomName}</span>
       </div>
     </article>
