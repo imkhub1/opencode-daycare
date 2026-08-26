@@ -1,6 +1,10 @@
-export default function StaffKidsLoading() {
+import { getServerDictionary } from "@/utils/i18n/server";
+
+export default async function StaffKidsLoading() {
+  const dictionary = await getServerDictionary();
+
   return (
-    <section aria-label="Cargando niños" className="mx-auto w-full max-w-[880px] animate-pulse px-5 py-8 pb-16 sm:px-10 sm:py-[34px]">
+    <section aria-label={dictionary.common.loading} className="mx-auto w-full max-w-[880px] animate-pulse px-5 py-8 pb-16 sm:px-10 sm:py-[34px]">
       <div className="mb-6 flex items-end justify-between">
         <div className="space-y-2"><div className="h-3 w-20 rounded bg-[#eadaca]" /><div className="h-9 w-32 rounded bg-[#e4d4c2]" /></div>
         <div className="h-11 w-36 rounded-[14px] bg-[#efb09d]" />

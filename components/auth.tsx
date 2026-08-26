@@ -14,6 +14,8 @@ import {
 import { Icon } from "@/components/open-daycare";
 import { clearLogoutHistoryMarker } from "@/components/shared/logout-history";
 import { createClient } from "@/utils/supabase/client";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import type { Dictionary } from "@/utils/i18n/dictionary";
 
 function AuthLogo({
   inverse = false,
@@ -92,9 +94,11 @@ function Field({
 export function LoginScreen({
   invite = "",
   activation = "",
+  dictionary,
 }: {
   invite?: string;
   activation?: string;
+  dictionary: Dictionary;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -141,43 +145,43 @@ export function LoginScreen({
         </div>
         <div className="relative">
           <h1 className="mb-[18px] font-display text-[42px] leading-[1.12] font-semibold">
-            El día de cada niño,
-            <br />
-            compartido con su familia.
+            {dictionary.auth.heroTitle}
           </h1>
           <p className="max-w-[430px] text-[17px] leading-relaxed text-white/90">
-            Publicá momentos, gestioná las salas y mantené a las familias cerca,
-            desde un solo lugar.
+            {dictionary.auth.heroDescription}
           </p>
         </div>
-        <p className="relative text-sm text-white/90">Guardería Sala Soles</p>
+        <p className="relative text-sm text-white/90">{dictionary.auth.heroFooter}</p>
       </section>
       <section className="flex items-center justify-center px-5 py-10 sm:p-10">
         <div className="w-full max-w-[392px]">
-          <h1 className="mb-1.5 font-display text-[30px] font-semibold text-ink">
-            Iniciar sesión
-          </h1>
+          <div className="mb-1.5 flex items-start justify-between gap-4">
+            <h1 className="font-display text-[30px] font-semibold text-ink">
+              {dictionary.auth.loginTitle}
+            </h1>
+            <LanguageSwitcher />
+          </div>
           <p className="mb-7 text-[15px] text-muted">
-            Ingresá para ver el día de hoy.
+            {dictionary.auth.loginSubtitle}
           </p>
           {activation === "success" && (
             <p role="status" className="mb-5 rounded-xl bg-[#cfebd8] px-4 py-3 text-sm font-bold text-[#3e8b62]">
-              Tu cuenta fue activada y el vínculo con el niño quedó confirmado.
+              {dictionary.auth.activationSuccess}
             </p>
           )}
           {activation === "error" && (
             <p role="alert" className="mb-5 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">
-              No se pudo completar la activación. Revisa el enlace e inténtalo nuevamente.
+              {dictionary.auth.activationError}
             </p>
           )}
           {activation === "pending" && (
             <p role="status" className="mb-5 rounded-xl bg-[#fff1c7] px-4 py-3 text-sm font-bold text-[#8a7234]">
-              Revisa tu correo para confirmar la cuenta y completar la activación.
+              {dictionary.auth.activationPending}
             </p>
           )}
           <form onSubmit={handleSubmit}>
             <Field
-              label="EMAIL"
+              label={dictionary.auth.email}
               name="email"
               type="email"
               value={email}
@@ -186,12 +190,12 @@ export function LoginScreen({
               required
             />
             <Field
-              label="CONTRASEÑA"
+              label={dictionary.auth.password}
               name="password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
+              placeholder={dictionary.auth.passwordPlaceholder}
               autoComplete="current-password"
               required
             />
@@ -199,14 +203,14 @@ export function LoginScreen({
               type="button"
               className="mb-5 block w-full text-right text-[13.5px] font-bold text-[#c5503a]"
             >
-              ¿Olvidaste tu contraseña?
+              {dictionary.auth.forgotPassword}
             </button>
             <button
               type="submit"
               disabled={isLoading}
               className="block w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
+              {isLoading ? dictionary.auth.loggingIn : dictionary.auth.login}
             </button>
             {error && (
               <p role="alert" className="mt-3 text-center text-sm text-[#c5503a]">
@@ -215,9 +219,9 @@ export function LoginScreen({
             )}
           </form>
           <p className="mt-6 text-center text-[14.5px] text-muted">
-            ¿Te invitó la guardería?{" "}
+            {dictionary.auth.invitedPrompt}{" "}
             <Link href="/activate" className="font-extrabold text-[#c5503a]">
-              Activá tu cuenta
+              {dictionary.auth.activateAccount}
             </Link>
           </p>
         </div>
@@ -230,10 +234,12 @@ export function ActivateScreen({
   token: initialToken,
   authenticated = false,
   blockedSession = false,
+  dictionary,
 }: {
   token: string;
   authenticated?: boolean;
   blockedSession?: boolean;
+  dictionary: Dictionary;
 }) {
   const router = useRouter();
   const [token, setToken] = useState(initialToken.trim().toUpperCase());
@@ -249,7 +255,7 @@ export function ActivateScreen({
     setError("");
 
     if (!token.trim() || !email.trim() || !name.trim() || password.length < 8) {
-      setError("Ingresa el código, email, nombre y contraseña (mínimo 8 caracteres).");
+      setError(dictionary.auth.activationValidation);
       return;
     }
 
@@ -278,7 +284,7 @@ export function ActivateScreen({
     event.preventDefault();
     setError("");
     if (!token.trim() || !name.trim()) {
-      setError("Ingresa el código de invitación y tu nombre.");
+      setError(dictionary.auth.activationExistingValidation);
       return;
     }
     setIsLoading(true);
@@ -297,17 +303,20 @@ export function ActivateScreen({
     <main className="flex min-h-screen items-center justify-center bg-[#fbf4ec] px-5 py-10 sm:p-10">
       <section className="w-full max-w-[440px]">
         <div className="mb-[22px]"><AuthLogo showName={false} /></div>
-        <h1 className="mb-2 font-display text-[32px] leading-[1.15] font-semibold text-ink">Bienvenida a OpenDayCare</h1>
-        <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">Te invitaron a seguir el día de tu hijo. Completa tus datos para activar la cuenta.</p>
+        <div className="mb-2 flex items-start justify-between gap-4">
+          <h1 className="font-display text-[32px] leading-[1.15] font-semibold text-ink">{dictionary.auth.activationTitle}</h1>
+          <LanguageSwitcher />
+        </div>
+        <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">{dictionary.auth.activationDescription}</p>
 
         {blockedSession ? (
           <div role="alert" className="rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold leading-relaxed text-[#c5413a]">
-            Cierra la sesión actual y vuelve a abrir este enlace con la cuenta del padre invitado.
+            {dictionary.auth.blockedSession}
           </div>
         ) : (
           <form onSubmit={authenticated ? acceptExisting : submitSignup}>
             <Field
-              label="CÓDIGO DE INVITACIÓN"
+              label={dictionary.auth.invitationCode}
               value={token}
               onChange={(event) => setToken(event.target.value.toUpperCase())}
               autoComplete="one-time-code"
@@ -316,7 +325,7 @@ export function ActivateScreen({
             />
             {!authenticated && (
               <Field
-                label="EMAIL AL QUE RECIBISTE LA INVITACIÓN"
+                label={dictionary.auth.invitedEmail}
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -325,7 +334,7 @@ export function ActivateScreen({
               />
             )}
             <Field
-              label="NOMBRE PARA TU CUENTA"
+              label={dictionary.auth.accountName}
               value={name}
               onChange={(event) => setName(event.target.value)}
               autoComplete="name"
@@ -333,7 +342,7 @@ export function ActivateScreen({
             />
             {!authenticated && (
               <Field
-                label="CREAR CONTRASEÑA"
+                label={dictionary.auth.createPassword}
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -353,18 +362,18 @@ export function ActivateScreen({
                 onChange={(event) => setPhotoConsent(event.target.checked)}
                 className="mt-0.5 size-6 shrink-0 accent-[#5fb97e]"
               />
-              <span className="text-sm leading-[1.45] text-[#8a7234]">Autorizo a la guardería a tomar y compartir fotos de mi hijo dentro de la app.</span>
+              <span className="text-sm leading-[1.45] text-[#8a7234]">{dictionary.auth.photoConsent}</span>
             </label>
             {error && <p role="alert" className="mb-4 rounded-xl bg-[#fbdad6] px-4 py-3 text-sm font-bold text-[#c5413a]">{error}</p>}
             <button type="submit" disabled={isLoading} className="w-full rounded-[15px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-4 py-[15px] text-center text-base font-extrabold text-white shadow-lg shadow-[#ee8164]/35 disabled:opacity-60">
-              {isLoading ? "Procesando…" : authenticated ? "Aceptar invitación" : "Activar mi cuenta"}
+              {isLoading ? dictionary.auth.processing : authenticated ? dictionary.auth.acceptInvitation : dictionary.auth.activateMyAccount}
             </button>
           </form>
         )}
 
         {!authenticated && (
           <p className="mt-[22px] text-center text-[14.5px] text-muted">
-            ¿Ya tenés cuenta? <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-[#c5503a]">Iniciar sesión</Link>
+            {dictionary.auth.alreadyHaveAccount} <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-[#c5503a]">{dictionary.auth.login}</Link>
           </p>
         )}
       </section>

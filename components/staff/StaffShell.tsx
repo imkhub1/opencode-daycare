@@ -4,13 +4,13 @@ import { AppShell, type AreaNavigationItem } from "@/components/shared/AppShell"
 import type { AppProfile } from "@/utils/supabase/profile";
 
 const navigation: AreaNavigationItem[] = [
-  { href: "/staff", label: "Feed", icon: "home" },
-  { href: "/staff/kids", label: "Niños", icon: "users" },
+  { href: "/staff", label: "feed", icon: "home" },
+  { href: "/staff/kids", label: "kids", icon: "users" },
 ];
 
 const primaryAction: AreaNavigationItem = {
   href: "/staff/crear-publicacion",
-  label: "Nueva publicación",
+  label: "newPost",
   icon: "plus",
 };
 
@@ -26,7 +26,7 @@ export function StaffShell({
       profile={profile}
       navigation={navigation}
       primaryAction={primaryAction}
-      brandSubtitle="Sala Soles"
+      brandSubtitle="staffSubtitle"
     >
       {children}
     </AppShell>

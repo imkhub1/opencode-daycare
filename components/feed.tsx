@@ -6,6 +6,7 @@ import { useRef, useState, type MouseEvent } from "react";
 import { CreatePost } from "@/components/create-post";
 import { Avatar, Icon, PostCard } from "@/components/open-daycare";
 import type { FeedPost, PostRoom } from "@/app/posts/types";
+import type { Dictionary } from "@/utils/i18n/dictionary";
 
 export function FeedClient({
   posts,
@@ -14,6 +15,7 @@ export function FeedClient({
   canCreatePost,
   currentUserId,
   canDeleteAnyPost,
+  dictionary,
 }: {
   posts: FeedPost[];
   rooms: PostRoom[];
@@ -21,6 +23,7 @@ export function FeedClient({
   canCreatePost: boolean;
   currentUserId: string;
   canDeleteAnyPost: boolean;
+  dictionary: Dictionary;
 }) {
   const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -80,6 +83,7 @@ export function FeedClient({
                 key={post.id}
                 post={post}
                 canDelete={canDeleteAnyPost || post.authorId === currentUserId}
+                dictionary={dictionary}
               />
             ))}
           </div>
@@ -94,7 +98,7 @@ export function FeedClient({
         )}
       </main>
       {isCreateOpen && (
-        <CreatePost rooms={rooms} onCancel={closeCreate} onSuccess={handlePublished} />
+         <CreatePost rooms={rooms} onCancel={closeCreate} onSuccess={handlePublished} dictionary={dictionary} />
       )}
     </>
   );
