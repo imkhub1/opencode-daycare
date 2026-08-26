@@ -4,8 +4,10 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 import type { PostPhoto } from "@/app/posts/types";
+import { useLocale } from "@/components/shared/LocaleProvider";
 
 export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
+  const { dictionary } = useLocale();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -90,19 +92,19 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
             key={photo.id}
             type="button"
             onClick={(event) => openPhoto(index, event)}
-            aria-label={`Ampliar foto ${index + 1} de ${photos.length}`}
+            aria-label={dictionary.feed.photoOfPublicationNumber.replace("{number}", `${index + 1} / ${photos.length}`)}
             className="group relative h-40 w-full overflow-hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral"
           >
             <Image
               src={photo.url}
-              alt={photos.length > 1 ? `Foto ${index + 1} de la publicación` : "Foto de la publicación"}
+              alt={photos.length > 1 ? dictionary.feed.photoOfPublicationNumber.replace("{number}", String(index + 1)) : dictionary.feed.photoOfPublication}
               fill
               sizes="(max-width: 640px) 100vw, 320px"
               loading={index === 0 ? "eager" : "lazy"}
               className="object-cover transition duration-300 group-hover:scale-105"
             />
             <span className="absolute inset-0 flex items-center justify-center bg-[#3f362e]/0 text-sm font-extrabold text-white opacity-0 transition group-hover:bg-[#3f362e]/25 group-hover:opacity-100 group-focus-visible:bg-[#3f362e]/25 group-focus-visible:opacity-100">
-              Ver foto
+              {dictionary.feed.viewPhoto}
             </span>
           </button>
         ))}
@@ -120,14 +122,14 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
-            aria-label={`Foto ${selectedIndex + 1} de ${photos.length}`}
+            aria-label={dictionary.feed.photoCounter.replace("{current}", String(selectedIndex + 1)).replace("{total}", String(photos.length))}
             className="relative flex h-full w-full items-center justify-center"
           >
             <button
               ref={closeButtonRef}
               type="button"
               onClick={closePhoto}
-              aria-label="Cerrar foto ampliada"
+              aria-label={dictionary.common.close}
               className="absolute right-0 top-0 z-10 flex size-11 items-center justify-center rounded-full bg-white/15 text-3xl leading-none text-white transition hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
               <span aria-hidden="true">×</span>
@@ -138,7 +140,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
                 <button
                   type="button"
                   onClick={() => movePhoto(-1)}
-                  aria-label="Foto anterior"
+                  aria-label={dictionary.feed.previousPhoto}
                   className="absolute left-0 z-10 flex size-11 items-center justify-center rounded-full bg-white/15 text-3xl leading-none text-white transition hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   <span aria-hidden="true">‹</span>
@@ -146,7 +148,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
                 <button
                   type="button"
                   onClick={() => movePhoto(1)}
-                  aria-label="Foto siguiente"
+                  aria-label={dictionary.feed.nextPhoto}
                   className="absolute right-0 z-10 flex size-11 items-center justify-center rounded-full bg-white/15 text-3xl leading-none text-white transition hover:bg-white/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
                   <span aria-hidden="true">›</span>
@@ -157,7 +159,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
             <div className="relative h-[78vh] w-[90vw] max-w-[1100px]">
               <Image
                 src={selectedPhoto.url}
-                alt={photos.length > 1 ? `Foto ${selectedIndex + 1} de la publicación` : "Foto de la publicación"}
+                alt={photos.length > 1 ? dictionary.feed.photoOfPublicationNumber.replace("{number}", String(selectedIndex + 1)) : dictionary.feed.photoOfPublication}
                 fill
                 sizes="90vw"
                 loading="eager"
@@ -165,7 +167,7 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
               />
             </div>
             <p className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white">
-              {selectedIndex + 1} de {photos.length}
+              {dictionary.feed.photoCounter.replace("{current}", String(selectedIndex + 1)).replace("{total}", String(photos.length))}
             </p>
           </div>
         </div>

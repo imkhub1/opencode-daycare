@@ -8,6 +8,7 @@ import {
   randomInt,
 } from "node:crypto";
 import { getPublicAppUrl } from "@/utils/email/resend";
+import { getDictionary, getIntlLocale, type Locale } from "@/utils/i18n/dictionary";
 
 const PARENT_INVITATION_TOKEN_ALPHABET =
   "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -27,6 +28,7 @@ export type ParentInvitationEmailInput = {
   relationship: ParentInvitationRelationship;
   token: string;
   expiresAt: string;
+  locale: Locale;
 };
 
 function requiredInvitationKey() {
@@ -151,22 +153,21 @@ function escapeHtml(value: string) {
   );
 }
 
-function relationshipLabel(relationship: ParentInvitationRelationship) {
-  return {
-    father: "Papá",
-    mother: "Mamá",
-    guardian: "Tutor/a",
-  }[relationship];
+function relationshipLabel(relationship: ParentInvitationRelationship, locale: Locale) {
+  const dictionary = getDictionary(locale);
+  return dictionary.invitations[
+    relationship === "mother" ? "mother" : relationship === "father" ? "father" : "guardian"
+  ] as string;
 }
 
-function formatExpiration(expiresAt: string) {
+function formatExpiration(expiresAt: string, locale: Locale) {
   const date = new Date(expiresAt);
 
   if (Number.isNaN(date.getTime())) {
     throw new Error("Invalid parent invitation expiration");
   }
 
-  return new Intl.DateTimeFormat("es-AR", {
+  return new Intl.DateTimeFormat(getIntlLocale(locale), {
     dateStyle: "long",
     timeStyle: "short",
     timeZone: "UTC",
@@ -176,9 +177,10 @@ function formatExpiration(expiresAt: string) {
 export function buildParentInvitationEmail(input: ParentInvitationEmailInput) {
   const token = normalizeParentInvitationToken(input.token);
   const activationUrl = getParentInvitationActivationUrl(token);
-  const expiration = formatExpiration(input.expiresAt);
-  const relationship = relationshipLabel(input.relationship);
-  const subject = `Invitación para seguir a ${input.childName} en OpenDayCare`;
+  const dictionary = getDictionary(input.locale);
+  const expiration = formatExpiration(input.expiresAt, input.locale);
+  const relationship = relationshipLabel(input.relationship, input.locale);
+  const subject = dictionary.email.subject.replace("{child}", input.childName);
 
   const fullName = escapeHtml(input.fullName);
   const childName = escapeHtml(input.childName);
@@ -190,32 +192,32 @@ export function buildParentInvitationEmail(input: ParentInvitationEmailInput) {
   return {
     subject,
     html: `<!doctype html>
-<html lang="es">
+<html lang="${input.locale}">
   <body style="margin:0;background:#fbf4ec;color:#3f332c;font-family:Arial,sans-serif;line-height:1.5">
     <main style="max-width:560px;margin:0 auto;padding:32px 20px">
       <section style="background:#ffffff;border:1px solid #eadfd0;border-radius:20px;padding:32px">
         <p style="margin:0 0 8px;color:#c5503a;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">OpenDayCare</p>
-        <h1 style="margin:0 0 20px;font-size:28px;line-height:1.2">Te invitaron a seguir el día de ${childName}</h1>
-        <p>Hola ${fullName},</p>
-        <p>${daycareName} te invitó a vincularte como <strong>${escapedRelationship}</strong> con <strong>${childName}</strong>.</p>
-        <p style="margin:24px 0 8px;font-size:13px;color:#75675d">Tu código de activación</p>
+        <h1 style="margin:0 0 20px;font-size:28px;line-height:1.2">${dictionary.email.heading.replace("{child}", childName)}</h1>
+        <p>${dictionary.email.greeting.replace("{name}", fullName)}</p>
+        <p>${dictionary.email.invitation.replace("{daycare}", daycareName).replace("{relationship}", `<strong>${escapedRelationship}</strong>`).replace("{child}", `<strong>${childName}</strong>`)}</p>
+        <p style="margin:24px 0 8px;font-size:13px;color:#75675d">${dictionary.email.activationCode}</p>
         <p style="margin:0 0 24px;font-size:30px;font-weight:700;letter-spacing:.18em;color:#c5503a">${token}</p>
-        <p style="margin:0 0 24px"><a href="${escapedActivationUrl}" style="display:inline-block;border-radius:12px;background:#ee8164;color:#ffffff;padding:13px 18px;text-decoration:none;font-weight:700">Activar mi cuenta</a></p>
-        <p style="font-size:14px;color:#75675d">También podés abrir el enlace y escribir manualmente el código. La invitación vence el ${escapedExpiration} (UTC).</p>
+        <p style="margin:0 0 24px"><a href="${escapedActivationUrl}" style="display:inline-block;border-radius:12px;background:#ee8164;color:#ffffff;padding:13px 18px;text-decoration:none;font-weight:700">${dictionary.email.activateAccount}</a></p>
+        <p style="font-size:14px;color:#75675d">${dictionary.email.manualCode} ${dictionary.email.expires.replace("{date}", escapedExpiration)}</p>
       </section>
     </main>
   </body>
 </html>`,
-    text: `Hola ${input.fullName},
+    text: `${dictionary.email.greeting.replace("{name}", input.fullName)}
 
-${input.daycareName} te invitó a vincularte como ${relationship} con ${input.childName}.
+${dictionary.email.invitation.replace("{daycare}", input.daycareName).replace("{relationship}", relationship).replace("{child}", input.childName)}
 
-Activá tu cuenta: ${activationUrl}
+${dictionary.email.textActivation.replace("{url}", activationUrl)}
 
-Código de activación: ${token}
+${dictionary.email.textCode.replace("{token}", token)}
 
-La invitación vence el ${expiration} (UTC), dentro de siete días.
-También podés abrir el enlace y escribir manualmente el código.
+${dictionary.email.textExpires.replace("{date}", expiration)}
+${dictionary.email.textManualCode}
 
 OpenDayCare`,
   };

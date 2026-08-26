@@ -13,14 +13,10 @@ import {
   type ParentInvitationActionState,
   type ParentInvitationFormValues,
 } from "@/app/kids/parent-invitations/actions";
+import { useLocale } from "@/components/shared/LocaleProvider";
 
 const INITIAL_STATE: ParentInvitationActionState = { success: false };
-const RELATIONSHIPS = ["Mamá", "Papá", "Tutor/a"] as const;
-const RELATIONSHIP_VALUES = {
-  Mamá: "mother",
-  Papá: "father",
-  "Tutor/a": "guardian",
-} as const;
+const RELATIONSHIPS = ["mother", "father", "guardian"] as const;
 
 type ParentLinkDialogProps = {
   childId: string;
@@ -32,7 +28,7 @@ type ParentLinkDialogProps = {
 };
 
 function emptyForm(): ParentInvitationFormValues {
-  return { name: "", email: "", relationship: "Mamá" };
+  return { name: "", email: "", relationship: "mother" };
 }
 
 export function ParentLinkDialog({
@@ -43,6 +39,7 @@ export function ParentLinkDialog({
   invitationId,
   edit = false,
 }: ParentLinkDialogProps) {
+  const { dictionary } = useLocale();
   const action = edit
     ? editParentInvitation.bind(null, invitationId ?? "", childId)
     : createParentInvitation;
@@ -113,20 +110,20 @@ export function ParentLinkDialog({
         <input
           type="hidden"
           name="relationship"
-          value={RELATIONSHIP_VALUES[form.relationship]}
+          value={form.relationship}
         />
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
           <div>
             <h2 id="link-parent-title" className="font-display text-lg font-semibold text-ink">
-              {edit ? "Editar invitación" : "Vincular padre"}
+              {edit ? dictionary.invitations.saveChanges : dictionary.kids.linkParent}
             </h2>
-            <p className="text-[13px] text-[#a89a8b]">a {childName}</p>
+            <p className="text-[13px] text-[#a89a8b]">{childName}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={pending}
-            aria-label="Cerrar"
+            aria-label={dictionary.common.close}
             className="flex size-[34px] items-center justify-center rounded-[10px] bg-[#f0e6d8] text-muted disabled:opacity-50"
           >
             <svg aria-hidden="true" className="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -148,7 +145,7 @@ export function ParentLinkDialog({
               <circle cx="22" cy="22" r="18" stroke="currentColor" strokeOpacity=".2" strokeWidth="5" />
               <path d="M40 22a18 18 0 0 0-18-18" stroke="currentColor" strokeWidth="5" strokeLinecap="round" />
             </svg>
-            <p className="font-display text-xl font-semibold text-ink">Enviando invitación…</p>
+            <p className="font-display text-xl font-semibold text-ink">{dictionary.invitations.sending}</p>
           </div>
         ) : success ? (
           <div
@@ -160,21 +157,21 @@ export function ParentLinkDialog({
                 <path d="m5 12 4 4L19 6" />
               </svg>
             </span>
-            <h3 className="mt-5 font-display text-2xl font-semibold text-ink">¡Invitación enviada!</h3>
+            <h3 className="mt-5 font-display text-2xl font-semibold text-ink">{dictionary.invitations.sentTitle}</h3>
             <p className="mt-2 max-w-[360px] text-[14.5px] leading-relaxed text-muted">
-              Se envió un correo a <strong className="font-extrabold text-ink">{form.email.trim().toLowerCase()}</strong> con el código de activación.
+              {dictionary.invitations.sentDescription.replace("{email}", form.email.trim().toLowerCase())}
             </p>
             <div className="mt-6 w-full rounded-2xl border-[1.5px] border-dashed border-[#e6d08a] bg-[#fbf1d6] px-4 py-5">
-              <p className="text-xs font-extrabold tracking-[0.08em] text-[#a88526]">CÓDIGO DE INVITACIÓN</p>
+              <p className="text-xs font-extrabold tracking-[0.08em] text-[#a88526]">{dictionary.invitations.invitationCode}</p>
               <p className="mt-2 font-display text-[34px] font-semibold tracking-[7px] text-[#8a7234]">{state.token}</p>
-              <p className="mt-1 text-[13px] text-[#a88526]">Vence en 7 días</p>
+              <p className="mt-1 text-[13px] text-[#a88526]">{dictionary.invitations.expiresInSevenDays}</p>
             </div>
             <button
               type="button"
               onClick={onClose}
               className="mt-6 flex w-full items-center justify-center rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
             >
-              Cerrar
+              {dictionary.invitations.close}
             </button>
           </div>
         ) : (
@@ -185,19 +182,19 @@ export function ParentLinkDialog({
                 <path d="M12 16v-4M12 8h.01" />
               </svg>
               {edit
-                ? "Actualiza los datos del padre. Deberás reenviar la invitación para que reciba la información nueva."
-                : `Le enviaremos un correo con un código para que active su cuenta. Solo verá el feed de ${childName}.`}
+                ? dictionary.invitations.editDescription
+                : dictionary.invitations.createDescription.replace("{child}", childName)}
             </div>
 
             <label className="block" htmlFor="link-parent-name">
-              <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">NOMBRE DEL PADRE/MADRE</span>
+              <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">{dictionary.invitations.parentName}</span>
               <input
                 id="link-parent-name"
                 name="name"
                 required
                 value={form.name}
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-                placeholder="Ej. Diego Fernández"
+                placeholder={dictionary.invitations.parentNamePlaceholder}
                 aria-invalid={Boolean(errors.name)}
                 aria-describedby={errors.name ? "link-parent-name-error" : undefined}
                 className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
@@ -206,7 +203,7 @@ export function ParentLinkDialog({
             </label>
 
             <label className="block" htmlFor="link-parent-email">
-              <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">EMAIL</span>
+              <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">{dictionary.invitations.email}</span>
               <input
                 id="link-parent-email"
                 name="email"
@@ -214,7 +211,7 @@ export function ParentLinkDialog({
                 required
                 value={form.email}
                 onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-                placeholder="correo@ejemplo.com"
+                placeholder={dictionary.invitations.emailPlaceholder}
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "link-parent-email-error" : undefined}
                 className="w-full rounded-[14px] border-[1.5px] border-[#eadfd0] bg-white px-4 py-[13px] text-[15px] outline-none placeholder:text-[#b6a99b]"
@@ -223,7 +220,7 @@ export function ParentLinkDialog({
             </label>
 
             <fieldset>
-              <legend className="mb-2.5 text-xs font-extrabold tracking-[0.07em] text-muted">PARENTESCO</legend>
+              <legend className="mb-2.5 text-xs font-extrabold tracking-[0.07em] text-muted">{dictionary.invitations.relationship}</legend>
               <div className="flex gap-2">
                 {RELATIONSHIPS.map((relationship) => {
                   const selected = form.relationship === relationship;
@@ -235,7 +232,7 @@ export function ParentLinkDialog({
                       onClick={() => setForm((current) => ({ ...current, relationship }))}
                       className={`min-w-0 flex-1 rounded-full border-[1.5px] px-1 py-[11px] text-sm font-extrabold ${selected ? "border-[#9fb8ec] bg-[#ccd8f4] text-[#4e72c8]" : "border-line bg-surface text-[#6e6359]"}`}
                     >
-                      {relationship}
+                      {dictionary.invitations[relationship]}
                     </button>
                   );
                 })}
@@ -252,7 +249,7 @@ export function ParentLinkDialog({
               type="submit"
               className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-linear-to-b from-[#f4977e] to-[#ee8164] px-3 py-3.5 text-[15.5px] font-extrabold text-white shadow-lg shadow-[#ee8164]/25"
             >
-              {edit ? "Guardar cambios" : state.invitationId ? "Reintentar envío" : "Enviar invitación"}
+              {edit ? dictionary.invitations.saveChanges : state.invitationId ? dictionary.invitations.retryDelivery : dictionary.invitations.sendInvitation}
             </button>
           </div>
         )}

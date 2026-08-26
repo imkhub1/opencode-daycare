@@ -1,8 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-
-const GENERIC_ERROR = "El código no es válido o ya no está disponible.";
+import { getServerDictionary } from "@/utils/i18n/server";
 
 function validToken(token: string) {
   return /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/i.test(token.trim());
@@ -19,6 +18,7 @@ export async function signUpParentAccount({
   email: string;
   password: string;
 }) {
+  const genericError = (await getServerDictionary()).actions.activationError;
   const normalizedToken = token.trim().toUpperCase();
   const normalizedName = fullName.trim();
   const normalizedEmail = email.trim().toLowerCase();
@@ -30,11 +30,11 @@ export async function signUpParentAccount({
     !normalizedEmail ||
     password.length < 8
   ) {
-    return { ok: false as const, message: GENERIC_ERROR };
+    return { ok: false as const, message: genericError };
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) return { ok: false as const, message: GENERIC_ERROR };
+  if (!appUrl) return { ok: false as const, message: genericError };
 
   const confirmationUrl = new URL("/auth/callback", appUrl);
   confirmationUrl.searchParams.set("invite", normalizedToken);
@@ -56,7 +56,7 @@ export async function signUpParentAccount({
     if (data.session) await supabase.auth.signOut();
     return {
       ok: false as const,
-      message: GENERIC_ERROR,
+      message: genericError,
     };
   }
 
@@ -73,7 +73,7 @@ export async function signUpParentAccount({
   await supabase.auth.signOut();
 
   if (acceptanceError || !acceptance?.[0]) {
-    return { ok: false as const, message: GENERIC_ERROR };
+    return { ok: false as const, message: genericError };
   }
 
   return { ok: true as const, awaitingConfirmation: false as const };
@@ -83,11 +83,12 @@ export async function acceptExistingParentInvitation(
   token: string,
   fullName: string,
 ) {
+  const genericError = (await getServerDictionary()).actions.activationError;
   const normalizedToken = token.trim().toUpperCase();
   const normalizedName = fullName.trim();
 
   if (!validToken(normalizedToken) || !normalizedName) {
-    return { ok: false as const, message: GENERIC_ERROR };
+    return { ok: false as const, message: genericError };
   }
 
   const supabase = await createClient();
@@ -97,7 +98,7 @@ export async function acceptExistingParentInvitation(
   } = await supabase.auth.getUser();
 
   if (userError || !user?.email) {
-    return { ok: false as const, message: GENERIC_ERROR };
+    return { ok: false as const, message: genericError };
   }
 
   const { data, error } = await supabase.rpc("accept_parent_invitation", {
@@ -106,7 +107,7 @@ export async function acceptExistingParentInvitation(
   });
 
   if (error || !data?.[0]) {
-    return { ok: false as const, message: GENERIC_ERROR };
+    return { ok: false as const, message: genericError };
   }
 
   await supabase.auth.signOut();

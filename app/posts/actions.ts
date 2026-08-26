@@ -16,6 +16,8 @@ import {
   type UploadSlot,
 } from "@/app/posts/types";
 import { getCurrentAppProfile } from "@/utils/supabase/profile";
+import { getServerDictionary } from "@/utils/i18n/server";
+import { getDictionary, DEFAULT_LOCALE } from "@/utils/i18n/dictionary";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -28,9 +30,6 @@ const POST_TYPES = new Set<PostType>([
   "photo",
   "announcement",
 ]);
-
-const GENERIC_ERROR = "No se pudo guardar la publicación. Inténtalo de nuevo.";
-const DELETE_ERROR = "No se pudo eliminar la publicación. Inténtalo de nuevo.";
 
 function isPublishProfile(profile: Awaited<ReturnType<typeof getCurrentAppProfile>>) {
   return (
@@ -87,29 +86,29 @@ function readPreparePayload(data: unknown) {
   };
 }
 
-function mapPostError(message: string) {
+function mapPostError(message: string, dictionary = getDictionary(DEFAULT_LOCALE)) {
   const normalized = message.toLowerCase();
 
   if (normalized.includes("consent")) {
-    return "No se puede publicar fotos porque algún niño de la sala no tiene autorización para fotografías.";
+    return dictionary.actions.posts.photoConsent;
   }
   if (normalized.includes("no active recipient") || normalized.includes("no active children")) {
-    return "La sala no tiene niños activos para recibir la publicación.";
+    return dictionary.actions.posts.noActiveRecipients;
   }
   if (normalized.includes("room access") || normalized.includes("unauthorized")) {
-    return "No tienes permiso para publicar en esa sala.";
+    return dictionary.actions.posts.roomAccess;
   }
   if (normalized.includes("body cannot") || normalized.includes("blank")) {
-    return "Escribe una descripción para la publicación.";
+    return dictionary.actions.posts.bodyRequired;
   }
   if (normalized.includes("type is required")) {
-    return "Elige un tipo de publicación.";
+    return dictionary.actions.posts.typeRequired;
   }
   if (normalized.includes("more than 6") || normalized.includes("photo")) {
-    return "Revisa las fotos seleccionadas y vuelve a intentarlo.";
+    return dictionary.actions.posts.photosInvalid;
   }
 
-  return GENERIC_ERROR;
+  return dictionary.actions.posts.generic;
 }
 
 function validatePhotoInput(photo: PostPhotoInput) {
@@ -124,33 +123,35 @@ function validatePhotoInput(photo: PostPhotoInput) {
   );
 }
 
-function validateInput(input: PreparePostInput) {
-  if (!input || typeof input !== "object") return "La publicación no es válida.";
-  if (!UUID_PATTERN.test(input.roomId)) return "Selecciona una sala válida.";
-  if (!POST_TYPES.has(input.type)) return "Elige un tipo de publicación.";
+function validateInput(input: PreparePostInput, dictionary = getDictionary(DEFAULT_LOCALE)) {
+  if (!input || typeof input !== "object") return dictionary.actions.posts.invalidPost;
+  if (!UUID_PATTERN.test(input.roomId)) return dictionary.actions.posts.roomRequired;
+  if (!POST_TYPES.has(input.type)) return dictionary.actions.posts.typeRequired;
   if (typeof input.body !== "string" || !input.body.trim()) {
-    return "Escribe una descripción para la publicación.";
+    return dictionary.actions.posts.bodyRequired;
   }
   if (input.body.trim().length > 5000) {
-    return "La descripción no puede superar los 5000 caracteres.";
+    return dictionary.actions.posts.descriptionTooLong;
   }
   if (!Array.isArray(input.photos) || input.photos.length > MAX_POST_PHOTOS) {
-    return "Podés agregar hasta 6 fotos.";
+    return dictionary.actions.posts.maxPhotos;
   }
   if (input.photos.some((photo) => !validatePhotoInput(photo))) {
-    return "Una o más fotos no son válidas. Usa imágenes de hasta 10 MB.";
+    return dictionary.actions.posts.invalidPhotos;
   }
 
   return null;
 }
 
 export async function preparePost(input: PreparePostInput): Promise<PreparePostResult> {
-  const validationError = validateInput(input);
+  const dictionary = await getServerDictionary();
+  const genericError = dictionary.actions.posts.generic;
+  const validationError = validateInput(input, dictionary);
   if (validationError) return { success: false, message: validationError };
 
   const profile = await getCurrentAppProfile();
   if (!isPublishProfile(profile)) {
-    return { success: false, message: "No tienes permiso para crear publicaciones." };
+    return { success: false, message: dictionary.actions.posts.createPermission };
   }
 
   const supabase = await createClient();
@@ -164,10 +165,10 @@ export async function preparePost(input: PreparePostInput): Promise<PreparePostR
     })),
   });
 
-  if (error) return { success: false, message: mapPostError(error.message) };
+  if (error) return { success: false, message: mapPostError(error.message, dictionary) };
 
   const payload = readPreparePayload(data);
-  if (!payload) return { success: false, message: GENERIC_ERROR };
+  if (!payload) return { success: false, message: genericError };
 
   if (payload.status === "published") {
     revalidatePath("/staff");
@@ -182,7 +183,7 @@ export async function preparePost(input: PreparePostInput): Promise<PreparePostR
 
     if (signedUploadError || !signedUpload?.token) {
       await supabase.rpc("abort_post", { p_post_id: payload.postId });
-      return { success: false, message: GENERIC_ERROR };
+      return { success: false, message: genericError };
     }
 
     uploads.push({ ...slot, token: signedUpload.token });
@@ -190,7 +191,7 @@ export async function preparePost(input: PreparePostInput): Promise<PreparePostR
 
   if (uploads.length !== input.photos.length) {
     await supabase.rpc("abort_post", { p_post_id: payload.postId });
-    return { success: false, message: GENERIC_ERROR };
+    return { success: false, message: genericError };
   }
 
   return {
@@ -202,11 +203,13 @@ export async function preparePost(input: PreparePostInput): Promise<PreparePostR
 }
 
 export async function finalizePost(postId: string): Promise<PostActionResult> {
-  if (!UUID_PATTERN.test(postId)) return { success: false, message: GENERIC_ERROR };
+  const dictionary = await getServerDictionary();
+  const genericError = dictionary.actions.posts.generic;
+  if (!UUID_PATTERN.test(postId)) return { success: false, message: genericError };
 
   const profile = await getCurrentAppProfile();
   if (!isPublishProfile(profile)) {
-    return { success: false, message: "No tienes permiso para publicar." };
+    return { success: false, message: dictionary.actions.posts.publishPermission };
   }
 
   const supabase = await createClient();
@@ -214,11 +217,11 @@ export async function finalizePost(postId: string): Promise<PostActionResult> {
     p_post_id: postId,
   });
 
-  if (error) return { success: false, message: mapPostError(error.message) };
+  if (error) return { success: false, message: mapPostError(error.message, dictionary) };
 
   const payload = data as { post_id?: unknown } | null;
   if (!payload || payload.post_id !== postId) {
-    return { success: false, message: GENERIC_ERROR };
+    return { success: false, message: genericError };
   }
 
   revalidatePath("/staff");
@@ -227,16 +230,18 @@ export async function finalizePost(postId: string): Promise<PostActionResult> {
 }
 
 export async function abortPost(postId: string): Promise<PostActionResult> {
-  if (!UUID_PATTERN.test(postId)) return { success: false, message: GENERIC_ERROR };
+  const dictionary = await getServerDictionary();
+  const genericError = dictionary.actions.posts.generic;
+  if (!UUID_PATTERN.test(postId)) return { success: false, message: genericError };
 
   const profile = await getCurrentAppProfile();
   if (!isPublishProfile(profile)) {
-    return { success: false, message: "No tienes permiso para cancelar esta publicación." };
+    return { success: false, message: dictionary.actions.posts.abortPermission };
   }
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("abort_post", { p_post_id: postId });
-  if (error) return { success: false, message: GENERIC_ERROR };
+  if (error) return { success: false, message: genericError };
 
   return { success: true, postId };
 }
@@ -245,9 +250,11 @@ export async function deletePost(
   postId: string,
   _previousState: PostActionResult,
 ): Promise<PostActionResult> {
+  const dictionary = await getServerDictionary();
+  const deleteError = dictionary.actions.posts.delete;
   void _previousState;
 
-  if (!UUID_PATTERN.test(postId)) return { success: false, message: DELETE_ERROR };
+  if (!UUID_PATTERN.test(postId)) return { success: false, message: deleteError };
 
   const supabase = await createClient();
   const { data: postPhotoRows, error: photoError } = await supabase
@@ -256,13 +263,13 @@ export async function deletePost(
     .eq("post_id", postId);
 
   if (photoError) {
-    return { success: false, message: DELETE_ERROR };
+    return { success: false, message: deleteError };
   }
 
   const photoPaths = (postPhotoRows ?? []).map((photo) => photo.storage_path);
 
   if (photoPaths.some((path) => typeof path !== "string" || path.length === 0)) {
-    return { success: false, message: DELETE_ERROR };
+    return { success: false, message: deleteError };
   }
 
   if (photoPaths.length > 0) {
@@ -277,7 +284,7 @@ export async function deletePost(
       new Set(removedPhotos.map((photo) => photo.name)).size !== photoPaths.length ||
       photoPaths.some((path) => !removedPhotos.some((photo) => photo.name === path))
     ) {
-      return { success: false, message: DELETE_ERROR };
+      return { success: false, message: deleteError };
     }
   }
 
@@ -289,7 +296,7 @@ export async function deletePost(
     .maybeSingle();
 
   if (error || !data) {
-    return { success: false, message: "No tienes permiso para eliminar esta publicación." };
+    return { success: false, message: dictionary.actions.posts.deletePermission };
   }
 
   revalidatePath("/staff");

@@ -30,11 +30,12 @@ import {
   cancelParentInvitation,
   retryParentInvitation,
   type ParentInvitationSummary,
-  type ParentInvitationFormValues,
   type ParentLink,
 } from "@/app/kids/parent-invitations/actions";
 import { Icon } from "@/components/open-daycare";
 import { ParentLinkDialog } from "@/components/parent-link-dialog";
+import { useLocale } from "@/components/shared/LocaleProvider";
+import { formatAge, formatDate, type Dictionary, type Locale } from "@/utils/i18n/dictionary";
 
 const INITIAL_FORM_STATE: ChildFormState = { success: false };
 const INITIAL_LIFECYCLE_STATE: ChildLifecycleState = { success: false, message: "" };
@@ -49,7 +50,8 @@ const avatarTones = [
 
 type FormErrors = Partial<Record<keyof ChildFormValues, string>>;
 function InitialAvatar({ name, large = false }: { name: string; large?: boolean }) {
-  const initial = name.trim().charAt(0).toLocaleUpperCase("es") || "N";
+  const { locale } = useLocale();
+  const initial = name.trim().charAt(0).toLocaleUpperCase(locale) || "N";
   const tone = avatarTones[name.length % avatarTones.length];
 
   return (
@@ -61,7 +63,8 @@ function InitialAvatar({ name, large = false }: { name: string; large?: boolean 
   );
 }
 
-function BackLink({ href = "/staff/kids", children = "Volver a Niños" }) {
+function BackLink({ href = "/staff/kids", children }: { href?: string; children?: React.ReactNode }) {
+  const { dictionary } = useLocale();
   return (
     <Link href={href} className="mb-5 flex items-center gap-1.5 text-sm font-bold text-muted">
       <svg
@@ -76,14 +79,13 @@ function BackLink({ href = "/staff/kids", children = "Volver a Niños" }) {
       >
         <path d="m15 18-6-6 6-6" />
       </svg>
-      {children}
+      {children ?? dictionary.common.backToChildren}
     </Link>
   );
 }
 
-function isoToDisplayDate(value: string) {
-  const [year, month, day] = value.split("-");
-  return `${day}/${month}/${year}`;
+function isoToDisplayDate(value: string, locale: Locale) {
+  return formatDate(value, locale, { dateStyle: "short" });
 }
 
 function localToday() {
@@ -103,34 +105,25 @@ function isValidIsoDate(value: string) {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === isoDate;
 }
 
-function ageFromIsoDate(value: string) {
-  const [year, month, day] = value.split("-").map(Number);
-  const today = new Date();
-  let age = today.getFullYear() - year;
-  if (
-    today.getMonth() + 1 < month ||
-    (today.getMonth() + 1 === month && today.getDate() < day)
-  ) {
-    age--;
-  }
-  return `${age} ${age === 1 ? "año" : "años"}`;
+function ageFromIsoDate(value: string, locale: Locale) {
+  return formatAge(value, locale);
 }
 
-function validateLocally(values: ChildFormValues): FormErrors {
+function validateLocally(values: ChildFormValues, dictionary: Dictionary): FormErrors {
   const errors: FormErrors = {};
   const birthDate = isValidIsoDate(values.birthDate) ? values.birthDate : null;
 
-  if (!values.fullName.trim()) errors.fullName = "Escribe el nombre completo.";
-  if (!birthDate) errors.birthDate = "Selecciona una fecha de nacimiento válida.";
+  if (!values.fullName.trim()) errors.fullName = dictionary.kids.validation.fullName;
+  if (!birthDate) errors.birthDate = dictionary.kids.validation.birthDate;
   if (!isValidIsoDate(values.enrolledAt)) {
-    errors.enrolledAt = "Selecciona una fecha de inscripción válida.";
+    errors.enrolledAt = dictionary.kids.validation.enrollmentDate;
   } else if (values.enrolledAt > localToday()) {
-    errors.enrolledAt = "La inscripción no puede ser posterior a hoy.";
+    errors.enrolledAt = dictionary.kids.validation.enrollmentAfterToday;
   }
-  if (!values.roomId) errors.roomId = "Selecciona una sala válida.";
+  if (!values.roomId) errors.roomId = dictionary.kids.validation.room;
 
   if (birthDate && isValidIsoDate(values.enrolledAt) && birthDate >= values.enrolledAt) {
-    errors.birthDate = "El nacimiento debe ser anterior a la inscripción.";
+    errors.birthDate = dictionary.kids.validation.birthBeforeEnrollment;
   }
 
   return errors;
@@ -363,6 +356,7 @@ function ChildFormFields({
 }
 
 function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose: () => void; onSuccess: () => void }) {
+  const { dictionary } = useLocale();
   const [state, formAction, pending] = useActionState(createChild, INITIAL_FORM_STATE);
   const [values, setValues] = useState(() => emptyForm(rooms));
   const [localErrors, setLocalErrors] = useState<FormErrors>({});
@@ -405,7 +399,7 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
   }, [onSuccess, state.success]);
 
   function validate(event: FormEvent<HTMLFormElement>) {
-    const errors = validateLocally(values);
+    const errors = validateLocally(values, dictionary);
     setLocalErrors(errors);
     if (Object.keys(errors).length) event.preventDefault();
   }
@@ -479,6 +473,7 @@ function ChildEditDialog({
   rooms: Room[];
   onClose: () => void;
 }) {
+  const { dictionary } = useLocale();
   const router = useRouter();
   const updateAction = updateChild.bind(null, child.id);
   const [state, formAction, pending] = useActionState(updateAction, INITIAL_FORM_STATE);
@@ -537,7 +532,7 @@ function ChildEditDialog({
   }, [onClose, router, state.success]);
 
   function validate(event: FormEvent<HTMLFormElement>) {
-    const errors = validateLocally(values);
+    const errors = validateLocally(values, dictionary);
     setLocalErrors(errors);
     if (Object.keys(errors).length) event.preventDefault();
   }
@@ -675,6 +670,7 @@ function DeleteChildButton({
 }
 
 function ChildCard({ child, archived }: { child: Child; archived: boolean }) {
+  const { locale, dictionary } = useLocale();
   return (
     <article className="flex min-w-0 items-center gap-3.5 rounded-[18px] border border-line bg-surface p-4 shadow-sm shadow-[#785a3c]/10">
       <Link href={`/staff/kids/${child.id}`} className="flex min-w-0 flex-1 items-center gap-3.5 rounded-lg focus-visible:outline-offset-4">
@@ -684,12 +680,12 @@ function ChildCard({ child, archived }: { child: Child; archived: boolean }) {
             {child.fullName}
           </span>
           <span className="mt-0.5 block text-[13px] text-[#a89a8b]">
-            {ageFromIsoDate(child.birthDate)} · Sala {child.roomName}
+             {ageFromIsoDate(child.birthDate, locale)} · {String(dictionary.kids.room)} {child.roomName}
           </span>
         </span>
         {child.allergyTags[0] && !archived && (
           <span className="hidden shrink-0 rounded-full bg-[#fbd8cc] px-2.5 py-1 text-[11px] font-extrabold text-[#d9684a] sm:block">
-            {child.allergyTags[0].toLocaleUpperCase("es")}
+            {child.allergyTags[0].toLocaleUpperCase(locale)}
           </span>
         )}
       </Link>
@@ -706,6 +702,7 @@ export function ChildrenDirectory({
   childRecords: Child[];
   view: ChildStatus;
 }) {
+  const { locale, dictionary } = useLocale();
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -852,12 +849,11 @@ function LifecycleButton({
   );
 }
 
-function relationshipLabel(relationship: ParentLink["relationship"] | ParentInvitationSummary["relationship"]) {
-  return {
-    mother: "Mamá",
-    father: "Papá",
-    guardian: "Tutor/a",
-  }[relationship];
+function relationshipLabel(
+  relationship: ParentLink["relationship"] | ParentInvitationSummary["relationship"],
+  dictionary: Dictionary,
+) {
+  return dictionary.invitations[relationship];
 }
 
 function RetryInvitationButton({
@@ -948,6 +944,7 @@ export function ChildProfile({
   linkedParents: ParentLink[];
   invitations: ParentInvitationSummary[];
 }) {
+  const { locale, dictionary } = useLocale();
   const router = useRouter();
   const [isParentDialogOpen, setIsParentDialogOpen] = useState(false);
   const [editingInvitation, setEditingInvitation] = useState<ParentInvitationSummary | null>(null);
@@ -958,8 +955,10 @@ export function ChildProfile({
     (invitation) => invitation.status === "pending",
   );
   const medicalSummary = [
-    child.allergyTags.length ? `Alergias: ${child.allergyTags.join(", ")}.` : "Sin alergias registradas.",
-    child.medicalNotes || "Sin notas médicas.",
+    child.allergyTags.length
+      ? dictionary.kids.allergiesSummary.replace("{allergies}", child.allergyTags.join(", "))
+      : dictionary.kids.noAllergies,
+    child.medicalNotes || dictionary.kids.noMedicalNotes,
   ].join(" ");
 
   function closeParentDialog() {
@@ -984,7 +983,7 @@ export function ChildProfile({
             <div className="min-w-0 flex-1">
               <h1 className="break-words font-display text-[28px] font-semibold text-ink">{child.fullName}</h1>
               <p className="mt-1 text-[15px] text-muted">
-                {ageFromIsoDate(child.birthDate)} · Sala {child.roomName}
+                {ageFromIsoDate(child.birthDate, locale)} · {dictionary.kids.room} {child.roomName}
               </p>
             </div>
           </div>
@@ -999,11 +998,11 @@ export function ChildProfile({
 
           <dl className="overflow-hidden rounded-2xl border border-line bg-surface">
             {[
-              ["Fecha de nacimiento", isoToDisplayDate(child.birthDate)],
-              ["Sala", child.roomName],
-              ["Ingreso", isoToDisplayDate(child.enrolledAt)],
-              ["Autoriza fotografías", child.photoConsent ? "Sí" : "No"],
-              ["Estado", child.status === "active" ? "Activo" : "Archivado"],
+              [dictionary.kids.childDetailsBirthDate, isoToDisplayDate(child.birthDate, locale)],
+              [dictionary.kids.childDetailsRoom, child.roomName],
+              [dictionary.kids.childDetailsEnrollment, isoToDisplayDate(child.enrolledAt, locale)],
+              [dictionary.kids.childDetailsPhotoConsent, child.photoConsent ? dictionary.common.yes : dictionary.common.no],
+              [dictionary.kids.childDetailsStatus, child.status === "active" ? dictionary.common.active : dictionary.common.archived],
             ].map(([label, value], index, rows) => (
               <div key={label} className={`flex justify-between gap-4 px-[18px] py-[15px] ${index < rows.length - 1 ? "border-b border-[#f0e6d8]" : ""}`}>
                 <dt className="text-[14.5px] text-muted">{label}</dt>
@@ -1020,10 +1019,10 @@ export function ChildProfile({
             onClick={() => setIsEditDialogOpen(true)}
             className="block w-full rounded-[14px] bg-ink px-4 py-3 text-center text-sm font-extrabold text-white"
           >
-            Editar datos
+            {dictionary.kids.editChild}
           </button>
           <section className="rounded-2xl border border-line bg-surface p-4 sm:p-[18px]">
-            <h2 className="mb-3.5 text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">PADRES VINCULADOS</h2>
+            <h2 className="mb-3.5 text-xs font-extrabold tracking-[0.08em] text-[#8a7c6d]">{dictionary.kids.linkParents}</h2>
             <div className="flex flex-col gap-3.5">
               {linkedParents.length || pendingInvitations.length ? (
                 <>
@@ -1032,20 +1031,20 @@ export function ChildProfile({
                     <InitialAvatar name={parent.fullName} />
                     <div className="min-w-0 flex-1">
                       <p className="break-words text-[14.5px] font-extrabold leading-tight text-ink">{parent.fullName}</p>
-                      <p className="mt-1 break-words text-[12.5px] leading-snug text-[#a89a8b]">{relationshipLabel(parent.relationship)}</p>
+<p className="mt-1 break-words text-[12.5px] leading-snug text-[#a89a8b]">{relationshipLabel(parent.relationship, dictionary)}</p>
                       <p className="break-all text-[12.5px] leading-snug text-[#a89a8b]">{parent.email}</p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-[#cfebd8] px-2 py-1 text-[10.5px] font-extrabold text-[#3e8b62]">ACTIVA</span>
+                    <span className="shrink-0 rounded-full bg-[#cfebd8] px-2 py-1 text-[10.5px] font-extrabold text-[#3e8b62]">{dictionary.common.active}</span>
                   </div>
                   ))}
                   {pendingInvitations.map((invitation) => (
                     <article key={invitation.id} className="rounded-[18px] border border-[#f0e6d8] bg-[#fffaf2] p-3.5">
                       <header className="mb-3 flex items-center justify-between gap-2">
-                        <span className="shrink-0 rounded-full bg-[#f7e7a6] px-2.5 py-1 text-[10.5px] font-extrabold text-[#9a7b1e]">PENDIENTE</span>
+                        <span className="shrink-0 rounded-full bg-[#f7e7a6] px-2.5 py-1 text-[10.5px] font-extrabold text-[#9a7b1e]">{dictionary.common.pending}</span>
                         {child.status === "active" && (
                           <button
                             type="button"
-                            aria-label={`Editar invitación de ${invitation.fullName}`}
+                            aria-label={dictionary.kids.invitationEditLabel.replace("{name}", invitation.fullName)}
                             onClick={() => setEditingInvitation(invitation)}
                             className="flex size-8 items-center justify-center rounded-lg text-[#9a8b7c] hover:bg-[#f0e6d8] hover:text-[#c5503a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c5503a]"
                           >
@@ -1060,7 +1059,7 @@ export function ChildProfile({
                         <InitialAvatar name={invitation.fullName} />
                         <div className="min-w-0 flex-1">
                           <p className="break-words text-[15px] font-extrabold leading-tight text-ink">{invitation.fullName}</p>
-                          <p className="mt-1.5 text-[12.5px] leading-snug text-[#a89a8b]">{relationshipLabel(invitation.relationship)}</p>
+<p className="mt-1.5 text-[12.5px] leading-snug text-[#a89a8b]">{relationshipLabel(invitation.relationship, dictionary)}</p>
                         </div>
                       </div>
                       <p className="mt-2 whitespace-nowrap text-[12.5px] leading-snug tracking-[-0.01em] text-[#a89a8b]">{invitation.email}</p>
@@ -1068,8 +1067,8 @@ export function ChildProfile({
                         <footer className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-[#eadfd0] pt-3">
                           {invitation.deliveryStatus === "failed" && (
                             <div className="mr-auto self-center">
-                              <p className="text-[11px] font-bold text-[#c5413a]">Error de envío</p>
-                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {isoToDisplayDate(invitation.expiresAt.slice(0, 10))}</p>
+                              <p className="text-[11px] font-bold text-[#c5413a]">{dictionary.kids.deliveryError}</p>
+                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">{dictionary.kids.expires.replace("{date}", isoToDisplayDate(invitation.expiresAt.slice(0, 10), locale))}</p>
                             </div>
                           )}
                           {invitation.deliveryStatus === "failed" && child.status === "active" && (
@@ -1077,8 +1076,8 @@ export function ChildProfile({
                           )}
                           {invitation.deliveryStatus === "sent" && (
                             <div className="mr-auto self-center">
-                              <p className="text-[11px] font-bold text-[#3e8b62]">Correo enviado</p>
-                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">Vence {isoToDisplayDate(invitation.expiresAt.slice(0, 10))}</p>
+                              <p className="text-[11px] font-bold text-[#3e8b62]">{dictionary.kids.emailSent}</p>
+                              <p className="mt-0.5 text-[11px] text-[#a89a8b]">{dictionary.kids.expires.replace("{date}", isoToDisplayDate(invitation.expiresAt.slice(0, 10), locale))}</p>
                             </div>
                           )}
                           {child.status === "active" && (
@@ -1094,7 +1093,7 @@ export function ChildProfile({
                   ))}
                 </>
               ) : (
-                <p className="text-sm text-muted">Todavía no hay padres vinculados.</p>
+                <p className="text-sm text-muted">{dictionary.kids.noLinkedParents}</p>
               )}
               {child.status === "active" && (
                 <button
@@ -1108,8 +1107,8 @@ export function ChildProfile({
                   </span>
                   <span className="text-[14.5px] font-extrabold text-[#c5503a]">
                     {linkedParents.length || pendingInvitations.length
-                      ? "Vincular otro padre"
-                      : "Vincular padre"}
+                      ? dictionary.kids.linkAnotherParent
+                      : dictionary.kids.linkParent}
                   </span>
                 </button>
               )}
@@ -1127,7 +1126,7 @@ export function ChildProfile({
           initialValues={editingInvitation ? {
             name: editingInvitation.fullName,
             email: editingInvitation.email,
-            relationship: relationshipLabel(editingInvitation.relationship) as ParentInvitationFormValues["relationship"],
+            relationship: editingInvitation.relationship,
           } : undefined}
         />
       )}
@@ -1139,16 +1138,17 @@ export function ChildProfile({
 }
 
 export function KidsReadError({ onRetry }: { onRetry?: () => void }) {
+  const { dictionary } = useLocale();
   const router = useRouter();
 
   return (
     <section className="mx-auto flex min-h-[60vh] w-full max-w-[620px] items-center px-5 py-10">
       <div className="w-full rounded-[22px] border border-line bg-surface p-7 text-center shadow-sm shadow-[#785a3c]/10">
-        <p className="text-xs font-extrabold tracking-[0.08em] text-[#d9583c]">NO PUDIMOS CARGAR</p>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-ink">No se pudieron cargar los niños</h1>
-        <p className="mt-2 text-sm text-muted">Revisa tu conexión e inténtalo nuevamente.</p>
+        <p className="text-xs font-extrabold tracking-[0.08em] text-[#d9583c]">{dictionary.kids.noChildrenLoadedLabel}</p>
+        <h1 className="mt-2 font-display text-2xl font-semibold text-ink">{dictionary.kids.noChildrenLoadedTitle}</h1>
+        <p className="mt-2 text-sm text-muted">{dictionary.kids.noChildrenLoadedDescription}</p>
         <button onClick={onRetry ?? router.refresh} className="mt-5 rounded-[14px] bg-coral px-5 py-3 text-sm font-extrabold text-white">
-          Reintentar
+          {dictionary.common.retry}
         </button>
       </div>
     </section>
