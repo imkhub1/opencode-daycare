@@ -31,7 +31,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script id="protected-history-guard" strategy="beforeInteractive">{`
           (() => {
             const key = "opendaycare:logged-out";
-            const publicPaths = new Set(["/login", "/activate", "/auth/callback"]);
+             const publicPaths = new Set([
+               "/login",
+               "/activate",
+               "/auth/callback",
+               "/auth/recovery/complete",
+               "/forgot-password",
+               "/reset-password",
+             ]);
             const redirect = (event) => {
               if (publicPaths.has(location.pathname) || sessionStorage.getItem(key) !== "1") return;
               event?.stopImmediatePropagation();
