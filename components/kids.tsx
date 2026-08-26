@@ -35,7 +35,7 @@ import {
 import { Icon } from "@/components/open-daycare";
 import { ParentLinkDialog } from "@/components/parent-link-dialog";
 import { useLocale } from "@/components/shared/LocaleProvider";
-import { formatAge, formatDate, type Dictionary, type Locale } from "@/utils/i18n/dictionary";
+import { formatAge, formatDate, interpolate, type Dictionary, type Locale } from "@/utils/i18n/dictionary";
 
 const INITIAL_FORM_STATE: ChildFormState = { success: false };
 const INITIAL_LIFECYCLE_STATE: ChildLifecycleState = { success: false, message: "" };
@@ -197,6 +197,8 @@ function ChildFormFields({
   errors: FormErrors;
   disabled?: boolean;
 }) {
+  const { dictionary } = useLocale();
+
   function update<Key extends keyof ChildFormValues>(key: Key, value: ChildFormValues[Key]) {
     setValues((current) => ({ ...current, [key]: value }));
   }
@@ -205,7 +207,7 @@ function ChildFormFields({
     <div className="space-y-[18px]">
       <label className="block" htmlFor={`${idPrefix}-full-name`}>
         <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
-          NOMBRE COMPLETO
+          {dictionary.kids.fullName}
         </span>
         <input
           id={`${idPrefix}-full-name`}
@@ -217,7 +219,7 @@ function ChildFormFields({
           aria-describedby={errors.fullName ? `${idPrefix}-full-name-error` : undefined}
           value={values.fullName}
           onChange={(event) => update("fullName", event.target.value)}
-          placeholder="Ej. Martina López"
+          placeholder={dictionary.kids.fullNamePlaceholder}
           className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] outline-none placeholder:text-placeholder"
         />
         {errors.fullName && (
@@ -230,7 +232,7 @@ function ChildFormFields({
       <div className="grid gap-[18px] sm:grid-cols-2">
         <label className="block" htmlFor={`${idPrefix}-birth-date`}>
           <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
-            FECHA DE NACIMIENTO
+            {dictionary.kids.birthDate}
           </span>
           <input
             id={`${idPrefix}-birth-date`}
@@ -253,7 +255,7 @@ function ChildFormFields({
 
         <label className="block" htmlFor={`${idPrefix}-enrolled-at`}>
           <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
-            FECHA DE INSCRIPCIÓN
+            {dictionary.kids.enrollmentDate}
           </span>
           <input
             id={`${idPrefix}-enrolled-at`}
@@ -277,7 +279,7 @@ function ChildFormFields({
       </div>
 
       <label className="block" htmlFor={`${idPrefix}-room-id`}>
-        <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">SALA</span>
+        <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">{dictionary.kids.room}</span>
         <div className="relative">
           <select
             id={`${idPrefix}-room-id`}
@@ -310,7 +312,7 @@ function ChildFormFields({
 
       <label className="block" htmlFor={`${idPrefix}-allergies`}>
         <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
-          ALERGIAS (ETIQUETAS)
+          {dictionary.kids.allergies}
         </span>
         <input
           id={`${idPrefix}-allergies`}
@@ -318,14 +320,14 @@ function ChildFormFields({
           disabled={disabled}
           value={values.allergies}
           onChange={(event) => update("allergies", event.target.value)}
-          placeholder="Ej. Maní, Lactosa"
+          placeholder={dictionary.kids.allergiesPlaceholder}
           className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] outline-none placeholder:text-placeholder"
         />
       </label>
 
       <label className="block" htmlFor={`${idPrefix}-medical-notes`}>
         <span className="mb-2 block text-xs font-extrabold tracking-[0.07em] text-muted">
-          NOTAS MÉDICAS
+          {dictionary.kids.medicalNotes}
         </span>
         <textarea
           id={`${idPrefix}-medical-notes`}
@@ -333,7 +335,7 @@ function ChildFormFields({
           disabled={disabled}
           value={values.medicalNotes}
           onChange={(event) => update("medicalNotes", event.target.value)}
-          placeholder="Indicaciones, medicación, contactos…"
+          placeholder={dictionary.kids.medicalNotesPlaceholder}
           className="min-h-[90px] w-full resize-y rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] leading-relaxed outline-none placeholder:text-placeholder"
         />
       </label>
@@ -349,7 +351,7 @@ function ChildFormFields({
           onChange={(event) => update("photoConsent", event.target.checked)}
           className="size-5 accent-coral"
         />
-        <span className="text-[15px] font-bold text-ink">Autoriza fotografías</span>
+        <span className="text-[15px] font-bold text-ink">{dictionary.kids.photoConsent}</span>
       </label>
     </div>
   );
@@ -426,13 +428,13 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
           <h2 id="add-child-title" className="font-display text-lg font-semibold text-ink">
-            Agregar niño
+            {dictionary.kids.addChild}
           </h2>
           <button
             type="button"
             onClick={onClose}
             disabled={pending}
-            aria-label="Cerrar"
+            aria-label={dictionary.common.close}
             className="flex size-[34px] items-center justify-center rounded-[10px] bg-surface-muted text-muted disabled:opacity-50"
           >
             <span aria-hidden="true" className="text-xl leading-none">×</span>
@@ -456,7 +458,7 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
             disabled={pending}
             className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-wait disabled:opacity-70"
           >
-            {pending ? "Guardando…" : "Guardar"}
+            {pending ? dictionary.common.saving : dictionary.common.save}
           </button>
         </div>
       </form>
@@ -555,16 +557,16 @@ function ChildEditDialog({
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-5 sm:px-[26px]">
           <div>
-            <h2 id="edit-child-title" className="font-display text-lg font-semibold text-ink">Editar niño</h2>
+            <h2 id="edit-child-title" className="font-display text-lg font-semibold text-ink">{dictionary.kids.editChild}</h2>
             <p id="edit-child-description" className="sr-only">
-              Edita los datos y gestiona el estado de {child.fullName}.
+              {interpolate(dictionary.kids.editDescription, { name: child.fullName })}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             disabled={!closeAllowed}
-            aria-label="Cerrar"
+            aria-label={dictionary.common.close}
             className="flex size-[34px] items-center justify-center rounded-[10px] bg-surface-muted text-muted disabled:opacity-50"
           >
             <span aria-hidden="true" className="text-xl leading-none">×</span>
@@ -590,11 +592,11 @@ function ChildEditDialog({
             aria-disabled={submitDisabled}
             className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {pending ? "Guardando…" : "Guardar cambios"}
+            {pending ? dictionary.common.saving : dictionary.kids.saveChanges}
           </button>
         </form>
         <div className="border-t border-line p-5 sm:p-[26px] sm:pt-5">
-          <p className="mb-3 text-xs font-extrabold tracking-[0.08em] text-subtle-strong">GESTIÓN DEL NIÑO</p>
+          <p className="mb-3 text-xs font-extrabold tracking-[0.08em] text-subtle-strong">{dictionary.kids.childManagement}</p>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
             <LifecycleButton
               child={child}
@@ -622,6 +624,7 @@ function DeleteChildButton({
   disabled?: boolean;
   onPendingChange: (pending: boolean) => void;
 }) {
+  const { dictionary } = useLocale();
   const action = deleteChild.bind(null, child.id);
   const [state, formAction, pending] = useActionState(action, INITIAL_DELETION_STATE);
   const [confirmationName, setConfirmationName] = useState("");
@@ -643,14 +646,13 @@ function DeleteChildButton({
         value={confirmationName}
         onChange={(event) => setConfirmationName(event.target.value)}
         placeholder={child.fullName}
-        aria-label={`Escribe ${child.fullName} para eliminarlo`}
+        aria-label={interpolate(dictionary.kids.deleteConfirmationLabel, { name: child.fullName })}
         aria-invalid={Boolean(state.message)}
         aria-describedby={state.message ? `${confirmationHintId} ${confirmationErrorId}` : confirmationHintId}
         className="w-full min-w-0 rounded-[14px] border-[1.5px] border-danger-border bg-surface-warm px-3 py-3 text-sm outline-none placeholder:text-placeholder"
       />
       <p id={confirmationHintId} className="text-xs leading-relaxed text-muted">
-        Escribe exactamente{" "}
-        <strong className="font-extrabold text-ink">{child.fullName}</strong> para confirmar.
+        {interpolate(dictionary.kids.deleteConfirmationHint, { name: child.fullName })}
       </p>
       <button
         type="submit"
@@ -658,7 +660,7 @@ function DeleteChildButton({
         aria-disabled={pending || disabled || !matchesName}
         className="w-full rounded-[14px] border border-danger-border bg-coral-faint px-4 py-3 text-sm font-extrabold text-danger disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? "Eliminando…" : "Eliminar permanentemente"}
+        {pending ? dictionary.common.deleting : dictionary.kids.permanentlyDelete}
       </button>
       {state.message && !state.success && (
         <p id={confirmationErrorId} role="alert" className="text-sm font-bold text-danger">
@@ -809,6 +811,7 @@ function LifecycleButton({
   disabled?: boolean;
   onPendingChange: (pending: boolean) => void;
 }) {
+  const { dictionary } = useLocale();
   const router = useRouter();
   const archived = child.status === "archived";
   const action = (archived ? restoreChild : archiveChild).bind(null, child.id);
@@ -829,7 +832,7 @@ function LifecycleButton({
       action={formAction}
       className="min-w-0 flex-1"
       onSubmit={(event) => {
-        if (!archived && !window.confirm(`¿Archivar a ${child.fullName}?`)) event.preventDefault();
+        if (!archived && !window.confirm(interpolate(dictionary.kids.archiveConfirmation, { name: child.fullName }))) event.preventDefault();
       }}
     >
       <button
@@ -837,7 +840,7 @@ function LifecycleButton({
         disabled={pending || disabled}
         className={`w-full rounded-[14px] px-4 py-3 text-sm font-extrabold disabled:opacity-60 ${archived ? "bg-success-soft text-success" : "border border-danger-border bg-coral-faint text-danger"}`}
       >
-        {pending ? "Guardando…" : archived ? "Restaurar niño" : "Archivar niño"}
+        {pending ? dictionary.common.saving : archived ? dictionary.kids.restoreChild : dictionary.kids.archiveChild}
       </button>
       {state.message && !state.success && (
         <p aria-live="polite" className="mt-2 text-sm font-bold text-danger">
@@ -990,7 +993,7 @@ export function ChildProfile({
           <div className="flex gap-3.5 rounded-2xl bg-danger-soft p-4 sm:p-[18px]">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-[11px] bg-danger-border text-theme-white-strong">!</span>
             <div className="min-w-0">
-              <h2 className="text-[15px] font-extrabold text-danger">Alergias y notas</h2>
+              <h2 className="text-[15px] font-extrabold text-danger">{dictionary.kids.allergiesAndNotes}</h2>
               <p className="mt-0.5 break-words text-[14.5px] leading-relaxed text-danger-body">{medicalSummary}</p>
             </div>
           </div>
