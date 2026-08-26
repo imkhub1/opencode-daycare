@@ -91,9 +91,8 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-sand md:flex">
       <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-surface px-4 py-6 md:flex">
-        <div className="flex items-start justify-between gap-2 px-2 pb-6">
+        <div className="px-2 pb-6">
           <Brand href={landingHref} subtitle={dictionary.navigation[brandSubtitle]} />
-          <LanguageSwitcher />
         </div>
         {primaryAction && (
           <Link
@@ -106,8 +105,8 @@ export function AppShell({
         )}
         <Navigation items={navigation} />
         <div className="mt-3 border-t border-line pt-4">
-          <div className="mb-3 flex items-center justify-between gap-2 px-2">
-            <span className="sr-only">Tema</span>
+          <div className="mb-3 flex flex-col gap-2 px-2">
+            <LanguageSwitcher className="w-full justify-center" />
             <ThemeToggle className="w-full justify-center" />
           </div>
           <div className="flex items-center gap-3 px-2">
@@ -121,7 +120,10 @@ export function AppShell({
           <div className="flex items-center justify-between gap-3">
             <Brand href={landingHref} subtitle={dictionary.navigation[brandSubtitle]} />
             <div className="flex shrink-0 items-center gap-2">
-              <ThemeToggle />
+              <div className="flex flex-col items-end gap-1">
+                <LanguageSwitcher />
+                <ThemeToggle />
+              </div>
               <details className="relative">
               <summary className="flex size-10 cursor-pointer list-none items-center justify-center rounded-xl bg-sand text-ink">
                 <Icon name="menu" className="size-5" />
@@ -141,7 +143,6 @@ export function AppShell({
               </div>
               </details>
             </div>
-            <LanguageSwitcher className="absolute right-16 top-3" />
           </div>
         </header>
         {children}
