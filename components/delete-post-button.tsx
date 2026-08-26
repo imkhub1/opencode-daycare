@@ -31,12 +31,12 @@ export function DeletePostButton({ postId }: { postId: string }) {
         disabled={pending}
         aria-label="Eliminar publicación"
         title="Eliminar publicación"
-        className="flex size-9 items-center justify-center rounded-xl text-[#a89a8b] transition hover:bg-[#fff0eb] hover:text-[#c5503a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral disabled:cursor-wait disabled:opacity-50"
+        className="flex size-9 items-center justify-center rounded-xl text-subtle transition hover:bg-coral-faint hover:text-coral-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral disabled:cursor-wait disabled:opacity-50"
       >
         <Icon name="trash" className="size-[17px]" />
       </button>
       {!state.success && "message" in state && state.message && (
-        <p role="alert" className="text-xs font-bold text-[#c5413a]">
+        <p role="alert" className="text-xs font-bold text-danger">
           {state.message}
         </p>
       )}

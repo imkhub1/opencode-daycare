@@ -19,13 +19,13 @@ export function SidebarUser({
     <>
       <span
         aria-hidden="true"
-        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#f2937a] font-display text-lg font-semibold text-white"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-gradient font-display text-lg font-semibold text-theme-white-strong"
       >
         {initial}
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-extrabold text-ink">{name}</p>
-        <p className="text-xs text-[#a89a8b]">{role}</p>
+        <p className="text-xs text-subtle">{role}</p>
       </div>
     </>
   );
