@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 export { Icon, type IconName } from "@/components/shared/Icon";
-import { POST_TYPE_LABELS, type FeedPost, type PostType } from "@/app/posts/types";
+import type { FeedPost, PostType } from "@/app/posts/types";
 import { DeletePostButton } from "@/components/delete-post-button";
 import { PostPhotoGallery } from "@/components/post-photo-gallery";
 import type { Dictionary } from "@/utils/i18n/dictionary";

@@ -702,7 +702,6 @@ export function ChildrenDirectory({
   childRecords: Child[];
   view: ChildStatus;
 }) {
-  const { locale, dictionary } = useLocale();
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
