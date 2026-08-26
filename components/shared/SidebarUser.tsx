@@ -1,21 +1,19 @@
 "use client";
 
 import type { AppProfile } from "@/utils/supabase/profile";
-
-const roleLabels = {
-  admin: "Admin",
-  staff: "Personal",
-  parent: "Familia",
-} as const;
+import { useLocale } from "@/components/shared/LocaleProvider";
 
 export function SidebarUser({
   profile,
 }: {
   profile: Pick<AppProfile, "fullName" | "role">;
 }) {
-  const name = profile.fullName.trim() || "Usuario";
-  const role = profile.role ? roleLabels[profile.role] : "Cuenta";
-  const initial = (Array.from(name)[0] || "U").toLocaleUpperCase("es");
+  const { locale, dictionary } = useLocale();
+  const name = profile.fullName.trim() || dictionary.navigation.account;
+  const role = profile.role
+    ? dictionary.navigation[profile.role === "admin" ? "admin" : profile.role === "staff" ? "staff" : "family"]
+    : dictionary.navigation.account;
+  const initial = name.charAt(0).toLocaleUpperCase(locale);
 
   return (
     <>

@@ -20,6 +20,7 @@ import {
 } from "@/app/posts/types";
 import { createClient } from "@/utils/supabase/client";
 import { Icon } from "@/components/open-daycare";
+import type { Dictionary } from "@/utils/i18n/dictionary";
 
 type LocalPhoto = {
   id: string;
@@ -39,11 +40,13 @@ export function CreatePost({
   variant = "modal",
   onCancel,
   onSuccess,
+  dictionary,
 }: {
   rooms: PostRoom[];
   variant?: "modal" | "page";
   onCancel?: () => void;
   onSuccess?: () => void;
+  dictionary: Dictionary;
 }) {
   const router = useRouter();
   const [roomId, setRoomId] = useState(rooms.length === 1 ? rooms[0].id : "");

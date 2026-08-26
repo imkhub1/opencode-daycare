@@ -3,6 +3,8 @@ import { Fredoka, Nunito } from "next/font/google";
 import Script from "next/script";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { LocaleProvider } from "@/components/shared/LocaleProvider";
+import { getServerDictionary } from "@/utils/i18n/server";
 
 const fredoka = Fredoka({
   variable: "--font-fredoka",
@@ -16,15 +18,21 @@ const nunito = Nunito({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "OpenDayCare",
-  description: "La comunidad de tu guarderia",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dictionary = await getServerDictionary();
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+  return {
+    title: "OpenDayCare",
+    description: dictionary.metadata.description,
+  };
+}
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const dictionary = await getServerDictionary();
+
   return (
     <html
-      lang="es"
+      lang={dictionary.locale}
       className={`${fredoka.variable} ${nunito.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
@@ -41,7 +49,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             addEventListener("pageshow", redirect, true);
           })();
         `}</Script>
-        {children}
+        <LocaleProvider locale={dictionary.locale} dictionary={dictionary}>
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );
