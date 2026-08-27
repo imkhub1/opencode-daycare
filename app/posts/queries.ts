@@ -3,10 +3,14 @@ import { getCurrentAppProfile, type AppProfile } from "@/utils/supabase/profile"
 import { getServerDictionary } from "@/utils/i18n/server";
 import {
   POST_PHOTO_BUCKET,
+  POST_REACTION_OPTIONS,
   POST_TYPE_OPTIONS,
   type FeedPost,
   type FeedRecipient,
   type PostPhoto,
+  type PostComment,
+  type PostReactionCode,
+  type PostReactionCounts,
   type PostRoom,
   type PostType,
 } from "@/app/posts/types";
@@ -80,6 +84,62 @@ function parsePhoto(value: unknown) {
   };
 }
 
+function emptyReactionCounts(): PostReactionCounts {
+  return {
+    love: 0,
+    laugh: 0,
+    wow: 0,
+    sad: 0,
+    angry: 0,
+    like: 0,
+  };
+}
+
+function parseReactionCounts(value: unknown): PostReactionCounts {
+  const counts = emptyReactionCounts();
+  if (!value || typeof value !== "object" || Array.isArray(value)) return counts;
+
+  const rawCounts = value as Record<string, unknown>;
+  for (const { code } of POST_REACTION_OPTIONS) {
+    const count = rawCounts[code];
+    if (typeof count === "number" && Number.isInteger(count) && count >= 0) {
+      counts[code] = count;
+    }
+  }
+
+  return counts;
+}
+
+function parseReaction(value: unknown): PostReactionCode | null {
+  return POST_REACTION_OPTIONS.some((option) => option.code === value)
+    ? (value as PostReactionCode)
+    : null;
+}
+
+function parseComment(value: unknown): PostComment | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const comment = value as Record<string, unknown>;
+
+  if (
+    typeof comment.id !== "string" ||
+    typeof comment.author_id !== "string" ||
+    typeof comment.author_name !== "string" ||
+    typeof comment.body !== "string" ||
+    !comment.body.trim() ||
+    typeof comment.created_at !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    id: comment.id,
+    authorId: comment.author_id,
+    authorName: comment.author_name,
+    body: comment.body,
+    createdAt: comment.created_at,
+  };
+}
+
 function parseFeedPost(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const post = value as Record<string, unknown>;
@@ -88,6 +148,9 @@ function parseFeedPost(value: unknown) {
     : [];
   const photos = Array.isArray(post.photos)
     ? post.photos.map(parsePhoto).filter((item): item is NonNullable<ReturnType<typeof parsePhoto>> => item !== null)
+    : [];
+  const comments = Array.isArray(post.comments)
+    ? post.comments.map(parseComment).filter((item): item is PostComment => item !== null)
     : [];
 
   if (
@@ -117,6 +180,9 @@ function parseFeedPost(value: unknown) {
     createdAt: post.created_at,
     recipientChildren: recipients,
     photos,
+    reactionCounts: parseReactionCounts(post.reaction_counts),
+    currentUserReaction: parseReaction(post.current_user_reaction),
+    comments,
   };
 }
 

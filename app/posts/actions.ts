@@ -6,16 +6,21 @@ import { createClient } from "@/utils/supabase/server";
 import {
   MAX_POST_PHOTOS,
   MAX_POST_PHOTO_BYTES,
+  MAX_POST_COMMENT_LENGTH,
   POST_PHOTO_BUCKET,
   POST_PHOTO_MIME_TYPES,
+  POST_REACTION_OPTIONS,
   type PostActionResult,
+  type PostInteractionActionResult,
   type PostPhotoInput,
+  type PostReactionCode,
   type PostType,
   type PreparePostInput,
   type PreparePostResult,
   type UploadSlot,
 } from "@/app/posts/types";
 import { getCurrentAppProfile } from "@/utils/supabase/profile";
+import type { AppProfile } from "@/utils/supabase/profile";
 import { getServerDictionary } from "@/utils/i18n/server";
 import { getDictionary, DEFAULT_LOCALE } from "@/utils/i18n/dictionary";
 
@@ -36,6 +41,22 @@ function isPublishProfile(profile: Awaited<ReturnType<typeof getCurrentAppProfil
     profile?.status === "active" &&
     (profile.role === "staff" || profile.role === "admin")
   );
+}
+
+function isInteractionProfile(
+  profile: AppProfile | null,
+): profile is AppProfile & {
+  status: "active";
+  role: "staff" | "admin" | "parent";
+} {
+  return (
+    profile?.status === "active" &&
+    (profile.role === "staff" || profile.role === "admin" || profile.role === "parent")
+  );
+}
+
+function isReactionCode(value: unknown): value is PostReactionCode {
+  return POST_REACTION_OPTIONS.some((option) => option.code === value);
 }
 
 function readPreparePayload(data: unknown) {
@@ -302,4 +323,105 @@ export async function deletePost(
   revalidatePath("/staff");
   revalidatePath("/family");
   return { success: true, postId };
+}
+
+export async function addPostComment(
+  postId: string,
+  _previousState: PostInteractionActionResult,
+  formData: FormData,
+): Promise<PostInteractionActionResult> {
+  const dictionary = await getServerDictionary();
+  const invalidMessage = dictionary.actions.posts.interactionGeneric;
+  void _previousState;
+
+  if (!UUID_PATTERN.test(postId)) {
+    return { success: false, message: invalidMessage };
+  }
+
+  const rawBody = formData.get("body");
+  if (typeof rawBody !== "string") {
+    return { success: false, message: dictionary.actions.posts.commentRequired };
+  }
+
+  const body = rawBody.trim();
+  if (!body) {
+    return { success: false, message: dictionary.actions.posts.commentRequired };
+  }
+  if (body.length > MAX_POST_COMMENT_LENGTH) {
+    return { success: false, message: dictionary.actions.posts.commentTooLong };
+  }
+
+  const profile = await getCurrentAppProfile();
+  if (!isInteractionProfile(profile)) {
+    return { success: false, message: dictionary.actions.posts.interactionPermission };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("post_comments").insert({
+    post_id: postId,
+    author_id: profile.id,
+    body,
+  });
+
+  if (error) {
+    return { success: false, message: invalidMessage };
+  }
+
+  revalidatePath("/staff");
+  revalidatePath("/family");
+  return { success: true };
+}
+
+export async function togglePostReaction(
+  postId: string,
+  reaction: PostReactionCode,
+): Promise<PostInteractionActionResult> {
+  const dictionary = await getServerDictionary();
+  const invalidMessage = dictionary.actions.posts.interactionGeneric;
+
+  if (!UUID_PATTERN.test(postId) || !isReactionCode(reaction)) {
+    return { success: false, message: invalidMessage };
+  }
+
+  const profile = await getCurrentAppProfile();
+  if (!isInteractionProfile(profile)) {
+    return { success: false, message: dictionary.actions.posts.interactionPermission };
+  }
+
+  const supabase = await createClient();
+  const { data: currentReaction, error: currentReactionError } = await supabase
+    .from("post_reactions")
+    .select("reaction")
+    .eq("post_id", postId)
+    .eq("user_id", profile.id)
+    .maybeSingle();
+
+  if (currentReactionError) {
+    return { success: false, message: invalidMessage };
+  }
+
+  if (currentReaction?.reaction === reaction) {
+    const { error } = await supabase
+      .from("post_reactions")
+      .delete()
+      .eq("post_id", postId)
+      .eq("user_id", profile.id);
+
+    if (error) return { success: false, message: invalidMessage };
+  } else {
+    const { error } = await supabase.from("post_reactions").upsert(
+      {
+        post_id: postId,
+        user_id: profile.id,
+        reaction,
+      },
+      { onConflict: "post_id,user_id" },
+    );
+
+    if (error) return { success: false, message: invalidMessage };
+  }
+
+  revalidatePath("/staff");
+  revalidatePath("/family");
+  return { success: true };
 }

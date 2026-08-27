@@ -36,6 +36,20 @@ export const POST_PHOTO_MIME_TYPES = [
 export const POST_PHOTO_BUCKET = "post-photos";
 export const MAX_POST_PHOTOS = 6;
 export const MAX_POST_PHOTO_BYTES = 10 * 1024 * 1024;
+export const MAX_POST_COMMENT_LENGTH = 1000;
+
+export const POST_REACTION_OPTIONS = [
+  { code: "love", emoji: "❤️" },
+  { code: "laugh", emoji: "😂" },
+  { code: "wow", emoji: "😮" },
+  { code: "sad", emoji: "😢" },
+  { code: "angry", emoji: "😡" },
+  { code: "like", emoji: "👍" },
+] as const;
+
+export type PostReactionCode = (typeof POST_REACTION_OPTIONS)[number]["code"];
+
+export type PostReactionCounts = Record<PostReactionCode, number>;
 
 export type PostRoom = {
   id: string;
@@ -54,6 +68,14 @@ export type FeedRecipient = {
   fullName: string;
 };
 
+export type PostComment = {
+  id: string;
+  authorId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+};
+
 export type FeedPost = {
   id: string;
   authorId: string;
@@ -66,6 +88,9 @@ export type FeedPost = {
   createdAt: string;
   recipientChildren: FeedRecipient[];
   photos: PostPhoto[];
+  reactionCounts: PostReactionCounts;
+  currentUserReaction: PostReactionCode | null;
+  comments: PostComment[];
 };
 
 export type PostPhotoInput = {
@@ -104,6 +129,15 @@ export type PostActionResult =
   | {
       success: true;
       postId: string;
+    }
+  | {
+      success: false;
+      message: string;
+    };
+
+export type PostInteractionActionResult =
+  | {
+      success: true;
     }
   | {
       success: false;
