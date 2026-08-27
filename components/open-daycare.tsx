@@ -5,6 +5,7 @@ export { Icon, type IconName } from "@/components/shared/Icon";
 import type { FeedPost, PostType } from "@/app/posts/types";
 import { DeletePostButton } from "@/components/delete-post-button";
 import { PostPhotoGallery } from "@/components/post-photo-gallery";
+import { PostInteractions } from "@/components/post-interactions";
 import type { Dictionary } from "@/utils/i18n/dictionary";
 
 export function Avatar({ children, tone = "coral" }: { children: ReactNode; tone?: "coral" | "blue" }) {
@@ -39,7 +40,7 @@ export function PostCard({ post, canDelete = false, dictionary }: { post: FeedPo
   const photoLabel = `${post.photos.length} ${post.photos.length === 1 ? dictionary.feed.photo : dictionary.feed.photos}`;
 
   return (
-    <article className="rounded-[20px] border border-line bg-surface p-5 shadow-theme-sm sm:p-[22px]">
+    <article className="motion-card rounded-[20px] border border-line bg-surface p-5 shadow-theme-sm sm:p-[22px]">
       <div className="mb-4 flex flex-wrap items-start gap-3">
         <Avatar tone="blue">{initialFor(post.authorName)}</Avatar>
         <div className="min-w-0 flex-1">
@@ -50,7 +51,6 @@ export function PostCard({ post, canDelete = false, dictionary }: { post: FeedPo
         </div>
         <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
           <span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold tracking-wide ${postStyle[post.type]}`}>
-            <span className="size-2 rounded-full bg-current" />
             {dictionary.postTypes[post.type]}
           </span>
           {canDelete && <DeletePostButton postId={post.id} />}
@@ -63,10 +63,11 @@ export function PostCard({ post, canDelete = false, dictionary }: { post: FeedPo
         <span>{post.photos.length > 0 ? photoLabel : dictionary.feed.roomPost}</span>
         <span>{post.roomName}</span>
       </div>
+      <PostInteractions post={post} dictionary={dictionary} />
     </article>
   );
 }
 
 export function PlaceholderPage({ title }: { title: string }) {
-  return <main className="flex min-h-screen items-center justify-center bg-sand px-5"><section className="w-full max-w-md rounded-3xl border border-line bg-surface p-8 text-center shadow-theme-md"><p className="mb-2 text-xs font-extrabold tracking-widest text-coral">OPENDAYCARE</p><h1 className="font-display text-3xl font-semibold text-ink">{title}</h1><p className="mt-3 text-muted">Esta pantalla estará disponible próximamente.</p><Link href="/" className="mt-7 inline-flex rounded-xl bg-coral px-5 py-3 text-sm font-extrabold text-theme-white-strong">Volver al inicio</Link></section></main>;
+  return <main className="flex min-h-screen items-center justify-center bg-sand px-5"><section className="w-full max-w-md rounded-3xl border border-line bg-surface p-8 text-center shadow-theme-md"><p className="mb-2 text-xs font-extrabold tracking-widest text-coral">OPENDAYCARE</p><h1 className="font-display text-3xl font-semibold text-ink">{title}</h1><p className="mt-3 text-muted">Esta pantalla estará disponible próximamente.</p><Link href="/" className="motion-link mt-7 inline-flex rounded-xl bg-coral px-5 py-3 text-sm font-extrabold text-theme-white-strong">Volver al inicio</Link></section></main>;
 }
