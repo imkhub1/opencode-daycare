@@ -37,7 +37,6 @@ function initialFor(name: string) {
 
 export function PostCard({ post, canDelete = false, dictionary }: { post: FeedPost; canDelete?: boolean; dictionary: Dictionary }) {
   const audience = dictionary.feed.audience.replace("{room}", post.roomName);
-  const photoLabel = `${post.photos.length} ${post.photos.length === 1 ? dictionary.feed.photo : dictionary.feed.photos}`;
 
   return (
     <article className="motion-card rounded-[20px] border border-line bg-surface p-5 shadow-theme-sm sm:p-[22px]">
@@ -59,10 +58,6 @@ export function PostCard({ post, canDelete = false, dictionary }: { post: FeedPo
       <p className="mb-2.5 text-xs text-subtle">{audience}</p>
       <p className="text-[15.5px] leading-relaxed text-body">{post.body}</p>
       {post.photos.length > 0 && <PostPhotoGallery photos={post.photos} />}
-      <div className="mt-4 flex items-center justify-between border-t border-line-soft pt-3.5 text-xs font-bold text-muted">
-        <span>{post.photos.length > 0 ? photoLabel : dictionary.feed.roomPost}</span>
-        <span>{post.roomName}</span>
-      </div>
       <PostInteractions post={post} dictionary={dictionary} />
     </article>
   );

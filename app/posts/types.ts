@@ -39,12 +39,7 @@ export const MAX_POST_PHOTO_BYTES = 10 * 1024 * 1024;
 export const MAX_POST_COMMENT_LENGTH = 1000;
 
 export const POST_REACTION_OPTIONS = [
-  { code: "love", emoji: "❤️" },
-  { code: "laugh", emoji: "😂" },
-  { code: "wow", emoji: "😮" },
-  { code: "sad", emoji: "😢" },
-  { code: "angry", emoji: "😡" },
-  { code: "like", emoji: "👍" },
+  { code: "like" },
 ] as const;
 
 export type PostReactionCode = (typeof POST_REACTION_OPTIONS)[number]["code"];

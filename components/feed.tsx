@@ -27,6 +27,7 @@ export function FeedClient({
 }) {
   const router = useRouter();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [openFilePickerOnMount, setOpenFilePickerOnMount] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const firstName = displayName.trim().split(/\s+/)[0] || dictionary.feed.team;
   const roomName = rooms.length === 1 ? rooms[0].name : posts[0]?.roomName;
@@ -34,18 +35,21 @@ export function FeedClient({
     ? interpolate(dictionary.feed.daycareRoom, { room: roomName.toLocaleUpperCase(dictionary.locale) })
     : dictionary.feed.daycareFeed;
 
-  function openCreate(event: MouseEvent<HTMLButtonElement>) {
+  function openCreate(event: MouseEvent<HTMLButtonElement>, withPhotoPicker = false) {
     triggerRef.current = event.currentTarget;
+    setOpenFilePickerOnMount(withPhotoPicker);
     setIsCreateOpen(true);
   }
 
   function closeCreate() {
     setIsCreateOpen(false);
+    setOpenFilePickerOnMount(false);
     requestAnimationFrame(() => triggerRef.current?.focus());
   }
 
   function handlePublished() {
     setIsCreateOpen(false);
+    setOpenFilePickerOnMount(false);
     requestAnimationFrame(() => triggerRef.current?.focus());
     router.refresh();
   }
@@ -62,17 +66,25 @@ export function FeedClient({
         </header>
 
         {canCreatePost && (
-          <button
-            type="button"
-            onClick={openCreate}
-            className="mb-6 flex w-full items-center gap-3.5 rounded-[18px] border border-line bg-surface px-4 py-3.5 text-left shadow-theme-sm"
-          >
-            <Avatar>{firstName.charAt(0).toLocaleUpperCase("es")}</Avatar>
-            <span className="flex-1 text-[15px] text-subtle">{dictionary.feed.shareMoment}</span>
-            <span className="flex size-10 items-center justify-center rounded-xl bg-coral-soft text-coral">
+          <div className="motion-card motion-composite mb-6 flex w-full items-center gap-3.5 rounded-[18px] border border-line bg-surface px-4 py-3.5 text-left shadow-theme-sm">
+            <button
+              type="button"
+              onClick={openCreate}
+              className="motion-composite-child flex min-w-0 flex-1 items-center gap-3.5 rounded-lg text-left"
+            >
+              <Avatar>{firstName.charAt(0).toLocaleUpperCase("es")}</Avatar>
+              <span className="min-w-0 flex-1 text-[15px] text-subtle">{dictionary.feed.shareMoment}</span>
+            </button>
+            <button
+              type="button"
+              onClick={(event) => openCreate(event, true)}
+              aria-label={dictionary.feed.addPhotoToPost}
+              title={dictionary.feed.addPhotoToPost}
+              className="motion-composite-child flex size-10 shrink-0 items-center justify-center rounded-xl bg-coral-soft text-coral"
+            >
               <Icon name="camera" className="size-5" />
-            </span>
-          </button>
+            </button>
+          </div>
         )}
 
         <div className="mb-3.5 flex items-center gap-3.5">
@@ -102,7 +114,12 @@ export function FeedClient({
         )}
       </main>
       {isCreateOpen && (
-         <CreatePost rooms={rooms} onCancel={closeCreate} onSuccess={handlePublished} />
+        <CreatePost
+          rooms={rooms}
+          openFilePickerOnMount={openFilePickerOnMount}
+          onCancel={closeCreate}
+          onSuccess={handlePublished}
+        />
       )}
     </>
   );

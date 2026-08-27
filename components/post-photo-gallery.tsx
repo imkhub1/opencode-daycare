@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 import type { PostPhoto } from "@/app/posts/types";
@@ -110,68 +111,70 @@ export function PostPhotoGallery({ photos }: { photos: PostPhoto[] }) {
         ))}
       </div>
 
-      {selectedPhoto && selectedIndex !== null && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay-deep/90 p-4 sm:p-8"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) closePhoto();
-          }}
-          role="presentation"
-        >
+      {selectedPhoto && selectedIndex !== null && typeof document !== "undefined" &&
+        createPortal(
           <div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label={dictionary.feed.photoCounter.replace("{current}", String(selectedIndex + 1)).replace("{total}", String(photos.length))}
-            className="relative flex h-full w-full items-center justify-center"
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-overlay-deep/90 p-4 sm:p-8"
+            onClick={(event) => {
+              if (event.target === event.currentTarget) closePhoto();
+            }}
+            role="presentation"
           >
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={closePhoto}
-              aria-label={dictionary.common.close}
-              className="absolute right-0 top-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            <div
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={dictionary.feed.photoCounter.replace("{current}", String(selectedIndex + 1)).replace("{total}", String(photos.length))}
+              className="relative flex h-full w-full items-center justify-center"
             >
-              <span aria-hidden="true">×</span>
-            </button>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={closePhoto}
+                aria-label={dictionary.common.close}
+                className="absolute right-0 top-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                <span aria-hidden="true">×</span>
+              </button>
 
-            {photos.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => movePhoto(-1)}
-                  aria-label={dictionary.feed.previousPhoto}
-                  className="absolute left-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                >
-                  <span aria-hidden="true">‹</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => movePhoto(1)}
-                  aria-label={dictionary.feed.nextPhoto}
-                  className="absolute right-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                >
-                  <span aria-hidden="true">›</span>
-                </button>
-              </>
-            )}
+              {photos.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => movePhoto(-1)}
+                    aria-label={dictionary.feed.previousPhoto}
+                    className="absolute left-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  >
+                    <span aria-hidden="true">‹</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => movePhoto(1)}
+                    aria-label={dictionary.feed.nextPhoto}
+                    className="absolute right-0 z-10 flex size-11 items-center justify-center rounded-full bg-control-overlay text-3xl leading-none text-theme-white-strong transition hover:bg-control-overlay-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  >
+                    <span aria-hidden="true">›</span>
+                  </button>
+                </>
+              )}
 
-            <div className="relative h-[78vh] w-[90vw] max-w-[1100px]">
-              <Image
-                src={selectedPhoto.url}
-                alt={photos.length > 1 ? dictionary.feed.photoOfPublicationNumber.replace("{number}", String(selectedIndex + 1)) : dictionary.feed.photoOfPublication}
-                fill
-                sizes="90vw"
-                loading="eager"
-                className="object-contain"
-              />
+              <div className="relative h-[78vh] w-[90vw] max-w-[1100px]">
+                <Image
+                  src={selectedPhoto.url}
+                  alt={photos.length > 1 ? dictionary.feed.photoOfPublicationNumber.replace("{number}", String(selectedIndex + 1)) : dictionary.feed.photoOfPublication}
+                  fill
+                  sizes="90vw"
+                  loading="eager"
+                  className="object-contain"
+                />
+              </div>
+              <p className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-control-overlay px-3 py-1 text-xs font-bold text-theme-white-strong">
+                {dictionary.feed.photoCounter.replace("{current}", String(selectedIndex + 1)).replace("{total}", String(photos.length))}
+              </p>
             </div>
-            <p className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-full bg-control-overlay px-3 py-1 text-xs font-bold text-theme-white-strong">
-              {dictionary.feed.photoCounter.replace("{current}", String(selectedIndex + 1)).replace("{total}", String(photos.length))}
-            </p>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

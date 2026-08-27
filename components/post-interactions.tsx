@@ -5,7 +5,6 @@ import { useActionState, useEffect, useOptimistic, useRef, useState, useTransiti
 import { addPostComment, togglePostReaction } from "@/app/posts/actions";
 import {
   MAX_POST_COMMENT_LENGTH,
-  POST_REACTION_OPTIONS,
   type FeedPost,
   type PostInteractionActionResult,
   type PostReactionCode,
@@ -27,21 +26,19 @@ function formatCommentDate(value: string, locale: Dictionary["locale"]) {
   }).format(new Date(value));
 }
 
-function applyReaction(post: FeedPost, reaction: PostReactionCode): FeedPost {
-  const counts = { ...post.reactionCounts };
-  const currentReaction = post.currentUserReaction;
+function applyLike(post: FeedPost, _reaction: PostReactionCode): FeedPost {
+  if (_reaction !== "like") return post;
 
-  if (currentReaction === reaction) {
-    counts[reaction] = Math.max(0, counts[reaction] - 1);
+  const counts = { ...post.reactionCounts };
+
+  if (post.currentUserReaction === "like") {
+    counts.like = Math.max(0, counts.like - 1);
     return { ...post, reactionCounts: counts, currentUserReaction: null };
   }
 
-  if (currentReaction) {
-    counts[currentReaction] = Math.max(0, counts[currentReaction] - 1);
-  }
-  counts[reaction] += 1;
+  counts.like += 1;
 
-  return { ...post, reactionCounts: counts, currentUserReaction: reaction };
+  return { ...post, reactionCounts: counts, currentUserReaction: "like" };
 }
 
 export function PostInteractions({
@@ -52,8 +49,8 @@ export function PostInteractions({
   dictionary: Dictionary;
 }) {
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
-  const [reactionError, setReactionError] = useState<string | null>(null);
-  const [optimisticPost, setOptimisticPost] = useOptimistic(post, applyReaction);
+  const [likeError, setLikeError] = useState<string | null>(null);
+  const [optimisticPost, setOptimisticPost] = useOptimistic(post, applyLike);
   const [isReactionPending, startReactionTransition] = useTransition();
   const commentFormRef = useRef<HTMLFormElement>(null);
   const boundCommentAction = addPostComment.bind(null, post.id);
@@ -66,48 +63,40 @@ export function PostInteractions({
     if (commentState.success) commentFormRef.current?.reset();
   }, [commentState]);
 
-  function handleReaction(reaction: PostReactionCode) {
+  function handleLike() {
     if (isReactionPending) return;
-    setReactionError(null);
+    setLikeError(null);
     startReactionTransition(async () => {
-      setOptimisticPost(reaction);
-      const result = await togglePostReaction(post.id, reaction);
-      if (!result.success) setReactionError(result.message);
+      setOptimisticPost("like");
+      const result = await togglePostReaction(post.id, "like");
+      if (!result.success) setLikeError(result.message);
     });
   }
 
   const commentCount = post.comments.length;
+  const liked = optimisticPost.currentUserReaction === "like";
+  const likeCount = optimisticPost.reactionCounts.like;
 
   return (
-    <section className="mt-4 border-t border-line-soft pt-3" aria-label={dictionary.feed.reactionsLabel}>
+    <section className="mt-4 border-t border-line-soft pt-3" aria-label={dictionary.feed.likesLabel}>
       <div className="flex flex-wrap items-center gap-1.5">
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={dictionary.feed.reactionsLabel}>
-          {POST_REACTION_OPTIONS.map(({ code, emoji }) => {
-            const selected = optimisticPost.currentUserReaction === code;
-            const count = optimisticPost.reactionCounts[code];
-
-            return (
-              <button
-                key={code}
-                type="button"
-                onClick={() => handleReaction(code)}
-                disabled={isReactionPending}
-                aria-label={`${dictionary.feed.reactWith} ${emoji} (${count})`}
-                aria-pressed={selected}
-                title={`${dictionary.feed.reactWith} ${emoji}`}
-                className={`inline-flex min-w-11 items-center justify-center gap-1 rounded-full border px-2.5 py-1.5 text-sm ${selected ? "border-coral-border bg-coral-faint text-coral-strong" : "border-line bg-surface-soft text-body hover:border-coral-border hover:bg-coral-faint"} disabled:cursor-wait disabled:opacity-60`}
-              >
-                <span aria-hidden="true">{emoji}</span>
-                <span className="min-w-[1ch] text-[11px] font-extrabold tabular-nums">{count}</span>
-              </button>
-            );
-          })}
-        </div>
+        <button
+          type="button"
+          onClick={handleLike}
+          disabled={isReactionPending}
+          aria-label={interpolate(liked ? dictionary.feed.unlikePost : dictionary.feed.likePost, { count: likeCount })}
+          aria-pressed={liked}
+          title={interpolate(liked ? dictionary.feed.unlikePost : dictionary.feed.likePost, { count: likeCount })}
+          className={`inline-flex min-w-11 items-center justify-center gap-1.5 rounded-full border px-2.5 py-1.5 text-sm ${liked ? "border-danger-border bg-danger-soft text-danger" : "border-line bg-surface-soft text-body hover:border-coral-border hover:bg-coral-faint"} disabled:cursor-wait disabled:opacity-60`}
+        >
+          <Icon name="heart" filled={liked} className="size-5" />
+          <span className="min-w-[1ch] text-[11px] font-extrabold tabular-nums">{likeCount}</span>
+        </button>
         <button
           type="button"
           onClick={() => setIsCommentsOpen((open) => !open)}
           aria-expanded={isCommentsOpen}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-extrabold text-muted hover:bg-surface-soft hover:text-coral-strong"
+          className="ml-auto inline-flex items-center justify-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-extrabold text-muted hover:bg-surface-soft hover:text-coral-strong"
         >
           <Icon name="message" className="size-4" />
           {isCommentsOpen
@@ -116,15 +105,15 @@ export function PostInteractions({
         </button>
       </div>
 
-      {reactionError && (
+      {likeError && (
         <p className="mt-2 text-xs font-bold text-danger" role="alert">
-          {reactionError}
+          {likeError}
         </p>
       )}
 
       {isCommentsOpen && (
         <div className="motion-reveal mt-3 border-t border-line-soft pt-3" aria-label={dictionary.feed.commentsLabel}>
-          {commentCount > 0 ? (
+          {commentCount > 0 && (
             <ul className="space-y-3">
               {post.comments.map((comment) => (
                 <li key={comment.id} className="flex gap-2.5">
@@ -143,14 +132,12 @@ export function PostInteractions({
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="text-sm text-muted">{dictionary.feed.noComments}</p>
           )}
 
           <form
             ref={commentFormRef}
             action={commentFormAction}
-            className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end"
+            className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center"
             aria-busy={commentPending}
           >
             <div className="min-w-0 flex-1">

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
 
 import {
   abortPost,
@@ -39,11 +39,13 @@ type FormErrors = {
 export function CreatePost({
   rooms,
   variant = "modal",
+  openFilePickerOnMount = false,
   onCancel,
   onSuccess,
 }: {
   rooms: PostRoom[];
   variant?: "modal" | "page";
+  openFilePickerOnMount?: boolean;
   onCancel?: () => void;
   onSuccess?: () => void;
 }) {
@@ -62,8 +64,17 @@ export function CreatePost({
   const typeRef = useRef<HTMLButtonElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const hasOpenedFilePickerRef = useRef(false);
   const photosRef = useRef<LocalPhoto[]>([]);
   const dialogRef = useRef<HTMLElement>(null);
+
+  const handleFileInputRef = useCallback((input: HTMLInputElement | null) => {
+    fileInputRef.current = input;
+    if (input && openFilePickerOnMount && !hasOpenedFilePickerRef.current) {
+      hasOpenedFilePickerRef.current = true;
+      input.click();
+    }
+  }, [openFilePickerOnMount]);
 
   useEffect(() => {
     photosRef.current = photos;
@@ -368,7 +379,7 @@ export function CreatePost({
         <div>
           <label htmlFor="post-photos" className="mb-2.5 block text-xs font-extrabold tracking-[0.7px] text-muted">{dictionary.posts.photos}</label>
           <input
-            ref={fileInputRef}
+            ref={handleFileInputRef}
             className="sr-only"
             id="post-photos"
             type="file"
