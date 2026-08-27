@@ -72,6 +72,9 @@ export type Dictionary = {
     noChildrenLoadedDescription: string;
     noRoomAssigned: string;
     noRoomAssignedDescription: string;
+    moveChild: string;
+    moveChildInstructions: string;
+    movingChild: string;
     validation: {
       fullName: string;
       birthDate: string;
@@ -222,8 +225,10 @@ const spanish: Dictionary = {
     photoOfPublication: "Foto de la publicación",
     photoOfPublicationNumber: "Foto {number} de la publicación",
     photoCounter: "{current} de {total}",
-    reactionsLabel: "Reacciones",
-    reactWith: "Reaccionar con",
+    likesLabel: "Me gusta",
+    likePost: "Dar me gusta a la publicación ({count})",
+    unlikePost: "Quitar me gusta de la publicación ({count})",
+    addPhotoToPost: "Agregar una foto a una nueva publicación",
     commentsCount: "Ver comentarios ({count})",
     hideComments: "Ocultar comentarios",
     commentsLabel: "Comentarios de la publicación",
@@ -312,6 +317,9 @@ const spanish: Dictionary = {
     noChildrenLoadedDescription: "Revisa tu conexión e inténtalo nuevamente.",
     noRoomAssigned: "No tenés una sala asignada",
     noRoomAssignedDescription: "Pedile a un administrador que te asigne una sala para poder publicar.",
+    moveChild: "Mover a {name}",
+    moveChildInstructions: "Arrastra una tarjeta a otra sala o usa el selector para mover al niño.",
+    movingChild: "Moviendo…",
     validation: {
       fullName: "Escribe el nombre completo.",
       birthDate: "Selecciona una fecha de nacimiento válida.",
@@ -362,6 +370,7 @@ const spanish: Dictionary = {
       unavailableChild: "El niño no existe o no está disponible.",
       exactName: "Escribe el nombre exacto del niño para confirmar.",
       deleteChild: "No se pudo eliminar el niño. Inténtalo de nuevo.",
+      moveChild: "No se pudo mover el niño. Inténtalo de nuevo.",
     },
     invitations: {
       generic: "No se pudo procesar la invitación. Revisa los datos e inténtalo nuevamente.",
@@ -544,8 +553,10 @@ const english: Dictionary = {
     photoOfPublication: "Photo from the post",
     photoOfPublicationNumber: "Photo {number} from the post",
     photoCounter: "{current} of {total}",
-    reactionsLabel: "Reactions",
-    reactWith: "React with",
+    likesLabel: "Likes",
+    likePost: "Like this post ({count})",
+    unlikePost: "Unlike this post ({count})",
+    addPhotoToPost: "Add a photo to a new post",
     commentsCount: "View comments ({count})",
     hideComments: "Hide comments",
     commentsLabel: "Post comments",
@@ -634,6 +645,9 @@ const english: Dictionary = {
     noChildrenLoadedDescription: "Check your connection and try again.",
     noRoomAssigned: "No room assigned",
     noRoomAssignedDescription: "Ask an administrator to assign you a room so you can post.",
+    moveChild: "Move {name}",
+    moveChildInstructions: "Drag a card to another room or use the selector to move the child.",
+    movingChild: "Moving…",
     validation: {
       fullName: "Enter the full name.",
       birthDate: "Select a valid date of birth.",
@@ -684,6 +698,7 @@ const english: Dictionary = {
       unavailableChild: "The child does not exist or is no longer available.",
       exactName: "Type the child's exact name to confirm.",
       deleteChild: "The child could not be deleted. Please try again.",
+      moveChild: "The child could not be moved. Please try again.",
     },
     invitations: {
       generic: "The invitation could not be processed. Check the details and try again.",

@@ -67,6 +67,17 @@ export type ChildLifecycleState = {
   status?: ChildStatus;
 };
 
+export type ChildRoomMoveState =
+  | {
+      success: true;
+      childId: string;
+      roomId: string;
+    }
+  | {
+      success: false;
+      message: string;
+    };
+
 export type ChildDeletionState = {
   success: boolean;
   message?: string;
@@ -376,6 +387,62 @@ export async function updateChild(
     return { success: true, childId: data.id };
   } catch {
     return { success: false, message: dictionary.actions.authorizationError, values };
+  }
+}
+
+export async function moveChildToRoom(
+  childId: string,
+  roomId: string,
+): Promise<ChildRoomMoveState> {
+  const dictionary = await getServerDictionary();
+
+  if (!UUID_PATTERN.test(childId) || !UUID_PATTERN.test(roomId)) {
+    return { success: false, message: dictionary.actions.children.unavailableChild };
+  }
+
+  try {
+    const supabase = await createAuthorizedClient();
+    const { data: child, error: childError } = await supabase
+      .from("children")
+      .select("room_id")
+      .eq("id", childId)
+      .maybeSingle();
+
+    if (childError || !child) {
+      return { success: false, message: dictionary.actions.children.unavailableChild };
+    }
+
+    if (child.room_id === roomId) {
+      return { success: true, childId, roomId };
+    }
+
+    const { data: destinationRoom, error: destinationRoomError } = await supabase
+      .from("rooms")
+      .select("id")
+      .eq("id", roomId)
+      .maybeSingle();
+
+    if (destinationRoomError || !destinationRoom) {
+      return { success: false, message: dictionary.actions.children.moveChild };
+    }
+
+    const { data, error } = await supabase
+      .from("children")
+      .update({ room_id: destinationRoom.id })
+      .eq("id", childId)
+      .eq("room_id", child.room_id)
+      .select("id, room_id")
+      .maybeSingle();
+
+    if (error || !data) {
+      return { success: false, message: dictionary.actions.children.moveChild };
+    }
+
+    revalidatePath("/staff/kids");
+    revalidatePath(`/staff/kids/${childId}`);
+    return { success: true, childId: data.id, roomId: data.room_id };
+  } catch {
+    return { success: false, message: dictionary.actions.authorizationError };
   }
 }
 

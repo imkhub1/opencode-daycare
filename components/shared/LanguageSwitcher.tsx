@@ -30,7 +30,8 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
   return (
     <div
       aria-label={dictionary.language.label}
-      className={`inline-flex items-center gap-1 rounded-xl border border-line bg-surface p-1 text-xs font-extrabold ${className}`}
+      aria-busy={isPending}
+      className={`inline-flex items-center gap-1 rounded-xl border border-line bg-surface p-1 text-xs font-extrabold ${isPending ? "language-switcher-loading" : ""} ${className}`}
     >
       <button
         type="button"

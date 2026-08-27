@@ -7,7 +7,9 @@ import {
   useEffect,
   useRef,
   useState,
+  useTransition,
   type Dispatch,
+  type DragEvent,
   type FormEvent,
   type SetStateAction,
 } from "react";
@@ -16,6 +18,7 @@ import {
   archiveChild,
   createChild,
   deleteChild,
+  moveChildToRoom,
   restoreChild,
   updateChild,
   type Child,
@@ -49,6 +52,7 @@ const avatarTones = [
 ];
 
 type FormErrors = Partial<Record<keyof ChildFormValues, string>>;
+type MoveError = { childId: string; message: string } | null;
 function InitialAvatar({ name, large = false }: { name: string; large?: boolean }) {
   const { locale } = useLocale();
   const initial = name.trim().charAt(0).toLocaleUpperCase(locale) || "N";
@@ -671,10 +675,31 @@ function DeleteChildButton({
   );
 }
 
-function ChildCard({ child, archived }: { child: Child; archived: boolean }) {
+function ChildCard({
+  child,
+  archived,
+  onDragStart,
+  onDragEnd,
+  movePending,
+  moveError,
+}: {
+  child: Child;
+  archived: boolean;
+  onDragStart: (event: DragEvent<HTMLElement>, childId: string) => void;
+  onDragEnd: () => void;
+  movePending: boolean;
+  moveError: string | null;
+}) {
   const { locale, dictionary } = useLocale();
+
   return (
-    <article className="flex min-w-0 items-center gap-3.5 rounded-[18px] border border-line bg-surface p-4 shadow-theme-sm">
+    <article
+      draggable={!movePending}
+      onDragStart={(event) => onDragStart(event, child.id)}
+      onDragEnd={onDragEnd}
+      aria-busy={movePending}
+      className="motion-child-card flex min-w-0 cursor-grab flex-wrap items-center gap-3.5 rounded-[18px] border border-line bg-surface p-4 shadow-theme-sm active:cursor-grabbing"
+    >
       <Link href={`/staff/kids/${child.id}`} className="flex min-w-0 flex-1 items-center gap-3.5 rounded-lg focus-visible:outline-offset-4">
         <InitialAvatar name={child.fullName} />
         <span className="min-w-0 flex-1">
@@ -691,6 +716,16 @@ function ChildCard({ child, archived }: { child: Child; archived: boolean }) {
           </span>
         )}
       </Link>
+      {movePending && (
+        <span className="shrink-0 text-[11px] font-bold text-muted" aria-live="polite">
+          {dictionary.kids.movingChild}
+        </span>
+      )}
+      {moveError && (
+        <p className="basis-full text-xs font-bold text-danger" role="alert">
+          {moveError}
+        </p>
+      )}
     </article>
   );
 }
@@ -708,11 +743,76 @@ export function ChildrenDirectory({
   const { locale, dictionary } = useLocale();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [draggedChildId, setDraggedChildId] = useState<string | null>(null);
+  const [dropTargetRoomId, setDropTargetRoomId] = useState<string | null>(null);
+  const [movingChildId, setMovingChildId] = useState<string | null>(null);
+  const [moveError, setMoveError] = useState<MoveError>(null);
+  const [isMovePending, startMoveTransition] = useTransition();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const normalizedSearch = search.trim().toLocaleLowerCase(locale);
   const filteredChildren = childRecords
     .filter((child) => child.fullName.toLocaleLowerCase(locale).includes(normalizedSearch))
     .sort((left, right) => left.fullName.localeCompare(right.fullName, locale, { sensitivity: "base" }));
+
+  function requestMove(childId: string, roomId: string) {
+    const child = childRecords.find((record) => record.id === childId);
+    if (!child || child.roomId === roomId || isMovePending) return;
+
+    setMoveError(null);
+    setMovingChildId(childId);
+    startMoveTransition(async () => {
+      const result = await moveChildToRoom(childId, roomId);
+      if (result.success) {
+        router.refresh();
+      } else {
+        setMoveError({ childId, message: result.message });
+      }
+      setMovingChildId(null);
+    });
+  }
+
+  function handleDragStart(event: DragEvent<HTMLElement>, childId: string) {
+    if (isMovePending) {
+      event.preventDefault();
+      return;
+    }
+
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", childId);
+    setDraggedChildId(childId);
+    setMoveError(null);
+  }
+
+  function handleDragEnd() {
+    setDraggedChildId(null);
+    setDropTargetRoomId(null);
+  }
+
+  function handleDragOver(event: DragEvent<HTMLElement>, roomId: string) {
+    const childId = draggedChildId || event.dataTransfer.getData("text/plain");
+    const child = childRecords.find((record) => record.id === childId);
+    if (!child || child.roomId === roomId || isMovePending) return;
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDropTargetRoomId(roomId);
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLElement>) {
+    const relatedTarget = event.relatedTarget;
+    if (!(relatedTarget instanceof Node) || !event.currentTarget.contains(relatedTarget)) {
+      setDropTargetRoomId(null);
+    }
+  }
+
+  function handleDrop(event: DragEvent<HTMLElement>, roomId: string) {
+    event.preventDefault();
+    const childId = event.dataTransfer.getData("text/plain") || draggedChildId;
+    setDraggedChildId(null);
+    setDropTargetRoomId(null);
+
+    if (childId) requestMove(childId, roomId);
+  }
 
   function closeDialog() {
     setDialogOpen(false);
@@ -743,14 +843,24 @@ export function ChildrenDirectory({
         </button>
       </header>
 
-      <div className="mb-4 flex w-fit rounded-xl border border-line bg-surface p-1 text-sm font-bold">
-        <Link href="/staff/kids" className={`rounded-lg px-3 py-2 ${view === "active" ? "bg-coral-soft text-coral-deep" : "text-muted"}`}>
+      <div className="motion-tabs mb-4 flex w-fit rounded-xl border border-line bg-surface p-1 text-sm font-bold">
+        <Link
+          href="/staff/kids"
+          aria-current={view === "active" ? "page" : undefined}
+          className={`motion-tab rounded-lg px-3 py-2 ${view === "active" ? "bg-coral-soft text-coral-deep" : "text-muted"}`}
+        >
           {dictionary.kids.activeChildren}
         </Link>
-        <Link href="/staff/kids?view=archived" className={`rounded-lg px-3 py-2 ${view === "archived" ? "bg-coral-soft text-coral-deep" : "text-muted"}`}>
+        <Link
+          href="/staff/kids?view=archived"
+          aria-current={view === "archived" ? "page" : undefined}
+          className={`motion-tab rounded-lg px-3 py-2 ${view === "archived" ? "bg-coral-soft text-coral-deep" : "text-muted"}`}
+        >
           {dictionary.kids.archivedChildren}
         </Link>
       </div>
+
+      <p className="sr-only">{dictionary.kids.moveChildInstructions}</p>
 
       <label className="mb-[22px] flex items-center gap-3 rounded-[14px] border border-line bg-surface px-4 py-3">
         <svg aria-hidden="true" className="size-[18px] shrink-0 text-placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -769,7 +879,13 @@ export function ChildrenDirectory({
       {rooms.map((room) => {
         const roomChildren = filteredChildren.filter((child) => child.roomId === room.id);
         return (
-          <section key={room.id} className="mb-6">
+          <section
+            key={room.id}
+            onDragOver={(event) => handleDragOver(event, room.id)}
+            onDragLeave={handleDragLeave}
+            onDrop={(event) => handleDrop(event, room.id)}
+            className={`mb-6 rounded-[20px] transition-colors ${dropTargetRoomId === room.id ? "bg-coral-faint p-2 ring-2 ring-coral ring-offset-2 ring-offset-canvas" : ""}`}
+          >
             <div className="mb-3.5 flex items-center gap-3">
               <span className="text-xs font-extrabold tracking-[0.08em] text-ink">
                 {dictionary.kids.room} {room.name.toLocaleUpperCase(locale)}
@@ -782,7 +898,15 @@ export function ChildrenDirectory({
             {roomChildren.length ? (
               <div className="grid gap-3.5 sm:grid-cols-2">
                 {roomChildren.map((child) => (
-                  <ChildCard key={child.id} child={child} archived={view === "archived"} />
+                  <ChildCard
+                    key={child.id}
+                    child={child}
+                    archived={view === "archived"}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    movePending={isMovePending && movingChildId === child.id}
+                    moveError={moveError?.childId === child.id ? moveError.message : null}
+                  />
                 ))}
               </div>
             ) : (
