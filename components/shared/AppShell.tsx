@@ -23,7 +23,7 @@ type ShellProfile = Pick<AppProfile, "fullName" | "role">;
 
 export function Brand({ href, subtitle }: { href: string; subtitle: string }) {
   return (
-    <Link href={href} className="flex items-center gap-3">
+    <Link href={href} className="motion-link flex items-center gap-3">
       <span className="flex size-10 items-center justify-center rounded-xl bg-brand-gradient text-theme-white-strong">
         <Icon name="sun" className="size-5" />
       </span>
@@ -61,7 +61,7 @@ function Navigation({
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 rounded-xl px-3 py-[11px] text-sm font-semibold ${active ? "bg-coral-soft text-coral-deep font-extrabold" : "text-nav hover:bg-sand"}`}
+            className={`motion-link flex items-center gap-3 rounded-xl px-3 py-[11px] text-sm font-semibold ${active ? "bg-coral-soft text-coral-deep font-extrabold" : "text-nav hover:bg-sand"}`}
           >
             <Icon name={item.icon} className="size-[19px]" />
             {dictionary.navigation[item.label]}
@@ -97,7 +97,7 @@ export function AppShell({
         {primaryAction && (
           <Link
             href={primaryAction.href}
-            className="mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-coral-gradient px-3 py-3 text-sm font-extrabold text-theme-white-strong shadow-theme-sm"
+            className="motion-link mb-5 flex items-center justify-center gap-2 rounded-[14px] bg-coral-gradient px-3 py-3 text-sm font-extrabold text-theme-white-strong shadow-theme-sm"
           >
             <Icon name={primaryAction.icon} className="size-[17px]" />
             {dictionary.navigation[primaryAction.label]}
@@ -133,7 +133,7 @@ export function AppShell({
                 {primaryAction && (
                   <Link
                     href={primaryAction.href}
-                    className="mb-1 flex items-center gap-3 rounded-xl bg-coral px-3 py-3 text-sm font-bold text-theme-white-strong"
+                    className="motion-link mb-1 flex items-center gap-3 rounded-xl bg-coral px-3 py-3 text-sm font-bold text-theme-white-strong"
                   >
                     <Icon name={primaryAction.icon} className="size-5" />
                     {dictionary.navigation[primaryAction.label]}
