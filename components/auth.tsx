@@ -256,7 +256,7 @@ export function LoginScreen({
           </form>
           <p className="mt-6 text-center text-[14.5px] text-muted">
             {dictionary.auth.invitedPrompt}{" "}
-            <Link href="/activate" className="font-extrabold text-coral-strong">
+            <Link href="/activate" className="motion-link inline-flex font-extrabold text-coral-strong">
               {dictionary.auth.activateAccount}
             </Link>
           </p>
@@ -329,7 +329,7 @@ export function ForgotPasswordScreen({ initialEmail = "" }: { initialEmail?: str
         </form>
       )}
       <p className="mt-6 text-center text-[14.5px] text-muted">
-        <Link href="/login" className="font-extrabold text-coral-strong">{dictionary.auth.recoveryBackToLogin}</Link>
+        <Link href="/login" className="motion-link inline-flex font-extrabold text-coral-strong">{dictionary.auth.recoveryBackToLogin}</Link>
       </p>
     </AuthShell>
   );
@@ -466,7 +466,7 @@ export function ResetPasswordScreen({ hasRecoveryMarker }: { hasRecoveryMarker: 
         </button>
       </form>
       <p className="mt-6 text-center text-[14.5px] text-muted">
-        <Link href="/login" className="font-extrabold text-coral-strong">{dictionary.auth.recoveryBackToLogin}</Link>
+        <Link href="/login" className="motion-link inline-flex font-extrabold text-coral-strong">{dictionary.auth.recoveryBackToLogin}</Link>
       </p>
     </AuthShell>
   );
@@ -616,7 +616,7 @@ export function ActivateScreen({
 
         {!authenticated && (
           <p className="mt-[22px] text-center text-[14.5px] text-muted">
-            {dictionary.auth.alreadyHaveAccount} <Link href={`/login?invite=${encodeURIComponent(token)}`} className="font-extrabold text-coral-strong">{dictionary.auth.login}</Link>
+            {dictionary.auth.alreadyHaveAccount} <Link href={`/login?invite=${encodeURIComponent(token)}`} className="motion-link inline-flex font-extrabold text-coral-strong">{dictionary.auth.login}</Link>
           </p>
         )}
       </section>
