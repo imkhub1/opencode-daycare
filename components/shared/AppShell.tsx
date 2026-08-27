@@ -23,9 +23,12 @@ type ShellProfile = Pick<AppProfile, "fullName" | "role">;
 
 export function Brand({ href, subtitle }: { href: string; subtitle: string }) {
   return (
-    <Link href={href} className="motion-link flex items-center gap-3">
+    <Link href={href} className="group flex items-center gap-3">
       <span className="flex size-10 items-center justify-center rounded-xl bg-brand-gradient text-theme-white-strong">
-        <Icon name="sun" className="size-5" />
+        <Icon
+          name="sun"
+          className="size-5 motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:rotate-[160deg]"
+        />
       </span>
       <span>
         <span className="block font-display text-lg font-semibold leading-none text-ink">OpenDayCare</span>
@@ -105,9 +108,9 @@ export function AppShell({
         )}
         <Navigation items={navigation} />
         <div className="mt-3 border-t border-line pt-4">
-          <div className="mb-3 flex flex-col gap-2 px-2">
-            <LanguageSwitcher className="w-full justify-center" />
-            <ThemeToggle className="w-full justify-center" />
+          <div className="mb-3 flex items-center justify-center gap-2 px-2">
+            <LanguageSwitcher className="shrink-0" />
+            <ThemeToggle className="shrink-0" />
           </div>
           <div className="flex items-center gap-3 px-2">
             <SidebarUser profile={profile} />

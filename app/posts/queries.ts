@@ -86,11 +86,6 @@ function parsePhoto(value: unknown) {
 
 function emptyReactionCounts(): PostReactionCounts {
   return {
-    love: 0,
-    laugh: 0,
-    wow: 0,
-    sad: 0,
-    angry: 0,
     like: 0,
   };
 }

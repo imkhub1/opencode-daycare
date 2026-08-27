@@ -18,7 +18,15 @@ export type IconName =
   | "user"
   | "users";
 
-export function Icon({ name, className = "" }: { name: IconName; className?: string }) {
+export function Icon({
+  name,
+  className = "",
+  filled = false,
+}: {
+  name: IconName;
+  className?: string;
+  filled?: boolean;
+}) {
   const paths: Record<IconName, ReactNode> = {
     bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></>,
     camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></>,
@@ -38,5 +46,5 @@ export function Icon({ name, className = "" }: { name: IconName; className?: str
     users: <><circle cx="9" cy="7" r="3" /><circle cx="17" cy="9" r="2.4" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 20a5.5 5.5 0 0 1 5.5-4.9" /></>,
   };
 
-  return <svg aria-hidden="true" className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
+  return <svg aria-hidden="true" className={className} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{paths[name]}</svg>;
 }
