@@ -58,6 +58,7 @@ Fill `.env.local` with values from the Supabase project and the email provider b
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `NEXT_PUBLIC_SUPABASE_URL`             | Supabase project URL used by browser and server clients.                                               |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key used by browser and server clients.                                           |
+| `SUPABASE_SERVICE_ROLE_KEY`            | Server-only key used to load invitation previews; never expose it to the browser.                     |
 | `RESEND_API_KEY`                       | Server-only Resend API key for invitation emails.                                                      |
 | `RESEND_FROM_EMAIL`                    | Verified sender address for invitation emails.                                                         |
 | `RESEND_REPLY_TO`                      | Optional reply-to address.                                                                             |
@@ -65,6 +66,37 @@ Fill `.env.local` with values from the Supabase project and the email provider b
 | `NEXT_PUBLIC_APP_URL`                  | Public application origin used to build activation links, for example `http://localhost:3000` locally. |
 
 `SUPABASE_DB_PASSWORD` is only for Supabase CLI operations. It is not used by the Next.js runtime and must not be exposed to the browser. Do not commit `.env.local` or any real credentials.
+
+## Hosting and Local Demo
+
+This repository intentionally has no hosted application deployment. The complete application is meant to be downloaded and run locally with a Next.js server.
+
+GitHub Pages is not a supported host for the complete application. A static export would disable the request-time features used here: `proxy.ts`, cookies, Supabase SSR/Auth, Server Actions, private Storage URLs, and server-only environment variables. The public GitHub repository is available for source review, but it is not a live application demo.
+
+No demo account or shared test credentials are published. To exercise authenticated routes, use a Supabase project you control or an account provided separately by the project owner. Never add credentials to the repository.
+
+## Local Verification
+
+From the repository root:
+
+```bash
+npm ci
+cp .env.template .env.local
+# Fill .env.local with the required Supabase, Resend, invitation-key, and app-URL values.
+npm run dev
+```
+
+Open `http://localhost:3000`. The public routes are `/login`, `/activate`, and the Auth callback routes. Authenticated staff/admin flows require matching Supabase profiles, rooms, children, and invitations; this repository does not publish shared demo data.
+
+Run the quality checks before considering a local checkout complete:
+
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+The known global lint baseline is limited to the generated `references/pantallas/support.js` file; application source is checked separately in the project workflow.
 
 ## Supabase CLI Authentication
 
