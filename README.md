@@ -130,6 +130,25 @@ supabase link --project-ref buhfslxahextimvdfveh
 
 Use `supabase migration list --linked` to inspect migration history. Database changes for this project must be reviewed as versioned migration files before they are applied.
 
+### Prepare a database for local testing
+
+After `supabase init`, choose one database that you control:
+
+```bash
+# Local Supabase stack (requires Docker Desktop)
+supabase start
+supabase db reset --local
+```
+
+```bash
+# A linked hosted Supabase project
+supabase link --project-ref YOUR_PROJECT_REF
+supabase migration list --linked
+supabase db push --linked
+```
+
+Do not push these migrations to the shared course project or to a third-party project without its owner's approval. The repository contains no public seed data or demo credentials; create test users and daycare data in the database you selected.
+
 ## OpenCode and Supabase MCP
 
 OpenCode reads the project configuration from `opencode.json` when it is started from this repository. The project configuration contains:
