@@ -343,16 +343,16 @@ using (
       and (select private.current_user_can_interact_with_post(p.id))
     )
   )
-with check (
-  post_reactions.user_id = (select auth.uid())
-  and (select private.current_user_is_active())
-  and exists (
-    select 1
-    from public.posts p
-    where p.id = post_reactions.post_id
-      and p.status = 'published'::public.post_status
-      and (select private.current_user_can_interact_with_post(p.id))
-  )
+  with check (
+    post_reactions.user_id = (select auth.uid())
+    and (select private.current_user_is_active())
+    and exists (
+      select 1
+      from public.posts p
+      where p.id = post_reactions.post_id
+        and p.status = 'published'::public.post_status
+        and (select private.current_user_can_interact_with_post(p.id))
+    )
 );
 
 create policy "post_reactions_delete_policy"

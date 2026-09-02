@@ -412,7 +412,7 @@ The implementation should use these concrete paths unless an existing project co
 | --- | --- |
 | Database row is created but Resend fails | Keep `pending/failed`, preserve encrypted token and expiry, show retry, and never report success. |
 | Resend accepts an email but the delivery update fails | Use a stable idempotency key, retry the same row, and document the 24-hour idempotency limit. |
-| Five-character tokens are brute-forced | Use an unambiguous random alphabet, hash validation, single-use status, seven-day expiry, generic errors, and rate limiting at the server/provider boundary if available. |
+| Five-character tokens are brute-forced | Use an unambiguous random alphabet, hash validation, single-use status, seven-day expiry, generic errors, and require a shared server/provider rate limiter before exposing the public preview in production. |
 | Encrypted token cannot be retried after key loss | Require `PARENT_INVITATION_CODE_KEY` to be managed as deployment secret and document that key rotation needs a migration strategy. |
 | Client metadata escalates a parent to staff/admin or another daycare | Derive parent role, status, and daycare from the invitation in the trusted trigger/function; never authorize from user metadata. |
 | RLS leaks emails or tokens to parents | Revoke direct invitation grants and expose only safe preview/function results; test anonymous, parent, inactive, and cross-daycare sessions. |

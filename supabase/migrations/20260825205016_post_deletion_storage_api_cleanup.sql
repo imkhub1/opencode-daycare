@@ -1,5 +1,5 @@
 -- Migration: 20260825204217_post_deletion_storage_api_cleanup.sql
--- Description: Remove the invalid SQL Storage cleanup trigger and authorize Storage API deletion for post photos.
+-- Description: Remove the invalid SQL Storage cleanup trigger and authorize Storage API deletion for published post photos.
 
 create or replace function private.current_user_can_delete_post_photo_storage(
   p_object_name text
@@ -15,6 +15,7 @@ as $$
     from public.post_photos pp
     join public.posts p on p.id = pp.post_id
     where pp.storage_path = p_object_name
+      and p.status = 'published'::public.post_status
       and private.current_user_can_delete_post(p.id)
   )
   or exists (
