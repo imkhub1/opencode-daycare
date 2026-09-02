@@ -52,7 +52,7 @@ export function PostCard({ post, canDelete = false, dictionary }: { post: FeedPo
           <span className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-extrabold tracking-wide ${postStyle[post.type]}`}>
             {dictionary.postTypes[post.type]}
           </span>
-          {canDelete && <DeletePostButton postId={post.id} />}
+          {canDelete && <DeletePostButton postId={post.id} dictionary={dictionary} />}
         </div>
       </div>
       <p className="mb-2.5 text-xs text-subtle">{audience}</p>

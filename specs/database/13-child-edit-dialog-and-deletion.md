@@ -1,13 +1,14 @@
 # SPEC 13 — Child Edit Dialog and Permanent Deletion
 
 > **Status:** Implemented
+> **Amendment:** Approved 2026-09-02 - preserve historical photo-consent decisions after child deletion.
 > **Depends on:** SPEC 05, SPEC 10, SPEC 11, SPEC 12
 > **Date:** 2026-08-25
-> **Objective:** Replace standalone child editing with an accessible in-page edit dialog and add authorized permanent child deletion that removes only child-owned links while preserving shared posts and media.
+> **Objective:** Replace standalone child editing with an accessible in-page edit dialog and add authorized permanent child deletion that removes only child-owned links while preserving shared posts and media while honoring historical photo-consent decisions.
 
 ## Why this spec exists
 
-SPEC 10 established persisted child lifecycle management, SPEC 11 added invitations and parent-child links, and SPEC 12 added child recipient snapshots for posts with private photos. The current staff profile exposes two edit CTAs and still renders a standalone edit form, while the existing `ON DELETE RESTRICT` foreign keys intentionally prevent direct child deletion. This spec consolidates child editing into the established dialog interaction and defines one restricted database deletion boundary without destroying shared room history or media.
+SPEC 10 established persisted child lifecycle management, SPEC 11 added invitations and parent-child links, and SPEC 12 added child recipient snapshots for posts with private photos. The current staff profile exposes two edit CTAs and still renders a standalone edit form, while the existing `ON DELETE RESTRICT` foreign keys intentionally prevent direct child deletion. This spec consolidates child editing into the established dialog interaction and defines one restricted database deletion boundary without destroying shared room history or media. The approved amendment preserves a private record of photo-consent denials so removing the child relationship cannot make previously denied photos visible.
 
 ## Scope
 
@@ -24,6 +25,8 @@ SPEC 10 established persisted child lifecycle management, SPEC 11 added invitati
 - Redirect direct `/staff/kids/[childId]/edit` requests to `/staff/kids/[childId]` so the standalone form is never rendered.
 - Delete invitations, `parent_children` links, and `post_children` associations before deleting the child row.
 - Preserve parent users, Supabase Auth accounts, posts, `post_photos` rows, and Storage objects.
+- Record private post-level photo-consent blocks before removing `post_children` associations when the deleted child has `photo_consent = false`.
+- Acquire invitation locks before the child lock so child deletion and invitation acceptance use the same lock order.
 - Keep edit, archive, and deletion failures inline in the dialog.
 - Preserve the accessible modal behavior established by `ParentLinkDialog`.
 - Require implementation on a new branch before any code or migration edit.
@@ -40,7 +43,11 @@ SPEC 10 established persisted child lifecycle management, SPEC 11 added invitati
 
 ## Data model
 
-This feature introduces no new tables, columns, enums, or Storage objects. It adds one versioned database function and one application deletion-action state while reusing the existing child, invitation, parent-link, post-recipient, post, and photo models.
+The base feature adds one versioned database function and one application deletion-action state while reusing the existing child, invitation, parent-link, post-recipient, post, and photo models. The approved amendment adds one private table; it exposes no Data API table, column, enum, or Storage object.
+
+### Historical photo-consent blocks
+
+The follow-up migration creates `private.post_photo_consent_blocks` with `post_id`, `deleted_child_id`, and `created_at`. It stores only the identity of the retained post and deleted child whose photo consent was false. The table has no public grants or policies and is used by the existing photo-metadata and Storage authorization helpers.
 
 ### Restricted deletion function
 
@@ -59,9 +66,10 @@ The function must:
 - Resolve the caller with `auth.uid()` and reject a missing authenticated identity.
 - Resolve the caller's `public.users` row and require `status = 'active'` with `role in ('staff', 'admin')`.
 - Resolve the child's daycare through `public.children.room_id -> public.rooms.daycare_id` and require it to equal the caller's `users.daycare_id`.
-- Lock the target child row with `FOR UPDATE` before checking or deleting dependencies.
+- Lock target invitation rows in stable ID order, then lock the target child row with `FOR UPDATE` before checking or deleting dependencies. This matches `accept_parent_invitation` and prevents an invitation/child lock cycle.
 - Accept both `active` and `archived` child rows.
 - Delete in this exact dependency order: `public.invitations`, `public.parent_children`, `public.post_children`, then `public.children`.
+- Before deleting `public.post_children`, insert a block for every associated post when the locked child has `photo_consent = false`.
 - Run all deletes inside the one function transaction without an intermediate commit.
 - Return success only after the child row has been deleted; raise one safe generic failure for missing, unauthorized, cross-daycare, or otherwise unavailable children.
 - Qualify every relation and callable object because the function uses an empty fixed `search_path`.
@@ -78,7 +86,7 @@ The deletion transaction must not delete or update:
 - `public.post_photos` rows.
 - `storage.objects` rows or physical objects in the `post-photos` bucket.
 
-Deleting `post_children` removes the deleted child from each post's recipient snapshot, but the post record, its shared-room history, its photo metadata, and its Storage object remain. Existing visibility rules determine whether a parent can still see a historical post after that child's relationship is removed; this spec does not add a new post-visibility rule.
+Deleting `post_children` removes the deleted child from each post's recipient snapshot, but the post record, its shared-room history, its photo metadata, and its Storage object remain. A private block prevents photo metadata from being returned and prevents signed Storage URLs for any retained post that was associated with the deleted child when consent was false. The post body remains subject to the existing post visibility rules.
 
 ### Privileges and RLS boundary
 
@@ -88,6 +96,7 @@ The migration must explicitly preserve the direct-table security boundary:
 - Revoke all default execution on `public.delete_child(uuid)` from `PUBLIC`, `anon`, and `authenticated` before granting only `EXECUTE` to `authenticated`.
 - Add no broad `DELETE` policy to any table.
 - Keep table RLS enabled and keep direct table `DELETE` unavailable even though the function runs as `SECURITY DEFINER`.
+- Keep `private.post_photo_consent_blocks` inaccessible to `PUBLIC`, `anon`, `authenticated`, and `service_role`; only the security-definer deletion and photo-authorization helpers may use it.
 - Do not use client-supplied role, status, daycare, or Auth metadata as authorization input.
 
 The `SECURITY DEFINER` function is deliberately placed in `public` because the application calls the named public RPC. Its explicit identity, active-role, same-daycare, fixed-search-path, revoke-by-default, and authenticated-only checks are mandatory mitigations for the elevated execution context.
@@ -166,6 +175,7 @@ The implementation should be limited to these concrete paths:
 - `app/staff/kids/[childId]/page.tsx` — load the authorized room options required by the reused child form and pass them to the profile dialog.
 - `app/staff/kids/[childId]/edit/page.tsx` — replace the standalone form page with the profile redirect.
 - `supabase/migrations/<timestamp>_delete_child.sql` — create the restricted transactional `public.delete_child(uuid)` function and its privilege boundary.
+- `supabase/migrations/<timestamp>_preserve_deleted_child_photo_consent.sql` — add the private photo-consent block table, consistent deletion lock order, and retained-photo authorization filters.
 
 No Storage API change, Storage migration, configuration change, `ParentLinkDialog` change, or additional application file is expected.
 
@@ -175,6 +185,7 @@ Each step is an independent reviewable work unit. Keep its focused verification 
 
 1. **Open the implementation branch before editing.** After this spec is reviewed and marked `Approved`, start `/spec-impl 13-child-edit-dialog-and-deletion` so the current `AutoCreateBranch: true` workflow creates and switches to `spec-13-child-edit-dialog-and-deletion`. Do not edit code or migrations before the branch exists; keep this Draft creation on the current branch. Confirm the unrelated pending worktree changes are not staged or modified.
 2. **Add the database deletion boundary.** Create exactly one timestamped `supabase/migrations/<timestamp>_delete_child.sql` through the approved migration workflow. Implement the fixed-search-path `SECURITY DEFINER` function, caller and tenant checks, child row lock, ordered dependency deletes, revocations, authenticated-only execute grant, and no-delete-policy boundary. Apply it only through the project-approved Supabase workflow, then perform focused catalog and controlled fixture verification before committing `feat(db): add restricted child deletion function`.
+2a. **Add the approved historical photo-consent boundary.** Create the follow-up `supabase/migrations/<timestamp>_preserve_deleted_child_photo_consent.sql` through the approved migration workflow. Add the private block table, invitation-before-child lock order, pre-association block insert, and feed/photo/Storage authorization filters. Verify that retained posts and media rows/objects remain while denied photos are inaccessible before committing the corresponding database work unit.
 3. **Add the server deletion action.** In `app/kids/actions.ts`, add `deleteChild` with UUID validation, current-name comparison, safe error mapping, the `delete_child` RPC call, and directory/profile revalidation. Keep `updateChild`, `archiveChild`, and `restoreChild` as the existing mutation paths. Verify invalid UUIDs, mismatched names, unauthorized RPC errors, and successful state serialization before committing `feat(kids): add authorized child deletion action`.
 4. **Replace the profile edit entry point with the dialog.** In `components/kids.tsx`, remove the small name-adjacent edit CTA and wire the sole primary `Editar datos` trigger to an in-page dialog. Reuse `ChildFormFields` and `updateChild`, initialize persisted values, preserve local/server validation, implement the `ParentLinkDialog` accessibility contract, and close-refresh-focus on success. Verify that opening the dialog does not change the URL and that edit failures preserve values before committing `feat(kids): move child editing into accessible dialog`.
 5. **Move lifecycle controls and add typed-name deletion.** Render archive/restore and permanent deletion together inside the dialog, preserve archive confirmation and lifecycle destinations, add the exact-name gate for both child statuses, keep all errors inline, and route successful deletion to `/staff/kids`. Verify active and archived controls, disabled/enabled confirmation states, pending behavior, and focus restoration before committing `feat(kids): add confirmed child deletion controls`.
@@ -188,12 +199,13 @@ If the authored implementation exceeds the repository's 400-line review budget, 
 
 - [ ] The implementation branch is created and checked out as `spec-13-child-edit-dialog-and-deletion` before any code or migration edit.
 - [ ] The spec itself was created on the current branch and remains `Draft` until explicitly approved.
-- [ ] The implementation changes only `components/kids.tsx`, `app/kids/actions.ts`, `app/staff/kids/[childId]/page.tsx`, `app/staff/kids/[childId]/edit/page.tsx`, this spec, and one new `supabase/migrations/<timestamp>_delete_child.sql`.
+- [ ] The implementation changes only the listed child-management paths, this spec, the base `delete_child` migration, and the approved follow-up photo-consent migration.
 - [ ] No Storage API, Storage policy, Auth account, configuration, or unrelated pending worktree change is modified.
 
 ### Database authorization and tenant isolation
 
 - [ ] The versioned migration creates `public.delete_child(uuid)` as a `SECURITY DEFINER` PL/pgSQL function with `set search_path = ''` and schema-qualified references.
+- [ ] The approved follow-up migration creates `private.post_photo_consent_blocks` with no public/Data API grants or policies.
 - [ ] The function rejects a null or unavailable `auth.uid()` and derives authorization from the caller's `public.users` row rather than editable Auth metadata.
 - [ ] The function permits only active `staff` and `admin` callers.
 - [ ] The function derives the target daycare through the child's room and rejects a child outside the caller's daycare without revealing cross-tenant details.
@@ -201,6 +213,7 @@ If the authored implementation exceeds the repository's 400-line review budget, 
 - [ ] Anonymous, parent, inactive, malformed, missing, and cross-daycare calls cannot delete a child.
 - [ ] Direct authenticated table `DELETE` remains denied, no broad `DELETE` policy is added, and only `authenticated` receives execute permission for the RPC after default execution is revoked.
 - [ ] Deletion executes in one transaction and removes dependencies in the required order: invitations, `parent_children`, `post_children`, then the child row.
+- [ ] Deletion locks target invitations before the child row and records photo-consent blocks before removing `post_children` associations.
 - [ ] A controlled rollback/failure check leaves the child and every dependency intact when the transaction does not complete.
 - [ ] An authorized active same-daycare staff member can delete an active child, and an authorized active same-daycare admin can delete an archived child.
 - [ ] The database security verification is read-only for catalog, grants, policies, function attributes, and foreign-key inspection, apart from explicitly controlled negative or fixture tests whose failed or rolled-back operations leave no persistent mutation.
@@ -213,6 +226,9 @@ If the authored implementation exceeds the repository's 400-line review budget, 
 - [ ] After deletion, every related `public.post_photos` row remains with its metadata unchanged.
 - [ ] After deletion, every related `storage.objects` row and physical Storage object remains unchanged.
 - [ ] The staff/admin feed can still resolve the retained shared-room post history after the child association is removed.
+- [ ] A retained post associated with a deleted child whose `photo_consent` was false has a private photo-consent block, while its post and photo rows and Storage object remain unchanged.
+- [ ] Blocked retained photos are absent from feed metadata and cannot produce signed Storage URLs for staff, admins, or parents.
+- [ ] Deletion locks target invitations before the child row, matching the invitation-acceptance lock order.
 
 ### Edit dialog and lifecycle UI
 
@@ -259,6 +275,8 @@ If the authored implementation exceeds the repository's 400-line review budget, 
 - **No:** Change the existing child foreign keys to `CASCADE`. Cascades would make it easier to delete shared posts, photos, or accounts accidentally and would weaken the reviewable deletion boundary.
 - **Yes:** Preserve posts, post-photo metadata, and Storage objects. Posts are room history shared beyond one child and are not child-owned records.
 - **No:** Delete parent users, Auth accounts, posts, `post_photos`, or Storage objects as part of child removal. Their lifecycle belongs to separate domains.
+- **Yes:** Preserve a private post-level block when a deleted child had photo consent disabled. Retaining the rows must not make a previously denied photo accessible through the remaining post.
+- **Yes:** Lock invitations before the child row during deletion. Invitation acceptance already uses that order, so both transactions avoid an invitation/child deadlock cycle.
 - **Yes:** Keep the old `/staff/kids/[childId]/edit` URL as a redirect. Existing links remain useful without preserving a second form implementation.
 - **No:** Add a new route or change the profile route's existing 404 contract. The profile remains the canonical child destination.
 - **Yes:** Create the implementation branch only after this Draft is approved. The current `AutoCreateBranch: true` workflow owns branch creation, while spec creation remains on the current branch.
@@ -271,28 +289,28 @@ If the authored implementation exceeds the repository's 400-line review budget, 
 | `SECURITY DEFINER` bypasses ordinary RLS checks | Require `auth.uid()`, an active `public.users` profile, `staff`/`admin` role, same-daycare ownership, a fixed empty `search_path`, fully qualified names, revoked default execution, and authenticated-only execute; verify the catalog state. |
 | A cross-daycare UUID is submitted directly | Derive daycare through `children -> rooms`, compare it with the caller profile inside the locked database function, and return a generic failure. |
 | A new dependency is added later and blocks deletion or causes an unsafe workaround | Keep the existing `ON DELETE RESTRICT` constraints, verify the dependency catalog before applying the migration, and fail the transaction instead of broadening the delete scope. |
-| A partial delete leaves orphaned or inconsistent child links | Lock the child, delete all required dependencies in one function transaction, and verify rollback behavior with a controlled fixture. |
+| A partial delete leaves orphaned or inconsistent child links | Lock target invitations first and the child second, delete all required dependencies in one function transaction, and verify rollback behavior with a controlled fixture. |
 | Shared history or private media is deleted accidentally | The function deletes only child-owned/link rows; it never references `posts`, `post_photos`, or `storage.objects`, and post/media counts and object metadata are checked before and after the fixture deletion. |
-| A parent loses access to historical posts after `post_children` removal | Document that the recipient association is intentionally removed while the shared post and media remain; do not silently retain a child link that would violate the required dependency cleanup. |
+| A denied photo becomes accessible after `post_children` removal | Insert a private block before removing the association, apply it to feed photo metadata and Storage authorization, and verify the retained post body/media-row/object boundary separately. |
 | A rename races with typed-name confirmation | Validate the name again in the server action against the current child row and let the locked RPC fail safely if the target is no longer available. |
 | The modal overflows or traps focus on small screens | Mirror `ParentLinkDialog` focus and dismissal behavior, use internal viewport-constrained scrolling, and verify both required Playwright viewports for overflow and keyboard behavior. |
 | Old bookmarks still expect a standalone form | Redirect the old edit URL to the canonical profile and verify that invalid or deleted UUIDs still resolve through the profile's existing not-found behavior. |
 
 ## Verification
 
-**Status:** Implemented and verified.
+**Status:** Base implementation verified; approved photo-consent amendment pending migration verification.
 
-- **Implementation:** The edit dialog, lifecycle controls, exact-name deletion flow, direct-edit redirect, server action, and restricted migration are implemented on `spec-13-child-edit-dialog-and-deletion` without commits.
-- **Database:** The migration is applied and read-only catalog verification confirmed the function, fixed empty `search_path`, `SECURITY DEFINER`, authenticated-only execution, revoked direct deletes, enabled RLS, and unchanged restrictive foreign keys. No destructive fixture was run because no safe authenticated fixture harness was available.
+- **Implementation:** The edit dialog, lifecycle controls, exact-name deletion flow, direct-edit redirect, server action, restricted base migration, and approved photo-consent amendment are implemented locally without commits.
+- **Database:** The base migration is applied and read-only catalog verification confirmed the function, fixed empty `search_path`, `SECURITY DEFINER`, authenticated-only execution, revoked direct deletes, enabled RLS, and unchanged restrictive foreign keys. The approved photo-consent amendment is local-only and has not been applied or fixture-tested.
 - **Application checks:** `npx tsc --noEmit`, `./node_modules/.bin/eslint app components utils proxy.ts`, `npm run build`, and `git diff --check` passed on the final candidate.
 - **Browser evidence:** Authenticated desktop/mobile checks passed for the single edit CTA, modal semantics, fields, exact-name gate, focus trapping/restoration, internal scrolling, no horizontal overflow, direct-edit redirect, console, and network behavior. Controlled fixtures proved create/archive/restore/delete cleanup, 404 behavior, and preservation of users, posts, post photos, and Storage objects.
 - **Post-deletion redirect:** Two controlled fixtures exposed that client-side navigation occurred after the deleted profile had already rendered its 404. Moving the successful redirect into the Server Action outside its error-catching `try` fixed the race. A final authorized fixture proved immediate navigation to `/staff/kids`, no transient deleted-profile 404, complete child/link cleanup, retained shared counts, and zero console or request errors.
 
 - **Branch evidence:** Confirm the implementation checkout is `spec-13-child-edit-dialog-and-deletion` before inspecting implementation diffs.
-- **Database evidence:** Apply the one versioned migration through the approved Supabase workflow, inspect function attributes, `search_path`, grants, RLS policies, foreign-key actions, and table privileges with read-only catalog queries, then run controlled active/archived, role, tenant, dependency, rollback, retention, and direct-delete-denial checks.
+- **Database evidence:** Apply the base and approved follow-up versioned migrations through the approved Supabase workflow, inspect function attributes, `search_path`, grants, RLS policies, foreign-key actions, and table privileges with read-only catalog queries, then run controlled active/archived, role, tenant, dependency, rollback, retention, photo-consent, and direct-delete-denial checks.
 - **Application evidence:** Run `npx tsc --noEmit`, `./node_modules/.bin/eslint app components utils proxy.ts`, and `npm run build`. Report the known generated reference-file lint baseline separately if a global lint command is used.
 - **Browser evidence:** Use Playwright at `1280 × 800` and `375 × 667` to verify the profile edit dialog, edit success/failure, archive confirmation, restore, typed-name deletion, inline errors, focus restoration, direct-edit redirect, deleted-profile 404, retained shared history, and no horizontal overflow.
-- **Review evidence:** Keep focused verification with each work-unit commit, review the complete diff for accidental Storage/API/config changes, and record the final acceptance results before changing the spec state from `Draft`.
+- **Review evidence:** Keep focused verification with each work-unit commit, review the complete diff for accidental Storage/API/config changes, and record the final acceptance results before closing the approved amendment.
 
 ## What is **not** in this spec
 
@@ -300,6 +318,7 @@ If the authored implementation exceeds the repository's 400-line review budget, 
 - Child recovery, recycle-bin behavior, audit history, or bulk deletion.
 - Independent parent-link or invitation deletion management outside deleting the child.
 - Deletion or modification of parent users, Supabase Auth accounts, posts, `post_photos`, or Storage objects.
+- Public exposure of the photo-consent block table or a new Storage object lifecycle.
 - Storage API, Storage policy, Auth configuration, room-management, or post-management changes.
 - Any implementation, migration application, branch change, configuration change, or unrelated worktree modification while this document remains a Draft.
 

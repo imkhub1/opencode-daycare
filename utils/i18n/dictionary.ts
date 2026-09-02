@@ -15,6 +15,10 @@ export type Dictionary = {
   common: Record<string, string>;
   auth: Record<string, string>;
   navigation: Record<string, string>;
+  family: {
+    title: string;
+    description: string;
+  };
   feed: Record<string, string>;
   posts: Record<string, string>;
   kids: {
@@ -34,6 +38,7 @@ export type Dictionary = {
     fullName: string;
     fullNamePlaceholder: string;
     birthDate: string;
+    birthDatePlaceholder: string;
     enrollmentDate: string;
     allergies: string;
     allergiesPlaceholder: string;
@@ -119,6 +124,8 @@ const spanish: Dictionary = {
   common: {
     cancel: "Cancelar",
     close: "Cerrar",
+    deletePost: "Eliminar publicación",
+    deletePostConfirmation: "¿Eliminar esta publicación?",
     save: "Guardar",
     saving: "Guardando…",
     deleting: "Eliminando…",
@@ -154,6 +161,11 @@ const spanish: Dictionary = {
     activateAccount: "Activá tu cuenta",
     activationTitle: "Bienvenida a OpenDayCare",
     activationDescription: "Te invitaron a seguir el día de tu hijo. Completa tus datos para activar la cuenta.",
+    invitationPreviewLabel: "INVITACIÓN PARA",
+    invitationPreview: "{daycare} te invitó a seguir el día de {child}.",
+    invitationRelationship: "Parentesco",
+    invitedEmailReadOnly: "Este email pertenece a la invitación y no se puede cambiar.",
+    verifyInvitation: "Verificar código",
     blockedSession: "Cierra la sesión actual y vuelve a abrir este enlace con la cuenta del padre invitado.",
     invitationCode: "CÓDIGO DE INVITACIÓN",
     invitedEmail: "EMAIL AL QUE RECIBISTE LA INVITACIÓN",
@@ -203,6 +215,10 @@ const spanish: Dictionary = {
     family: "Familia",
     account: "Cuenta",
     logout: "Cerrar sesión",
+  },
+  family: {
+    title: "Tu espacio familiar",
+    description: "Estamos preparando este espacio para que puedas acompañar el día de tu hijo.",
   },
   feed: {
     daycareRoom: "GUARDERÍA · SALA {room}",
@@ -279,6 +295,7 @@ const spanish: Dictionary = {
     fullName: "NOMBRE COMPLETO",
     fullNamePlaceholder: "Ej. Martina López",
     birthDate: "FECHA DE NACIMIENTO",
+    birthDatePlaceholder: "DD/MM/AAAA",
     enrollmentDate: "FECHA DE INSCRIPCIÓN",
     allergies: "ALERGIAS (ETIQUETAS)",
     allergiesPlaceholder: "Ej. Maní, Lactosa",
@@ -350,6 +367,9 @@ const spanish: Dictionary = {
     retryDelivery: "Reintentar envío",
     saveChanges: "Guardar cambios",
     sendingRetry: "Reintentando…",
+    cancelInvitation: "Cancelar invitación",
+    cancelling: "Cancelando…",
+    cancelConfirmation: "¿Cancelar la invitación de {name}?",
   },
   pending: {
     title: "Acceso pendiente",
@@ -447,6 +467,8 @@ const english: Dictionary = {
   common: {
     cancel: "Cancel",
     close: "Close",
+    deletePost: "Delete post",
+    deletePostConfirmation: "Delete this post?",
     save: "Save",
     saving: "Saving…",
     deleting: "Deleting…",
@@ -482,6 +504,11 @@ const english: Dictionary = {
     activateAccount: "Activate your account",
     activationTitle: "Welcome to OpenDayCare",
     activationDescription: "You were invited to follow your child's day. Complete your details to activate your account.",
+    invitationPreviewLabel: "INVITATION FOR",
+    invitationPreview: "{daycare} invited you to follow {child}'s day.",
+    invitationRelationship: "Relationship",
+    invitedEmailReadOnly: "This email belongs to the invitation and cannot be changed.",
+    verifyInvitation: "Verify code",
     blockedSession: "Sign out of the current session and reopen this link with the invited parent's account.",
     invitationCode: "INVITATION CODE",
     invitedEmail: "EMAIL THAT RECEIVED THE INVITATION",
@@ -531,6 +558,10 @@ const english: Dictionary = {
     family: "Family",
     account: "Account",
     logout: "Sign out",
+  },
+  family: {
+    title: "Your family space",
+    description: "We are preparing this space so you can follow your child's day.",
   },
   feed: {
     daycareRoom: "DAYCARE · ROOM {room}",
@@ -607,6 +638,7 @@ const english: Dictionary = {
     fullName: "FULL NAME",
     fullNamePlaceholder: "e.g. Martina López",
     birthDate: "DATE OF BIRTH",
+    birthDatePlaceholder: "DD/MM/YYYY",
     enrollmentDate: "ENROLLMENT DATE",
     allergies: "ALLERGIES (TAGS)",
     allergiesPlaceholder: "e.g. Peanuts, Lactose",
@@ -678,6 +710,9 @@ const english: Dictionary = {
     retryDelivery: "Retry delivery",
     saveChanges: "Save changes",
     sendingRetry: "Retrying…",
+    cancelInvitation: "Cancel invitation",
+    cancelling: "Canceling…",
+    cancelConfirmation: "Cancel the invitation for {name}?",
   },
   pending: {
     title: "Access pending",

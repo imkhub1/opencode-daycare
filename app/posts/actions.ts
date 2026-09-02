@@ -23,6 +23,7 @@ import { getCurrentAppProfile } from "@/utils/supabase/profile";
 import type { AppProfile } from "@/utils/supabase/profile";
 import { getServerDictionary } from "@/utils/i18n/server";
 import { getDictionary, DEFAULT_LOCALE } from "@/utils/i18n/dictionary";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -293,20 +294,9 @@ export async function deletePost(
     return { success: false, message: deleteError };
   }
 
-  if (photoPaths.length > 0) {
-    const { data: removedPhotos, error: storageError } = await supabase.storage
-      .from(POST_PHOTO_BUCKET)
-      .remove(photoPaths);
-
-    if (
-      storageError ||
-      !removedPhotos ||
-      removedPhotos.length !== photoPaths.length ||
-      new Set(removedPhotos.map((photo) => photo.name)).size !== photoPaths.length ||
-      photoPaths.some((path) => !removedPhotos.some((photo) => photo.name === path))
-    ) {
-      return { success: false, message: deleteError };
-    }
+  const adminSupabase = photoPaths.length > 0 ? createAdminClient() : null;
+  if (photoPaths.length > 0 && !adminSupabase) {
+    return { success: false, message: deleteError };
   }
 
   const { data, error } = await supabase
@@ -318,6 +308,25 @@ export async function deletePost(
 
   if (error || !data) {
     return { success: false, message: dictionary.actions.posts.deletePermission };
+  }
+
+  if (photoPaths.length > 0 && adminSupabase) {
+    const { data: removedPhotos, error: storageError } = await adminSupabase.storage
+      .from(POST_PHOTO_BUCKET)
+      .remove(photoPaths);
+
+    if (
+      storageError ||
+      !removedPhotos ||
+      removedPhotos.length !== photoPaths.length ||
+      new Set(removedPhotos.map((photo) => photo.name)).size !== photoPaths.length ||
+      photoPaths.some((path) => !removedPhotos.some((photo) => photo.name === path))
+    ) {
+      console.error("Post deleted but photo cleanup failed", {
+        postId,
+        photoCount: photoPaths.length,
+      });
+    }
   }
 
   revalidatePath("/staff");

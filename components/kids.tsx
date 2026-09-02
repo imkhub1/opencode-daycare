@@ -53,6 +53,13 @@ const avatarTones = [
 
 type FormErrors = Partial<Record<keyof ChildFormValues, string>>;
 type MoveError = { childId: string; message: string } | null;
+const childFieldOrder = ["fullName", "birthDate", "enrolledAt", "roomId"] as const;
+
+function focusFirstInvalidChildField(container: HTMLElement | null, errors: FormErrors) {
+  const fieldName = childFieldOrder.find((name) => errors[name]);
+  if (fieldName) container?.querySelector<HTMLElement>(`[name="${fieldName}"]`)?.focus();
+}
+
 function InitialAvatar({ name, large = false }: { name: string; large?: boolean }) {
   const { locale } = useLocale();
   const initial = name.trim().charAt(0).toLocaleUpperCase(locale) || "N";
@@ -115,7 +122,7 @@ function ageFromIsoDate(value: string, locale: Locale) {
 
 function validateLocally(values: ChildFormValues, dictionary: Dictionary): FormErrors {
   const errors: FormErrors = {};
-  const birthDate = isValidIsoDate(values.birthDate) ? values.birthDate : null;
+  const birthDate = parseBirthDateInput(values.birthDate);
 
   if (!values.fullName.trim()) errors.fullName = dictionary.kids.validation.fullName;
   if (!birthDate) errors.birthDate = dictionary.kids.validation.birthDate;
@@ -148,13 +155,33 @@ function emptyForm(rooms: Room[]): ChildFormValues {
 function childFormValues(child: Child): ChildFormValues {
   return {
     fullName: child.fullName.trim(),
-    birthDate: child.birthDate.slice(0, 10),
+    birthDate: displayBirthDate(child.birthDate),
     enrolledAt: child.enrolledAt.slice(0, 10),
     roomId: child.roomId,
     allergies: child.allergyTags.join(", "),
     medicalNotes: child.medicalNotes ?? "",
     photoConsent: child.photoConsent,
   };
+}
+
+function formatBirthDateInput(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function parseBirthDateInput(value: string) {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
+  if (!match) return null;
+
+  const isoDate = `${match[3]}-${match[2]}-${match[1]}`;
+  return isValidIsoDate(isoDate) ? isoDate : null;
+}
+
+function displayBirthDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : "";
 }
 
 function normalizeAllergyValues(value: string) {
@@ -240,14 +267,16 @@ function ChildFormFields({
           </span>
           <input
             id={`${idPrefix}-birth-date`}
-            type="date"
+            type="text"
+            inputMode="numeric"
             name="birthDate"
             required
             disabled={disabled}
             aria-invalid={Boolean(errors.birthDate)}
             aria-describedby={errors.birthDate ? `${idPrefix}-birth-date-error` : undefined}
             value={values.birthDate}
-            onChange={(event) => update("birthDate", event.target.value)}
+            onChange={(event) => update("birthDate", formatBirthDateInput(event.target.value))}
+            placeholder={dictionary.kids.birthDatePlaceholder}
             className="w-full rounded-[14px] border-[1.5px] border-line bg-surface-raised px-4 py-[13px] text-[15px] text-ink outline-none"
           />
           {errors.birthDate && (
@@ -404,6 +433,10 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
     if (state.success) onSuccess();
   }, [onSuccess, state.success]);
 
+  useEffect(() => {
+    focusFirstInvalidChildField(dialogRef.current, { ...state.errors, ...localErrors });
+  }, [localErrors, state.errors]);
+
   function validate(event: FormEvent<HTMLFormElement>) {
     const errors = validateLocally(values, dictionary);
     setLocalErrors(errors);
@@ -457,13 +490,23 @@ function AddChildDialog({ rooms, onClose, onSuccess }: { rooms: Room[]; onClose:
               {state.message}
             </p>
           )}
-          <button
-            type="submit"
-            disabled={pending}
-            className="mt-[18px] flex w-full items-center justify-center rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-wait disabled:opacity-70"
-          >
-            {pending ? dictionary.common.saving : dictionary.common.save}
-          </button>
+          <div className="mt-[18px] flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={pending}
+              className="w-full rounded-[14px] border border-line bg-surface-raised px-3 py-3.5 text-[15.5px] font-extrabold text-muted disabled:opacity-60 sm:w-auto sm:px-5"
+            >
+              {dictionary.common.cancel}
+            </button>
+            <button
+              type="submit"
+              disabled={pending}
+              className="flex w-full items-center justify-center rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm disabled:cursor-wait disabled:opacity-70 sm:flex-1"
+            >
+              {pending ? dictionary.common.saving : dictionary.common.save}
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -536,6 +579,10 @@ function ChildEditDialog({
       router.refresh();
     }
   }, [onClose, router, state.success]);
+
+  useEffect(() => {
+    focusFirstInvalidChildField(dialogRef.current, { ...state.errors, ...localErrors });
+  }, [localErrors, state.errors]);
 
   function validate(event: FormEvent<HTMLFormElement>) {
     const errors = validateLocally(values, dictionary);
@@ -678,15 +725,21 @@ function DeleteChildButton({
 function ChildCard({
   child,
   archived,
+  rooms,
   onDragStart,
   onDragEnd,
+  onRoomChange,
+  moveDisabled,
   movePending,
   moveError,
 }: {
   child: Child;
   archived: boolean;
+  rooms: Room[];
   onDragStart: (event: DragEvent<HTMLElement>, childId: string) => void;
   onDragEnd: () => void;
+  onRoomChange: (childId: string, roomId: string) => void;
+  moveDisabled: boolean;
   movePending: boolean;
   moveError: string | null;
 }) {
@@ -720,6 +773,24 @@ function ChildCard({
         <span className="shrink-0 text-[11px] font-bold text-muted" aria-live="polite">
           {dictionary.kids.movingChild}
         </span>
+      )}
+      {rooms.length > 1 && (
+        <select
+          aria-label={interpolate(dictionary.kids.moveChild, { name: child.fullName })}
+          value={child.roomId}
+          disabled={moveDisabled}
+          onChange={(event) => onRoomChange(child.id, event.target.value)}
+          className="w-full min-w-0 rounded-[10px] border border-line bg-surface px-2.5 py-2 text-xs font-bold text-muted outline-none focus-visible:border-coral focus-visible:ring-2 focus-visible:ring-coral/30 sm:w-auto"
+        >
+          <option value={child.roomId}>{child.roomName}</option>
+          {rooms
+            .filter((room) => room.id !== child.roomId)
+            .map((room) => (
+              <option key={room.id} value={room.id}>
+                {room.name}
+              </option>
+            ))}
+        </select>
       )}
       {moveError && (
         <p className="basis-full text-xs font-bold text-danger" role="alert">
@@ -902,8 +973,11 @@ export function ChildrenDirectory({
                     key={child.id}
                     child={child}
                     archived={view === "archived"}
+                    rooms={rooms}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
+                    onRoomChange={requestMove}
+                    moveDisabled={isMovePending}
                     movePending={isMovePending && movingChildId === child.id}
                     moveError={moveError?.childId === child.id ? moveError.message : null}
                   />
@@ -989,12 +1063,29 @@ function RetryInvitationButton({
   invitationId: string;
 }) {
   const router = useRouter();
+  const { dictionary } = useLocale();
   const action = retryParentInvitation.bind(null, invitationId);
   const [state, formAction, pending] = useActionState(action, { success: false });
 
-  useEffect(() => {
-    if (state.success) router.refresh();
-  }, [router, state.success]);
+  if (state.success && state.token) {
+    return (
+      <div className="inline-flex flex-col items-start gap-2" role="status">
+        <div className="rounded-xl border border-warning-border bg-warning-panel px-3 py-2 text-center">
+          <p className="text-[10px] font-extrabold tracking-[0.08em] text-warning-strong">
+            {dictionary.invitations.invitationCode}
+          </p>
+          <p className="font-display text-xl font-semibold tracking-[4px] text-warning">{state.token}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => router.refresh()}
+          className="rounded-xl bg-coral-faint px-3 py-2 text-xs font-extrabold text-coral-strong"
+        >
+          {dictionary.invitations.close}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <form action={formAction} className="inline-flex flex-col items-start">
@@ -1003,7 +1094,7 @@ function RetryInvitationButton({
         disabled={pending}
         className="rounded-xl bg-coral-faint px-3 py-2 text-xs font-extrabold text-coral-strong disabled:opacity-60"
       >
-        {pending ? "Reintentando…" : "Reintentar envío"}
+        {pending ? dictionary.invitations.sendingRetry : dictionary.invitations.retryDelivery}
       </button>
       {state.message && !state.success && (
         <p role="alert" className="mt-1 text-xs font-bold text-danger">
@@ -1024,6 +1115,7 @@ function CancelInvitationButton({
   parentName: string;
 }) {
   const router = useRouter();
+  const { dictionary } = useLocale();
   const action = cancelParentInvitation.bind(null, invitationId, childId);
   const [state, formAction, pending] = useActionState(action, {
     success: false,
@@ -1039,7 +1131,7 @@ function CancelInvitationButton({
       action={formAction}
       className="inline-flex flex-col items-start"
       onSubmit={(event) => {
-        if (!window.confirm(`¿Cancelar la invitación de ${parentName}?`)) {
+        if (!window.confirm(interpolate(dictionary.invitations.cancelConfirmation, { name: parentName }))) {
           event.preventDefault();
         }
       }}
@@ -1049,7 +1141,7 @@ function CancelInvitationButton({
         disabled={pending}
         className="rounded-xl border-[1.5px] border-danger-border bg-surface-warm px-3 py-2 text-xs font-extrabold text-danger disabled:opacity-60"
       >
-        {pending ? "Cancelando…" : "Cancelar invitación"}
+        {pending ? dictionary.invitations.cancelling : dictionary.invitations.cancelInvitation}
       </button>
       {state.message && !state.success && (
         <p role="alert" className="mt-1 text-xs font-bold text-danger">
@@ -1189,7 +1281,7 @@ export function ChildProfile({
                           <p className="mt-1.5 text-[12.5px] leading-snug text-subtle">{relationshipLabel(invitation.relationship, dictionary)}</p>
                         </div>
                       </div>
-                      <p className="mt-2 whitespace-nowrap text-[12.5px] leading-snug tracking-[-0.01em] text-subtle">{invitation.email}</p>
+                      <p className="mt-2 break-all text-[12.5px] leading-snug tracking-[-0.01em] text-subtle">{invitation.email}</p>
                       {(invitation.deliveryStatus === "sent" || invitation.deliveryStatus === "failed" || child.status === "active") && (
                         <footer className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-line pt-3">
                           {invitation.deliveryStatus === "failed" && (

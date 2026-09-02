@@ -19,22 +19,12 @@ export default async function StaffChildPage({
 
   if (!child) notFound();
 
-  const [rooms, linkedParentsResult, invitationsResult] = await Promise.all([
+  const [rooms, linkedParents, invitations] = await Promise.all([
     getRooms(),
-    Promise.resolve(getChildParentLinks(child.id)).then(
-      (value) => ({ status: "fulfilled" as const, value }),
-      () => ({ status: "rejected" as const }),
-    ),
-    Promise.resolve(getChildInvitations(child.id)).then(
-      (value) => ({ status: "fulfilled" as const, value }),
-      () => ({ status: "rejected" as const }),
-    ),
+    getChildParentLinks(child.id),
+    getChildInvitations(child.id),
   ]);
   rooms.sort((left, right) => ROOM_ORDER.indexOf(left.name) - ROOM_ORDER.indexOf(right.name));
-  const linkedParents =
-    linkedParentsResult.status === "fulfilled" ? linkedParentsResult.value : [];
-  const invitations =
-    invitationsResult.status === "fulfilled" ? invitationsResult.value : [];
 
   return (
     <ChildProfile
