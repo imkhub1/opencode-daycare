@@ -160,7 +160,10 @@ function validIsoDate(value: string) {
 }
 
 function parseBirthDate(value: string) {
-  const isoDate = value.trim();
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
+  if (!match) return null;
+
+  const isoDate = `${match[3]}-${match[2]}-${match[1]}`;
   return validIsoDate(isoDate) ? isoDate : null;
 }
 

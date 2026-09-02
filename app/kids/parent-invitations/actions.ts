@@ -103,13 +103,18 @@ function readText(formData: FormData, name: string) {
 }
 
 function relationshipFromLabel(value: string): ParentInvitationRelationship | null {
+  const normalizedValue = value.trim();
+  if (RELATIONSHIPS.includes(normalizedValue as ParentInvitationRelationship)) {
+    return normalizedValue as ParentInvitationRelationship;
+  }
+
   return (
     {
       Mamá: "mother", Mother: "mother",
       Papá: "father", Father: "father",
       "Tutor/a": "guardian", Guardian: "guardian",
     } as Record<string, ParentInvitationRelationship>
-  )[value] ?? null;
+  )[normalizedValue] ?? null;
 }
 
 function readFormValues(formData: FormData): ParentInvitationFormValues {

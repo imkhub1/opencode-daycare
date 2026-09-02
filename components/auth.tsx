@@ -19,9 +19,11 @@ import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { createClient } from "@/utils/supabase/client";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { useLocale } from "@/components/shared/LocaleProvider";
-import type { Dictionary } from "@/utils/i18n/dictionary";
+import { interpolate, type Dictionary } from "@/utils/i18n/dictionary";
+import type { InvitationPreview } from "@/app/activate/types";
 
 const RECOVERY_EMAIL_REDIRECT = "/auth/callback?next=/reset-password";
+const INVITATION_TOKEN_PATTERN = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/i;
 
 function AuthLogo({
   inverse = false,
@@ -476,27 +478,46 @@ export function ActivateScreen({
   token: initialToken,
   authenticated = false,
   blockedSession = false,
+  preview,
   dictionary,
 }: {
   token: string;
   authenticated?: boolean;
   blockedSession?: boolean;
+  preview: InvitationPreview | null;
   dictionary: Dictionary;
 }) {
   const router = useRouter();
   const [token, setToken] = useState(initialToken.trim().toUpperCase());
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [email, setEmail] = useState(preview?.email ?? "");
+  const [name, setName] = useState(preview?.invitedFullName ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [photoConsent, setPhotoConsent] = useState(true);
 
+  function loadPreview() {
+    const normalizedToken = token.trim().toUpperCase();
+    if (!INVITATION_TOKEN_PATTERN.test(normalizedToken)) {
+      setError(dictionary.actions.activationError);
+      return;
+    }
+
+    setError("");
+    router.push(`/activate?code=${encodeURIComponent(normalizedToken)}`);
+  }
+
   async function submitSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
-    if (!token.trim() || !email.trim() || !name.trim() || password.length < 8) {
+    if (
+      !token.trim() ||
+      !email.trim() ||
+      !name.trim() ||
+      password.length < 8 ||
+      (preview && email.trim().toLowerCase() !== preview.email)
+    ) {
       setError(dictionary.auth.activationValidation);
       return;
     }
@@ -550,32 +571,66 @@ export function ActivateScreen({
           <h1 className="font-display text-[32px] leading-[1.15] font-semibold text-ink">{dictionary.auth.activationTitle}</h1>
           <LanguageSwitcher />
         </div>
-        <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">{dictionary.auth.activationDescription}</p>
+         <p className="mb-[26px] text-[15.5px] leading-relaxed text-muted">{dictionary.auth.activationDescription}</p>
+
+         {preview && (
+           <div className="mb-6 rounded-[16px] border border-info-border bg-info-soft px-4 py-4 text-sm text-info">
+             <p className="text-xs font-extrabold tracking-[0.08em] text-info-strong">{dictionary.auth.invitationPreviewLabel}</p>
+             <p className="mt-1 font-display text-lg font-semibold text-info-strong">
+               {interpolate(dictionary.auth.invitationPreview, {
+                 child: preview.childName,
+                 daycare: preview.daycareName,
+               })}
+             </p>
+             <p className="mt-1">{dictionary.auth.invitationRelationship}: {dictionary.invitations[preview.relationship]}</p>
+           </div>
+         )}
+
+         {!authenticated && initialToken.trim() && !preview && (
+           <p role="alert" className="mb-5 rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold text-danger">
+             {dictionary.actions.activationError}
+           </p>
+         )}
 
         {blockedSession ? (
           <div role="alert" className="rounded-xl bg-danger-soft px-4 py-3 text-sm font-bold leading-relaxed text-danger">
             {dictionary.auth.blockedSession}
           </div>
         ) : (
-          <form onSubmit={authenticated ? acceptExisting : submitSignup}>
-            <Field
-              label={dictionary.auth.invitationCode}
-              value={token}
-              onChange={(event) => setToken(event.target.value.toUpperCase())}
-              autoComplete="one-time-code"
-              required
-              className="font-display font-bold tracking-[3px]"
-            />
-            {!authenticated && (
-              <Field
-                label={dictionary.auth.invitedEmail}
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="email"
-                required
-              />
-            )}
+             <form onSubmit={authenticated ? acceptExisting : submitSignup}>
+             <Field
+               label={dictionary.auth.invitationCode}
+               value={token}
+               onChange={(event) => setToken(event.target.value.toUpperCase())}
+               autoComplete="one-time-code"
+               required
+             readOnly={Boolean(preview)}
+             className="font-display font-bold tracking-[3px]"
+           />
+             {!preview && (
+               <button
+                 type="button"
+                 onClick={loadPreview}
+                 disabled={isLoading}
+                 className="-mt-2 mb-5 w-full rounded-[14px] border border-line bg-surface-raised px-4 py-3 text-sm font-extrabold text-muted disabled:cursor-not-allowed disabled:opacity-60"
+               >
+                 {dictionary.auth.verifyInvitation}
+               </button>
+             )}
+             {!authenticated && (
+               <>
+                 <Field
+                   label={dictionary.auth.invitedEmail}
+                   type="email"
+                   value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoComplete="email"
+                  required
+                  readOnly={Boolean(preview)}
+                 />
+                 {preview && <p className="-mt-3 mb-1 text-xs text-muted">{dictionary.auth.invitedEmailReadOnly}</p>}
+               </>
+             )}
             <Field
               label={dictionary.auth.accountName}
               value={name}

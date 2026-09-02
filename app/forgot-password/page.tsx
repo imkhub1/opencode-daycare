@@ -9,10 +9,11 @@ export const metadata: Metadata = {
 export default async function ForgotPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ email?: string | string[] }>;
 }) {
-  const { email = "" } = await searchParams;
-  const initialEmail = email.trim().length <= 254 ? email.trim() : "";
+  const { email } = await searchParams;
+  const emailValue = Array.isArray(email) ? email[0] ?? "" : email ?? "";
+  const initialEmail = emailValue.trim().length <= 254 ? emailValue.trim() : "";
 
   return <ForgotPasswordScreen initialEmail={initialEmail} />;
 }

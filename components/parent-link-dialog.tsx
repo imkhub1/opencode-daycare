@@ -51,7 +51,9 @@ export function ParentLinkDialog({
   const dialogRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    dialogRef.current?.querySelector<HTMLInputElement>("input[name='name']")?.focus();
+    if (!pending && !state.success && !state.message && !state.errors) {
+      dialogRef.current?.querySelector<HTMLInputElement>("input[name='name']")?.focus();
+    }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && !pending) {
@@ -62,7 +64,7 @@ export function ParentLinkDialog({
 
       if (event.key !== "Tab") return;
       const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        "button:not([disabled]), input:not([disabled])",
+        "button:not([disabled]), input:not([disabled]):not([type='hidden'])",
       );
       if (!focusable?.length) return;
 
@@ -79,10 +81,21 @@ export function ParentLinkDialog({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, pending]);
+  }, [onClose, pending, state.errors, state.message, state.success]);
 
   const errors = state.errors ?? {};
   const success = state.success && Boolean(state.token);
+
+  useEffect(() => {
+    const fieldSelector = errors.name
+      ? "input[name='name']"
+      : errors.email
+        ? "input[name='email']"
+        : errors.relationship
+          ? "button[aria-pressed]"
+          : null;
+    if (fieldSelector) dialogRef.current?.querySelector<HTMLElement>(fieldSelector)?.focus();
+  }, [errors.email, errors.name, errors.relationship]);
 
   useEffect(() => {
     if (edit && state.success) onClose();
@@ -245,12 +258,21 @@ export function ParentLinkDialog({
               </p>
             )}
 
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm"
-            >
-              {edit ? dictionary.invitations.saveChanges : state.invitationId ? dictionary.invitations.retryDelivery : dictionary.invitations.sendInvitation}
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full rounded-[14px] border border-line bg-surface-raised px-3 py-3.5 text-[15.5px] font-extrabold text-muted sm:w-auto sm:px-5"
+              >
+                {dictionary.common.cancel}
+              </button>
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-2 rounded-[14px] bg-coral-gradient px-3 py-3.5 text-[15.5px] font-extrabold text-theme-white-strong shadow-theme-sm sm:flex-1"
+              >
+                {edit ? dictionary.invitations.saveChanges : state.invitationId ? dictionary.invitations.retryDelivery : dictionary.invitations.sendInvitation}
+              </button>
+            </div>
           </div>
         )}
       </form>

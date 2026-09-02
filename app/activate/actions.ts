@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { getServerDictionary } from "@/utils/i18n/server";
+import { getInvitationPreview } from "@/utils/supabase/invitation-preview";
 
 function validToken(token: string) {
   return /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/i.test(token.trim());
@@ -35,6 +36,11 @@ export async function signUpParentAccount({
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!appUrl) return { ok: false as const, message: genericError };
+
+  const invitation = await getInvitationPreview(normalizedToken);
+  if (!invitation || invitation.email !== normalizedEmail) {
+    return { ok: false as const, message: genericError };
+  }
 
   const confirmationUrl = new URL("/auth/callback", appUrl);
   confirmationUrl.searchParams.set("invite", normalizedToken);
@@ -98,6 +104,11 @@ export async function acceptExistingParentInvitation(
   } = await supabase.auth.getUser();
 
   if (userError || !user?.email) {
+    return { ok: false as const, message: genericError };
+  }
+
+  const invitation = await getInvitationPreview(normalizedToken);
+  if (!invitation || invitation.email !== user.email.trim().toLowerCase()) {
     return { ok: false as const, message: genericError };
   }
 
